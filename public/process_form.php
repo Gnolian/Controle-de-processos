@@ -1,6 +1,10 @@
 <?php
 
+use App\Repositories\ProcessRepository;
+use App\Services\ProcessService;
+
 require __DIR__ . '/../app/bootstrap.php';
+require __DIR__ . '/../views/components.php';
 
 $user = require_login();
 $repo = new ProcessRepository();
@@ -9,121 +13,94 @@ $process = $id ? $repo->find($id, $user) : null;
 
 if ($id && !$process) {
     flash('Processo nao encontrado.', 'danger');
-    redirect('dashboard.php');
+    redirect('processes.php');
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        $repo->save($_POST, $user, $id);
-        flash('Processo salvo com sucesso.');
-        redirect('dashboard.php');
+        verify_csrf();
+        $savedId = (new ProcessService())->save($_POST, $user, $id, true);
+        flash('Processo salvo. A sincronizacao com a planilha foi tentada automaticamente.');
+        redirect('process_detail.php?id=' . $savedId);
     } catch (Throwable $exception) {
         flash($exception->getMessage(), 'danger');
     }
 }
 
-$defaults = array_fill_keys(ProcessRepository::COLUMNS, '');
-$defaults['updated_at'] = date('Y-m-d');
-$defaults['response_status'] = 'A iniciar';
-$defaults['andrea_review_status'] = 'N/A';
-$defaults['signed_status'] = 'N/A';
-$defaults['sent_gab_status'] = 'N/A';
-$defaults['status'] = 'Aberto';
-$process = array_merge($defaults, $process ?: []);
+$process = process_defaults($process);
 $pageTitle = $id ? 'Editar processo' : 'Novo processo';
+$activeNav = 'processes';
 
 require __DIR__ . '/../views/header.php';
 require __DIR__ . '/../views/nav.php';
 ?>
 
-<main class="shell narrow">
+<main class="content-shell">
     <?php require __DIR__ . '/../views/flash.php'; ?>
 
-    <section class="page-heading">
+    <section class="page-title-row">
         <div>
-            <p class="eyebrow"><?= $id ? 'Atualizacao' : 'Cadastro' ?></p>
+            <p class="section-kicker"><?= $id ? 'Atualizacao' : 'Cadastro' ?></p>
             <h1><?= e($pageTitle) ?></h1>
         </div>
-        <a class="button ghost" href="<?= url('dashboard.php') ?>">Voltar</a>
+        <a class="btn btn-outline-secondary" href="<?= $id ? url('process_detail.php?id=' . $id) : url('processes.php') ?>"><i class="bi bi-arrow-left"></i> Voltar</a>
     </section>
 
-    <form method="post" class="process-form">
-        <div class="form-grid two">
-            <?php input('process_number', 'Numero do Processo', $process, 'text', true); ?>
-            <?php input('updated_at', 'DATA DA ATUALIZACAO', $process, 'date'); ?>
-            <?php input('response_owner', 'Responsavel pela Resposta', $process); ?>
-            <?php input('deadline_days', 'Prazo (em dias)', $process, 'number'); ?>
+    <form method="post" class="app-card form-card">
+        <?= csrf_field() ?>
+
+        <div class="form-section">
+            <h2>Identificacao</h2>
+            <div class="row row-cols-1 row-cols-md-2 g-3">
+                <?php field_input('process_number', 'Numero do Processo', $process, 'text', true, 'bi-hash'); ?>
+                <?php field_input('updated_at', 'DATA DA ATUALIZACAO', $process, 'date', false, 'bi-calendar-event'); ?>
+                <?php field_input('response_owner', 'Responsavel pela Resposta', $process, 'text', false, 'bi-person'); ?>
+                <?php field_input('deadline_days', 'Prazo (em dias)', $process, 'number', false, 'bi-clock'); ?>
+                <?php field_input('requesting_agency', 'Orgao Solicitante', $process, 'text', false, 'bi-building'); ?>
+                <?php field_input('internal_block', 'Bloco interno', $process, 'text', false, 'bi-box'); ?>
+            </div>
         </div>
 
-        <div class="form-grid">
-            <?php textarea('general_description', 'Descricao Geral', $process); ?>
-            <?php textarea('detailed_description', 'Descricao Detalhada', $process); ?>
-            <?php textarea('notes', 'Comentarios/anotacoes', $process); ?>
+        <div class="form-section">
+            <h2>Descricoes e anotacoes</h2>
+            <div class="row g-3">
+                <?php field_textarea('general_description', 'Descricao Geral', $process, 3); ?>
+                <?php field_textarea('detailed_description', 'Descricao Detalhada', $process, 4); ?>
+                <?php field_textarea('notes', 'Comentarios/anotacoes', $process, 3); ?>
+            </div>
         </div>
 
-        <div class="form-grid two">
-            <?php input('requesting_agency', 'Orgao Solicitante', $process); ?>
-            <?php input('gab_signature_date', 'Data de assinatura (Oficio GAB)', $process, 'date'); ?>
-            <?php input('internal_deadline_gab', 'Prazo Interno (OFICIO GAB/SNBA)', $process, 'date'); ?>
-            <?php input('adjusted_internal_deadline', 'Prazo Interno AJUSTADO', $process, 'date'); ?>
-            <?php input('external_deadline_mds', 'Prazo Externo/MDS', $process, 'date'); ?>
-            <?php input('review_owner', 'Responsavel pela Revisao', $process); ?>
+        <div class="form-section">
+            <h2>Prazos e revisao</h2>
+            <div class="row row-cols-1 row-cols-md-2 g-3">
+                <?php field_input('gab_signature_date', 'Data de assinatura (Oficio GAB)', $process, 'date', false, 'bi-pen'); ?>
+                <?php field_input('internal_deadline_gab', 'Prazo Interno (OFICIO GAB/SNBA)', $process, 'date', false, 'bi-calendar-week'); ?>
+                <?php field_input('adjusted_internal_deadline', 'Prazo Interno AJUSTADO', $process, 'date', false, 'bi-calendar-check'); ?>
+                <?php field_input('external_deadline_mds', 'Prazo Externo/MDS', $process, 'date', false, 'bi-calendar2-range'); ?>
+                <?php field_input('review_owner', 'Responsavel pela Revisao', $process, 'text', false, 'bi-person-check'); ?>
+                <?php field_input('gab_sent_date', 'Data envio GAB', $process, 'date', false, 'bi-send'); ?>
+            </div>
         </div>
 
-        <div class="form-grid two">
-            <?php select_field('response_status', 'Resposta', config('dropdowns.workflow'), $process); ?>
-            <?php select_field('andrea_review_status', 'Revisao Andrea', config('dropdowns.workflow'), $process); ?>
-            <?php select_field('signed_status', 'Assinado', config('dropdowns.workflow'), $process); ?>
-            <?php select_field('sent_gab_status', 'Enviado Gab', config('dropdowns.workflow'), $process); ?>
-            <?php input('gab_sent_date', 'Data envio GAB', $process, 'date'); ?>
-            <?php select_field('status', 'STATUS', config('dropdowns.status'), $process); ?>
-            <?php input('internal_block', 'Bloco interno', $process); ?>
+        <div class="form-section">
+            <h2>Status controlados</h2>
+            <div class="row row-cols-1 row-cols-md-2 g-3">
+                <?php field_select('response_status', 'Resposta', config('dropdowns.workflow'), $process); ?>
+                <?php field_select('andrea_review_status', 'Revisao Andrea', config('dropdowns.workflow'), $process); ?>
+                <?php field_select('signed_status', 'Assinado', config('dropdowns.workflow'), $process); ?>
+                <?php field_select('sent_gab_status', 'Enviado Gab', config('dropdowns.workflow'), $process); ?>
+                <?php field_select('status', 'STATUS', config('dropdowns.status'), $process, 'bi-flag'); ?>
+            </div>
         </div>
 
-        <div class="form-actions">
-            <button class="button primary" type="submit">Salvar</button>
+        <div class="form-actions sticky-actions">
+            <button class="btn btn-primary" type="submit"><i class="bi bi-save"></i> Salvar e sincronizar</button>
             <?php if ($id): ?>
-                <a class="button danger" href="<?= url('delete.php?id=' . $id) ?>" onclick="return confirm('Excluir este processo?')">Excluir</a>
+                <button class="btn btn-outline-danger" type="submit" formaction="<?= url('delete.php?id=' . $id) ?>" formmethod="post" data-confirm="Excluir este processo? Essa acao nao pode ser desfeita."><i class="bi bi-trash"></i> Excluir</button>
             <?php endif; ?>
         </div>
     </form>
 </main>
 
-<?php
-function input(string $name, string $label, array $values, string $type = 'text', bool $required = false): void
-{
-    ?>
-    <label>
-        <?= e($label) ?>
-        <input type="<?= e($type) ?>" name="<?= e($name) ?>" value="<?= e((string) $values[$name]) ?>" <?= $required ? 'required' : '' ?>>
-    </label>
-    <?php
-}
-
-function textarea(string $name, string $label, array $values): void
-{
-    ?>
-    <label>
-        <?= e($label) ?>
-        <textarea name="<?= e($name) ?>" rows="4"><?= e((string) $values[$name]) ?></textarea>
-    </label>
-    <?php
-}
-
-function select_field(string $name, string $label, array $options, array $values): void
-{
-    ?>
-    <label>
-        <?= e($label) ?>
-        <select name="<?= e($name) ?>">
-            <?php foreach ($options as $option): ?>
-                <option value="<?= e($option) ?>" <?= selected((string) $values[$name], $option) ?>><?= e($option) ?></option>
-            <?php endforeach; ?>
-        </select>
-    </label>
-    <?php
-}
-
-require __DIR__ . '/../views/footer.php';
-?>
-
+<?php require __DIR__ . '/../views/app_end.php'; ?>
+<?php require __DIR__ . '/../views/footer.php'; ?>

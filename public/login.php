@@ -1,5 +1,7 @@
 <?php
 
+use App\Services\AuthService;
+
 require __DIR__ . '/../app/bootstrap.php';
 
 if (current_user()) {
@@ -9,56 +11,51 @@ if (current_user()) {
 $error = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim((string) ($_POST['email'] ?? ''));
-    $password = (string) ($_POST['password'] ?? '');
-
-    $stmt = db()->prepare('SELECT * FROM users WHERE email = ? AND active = 1');
-    $stmt->execute([$email]);
-    $user = $stmt->fetch();
-
-    $validPassword = false;
-    if ($user) {
-        $stored = (string) $user['password_hash'];
-        $validPassword = password_verify($password, $stored)
-            || hash_equals(strtolower($stored), hash('sha256', $password));
+    try {
+        verify_csrf();
+        if ((new AuthService())->attempt(trim((string) ($_POST['email'] ?? '')), (string) ($_POST['password'] ?? ''))) {
+            redirect('dashboard.php');
+        }
+        $error = 'Email ou senha invalidos.';
+    } catch (Throwable $exception) {
+        $error = $exception->getMessage();
     }
-
-    if ($user && $validPassword) {
-        $_SESSION['user_id'] = (int) $user['id'];
-        redirect('dashboard.php');
-    }
-
-    $error = 'Email ou senha invalidos.';
 }
 
 $pageTitle = 'Entrar';
+$bodyClass = 'login-body';
 require __DIR__ . '/../views/header.php';
 ?>
 
-<main class="auth-page">
-    <section class="login-panel">
-        <div>
-            <p class="eyebrow">Acesso interno</p>
-            <h1>Controle de Processos</h1>
-            <p class="muted">Preencha uma vez, acompanhe prazos e exporte a planilha quando precisar.</p>
-        </div>
+<main class="login-shell">
+    <section class="login-hero">
+        <span class="login-icon"><i class="bi bi-shield-lock"></i></span>
+        <h1>Controle de Processos</h1>
+        <p>Uma interface interna para preencher, acompanhar, auditar e sincronizar processos com a planilha gerencial.</p>
+    </section>
+
+    <section class="login-card">
+        <p class="text-primary fw-semibold mb-2">Acesso interno</p>
+        <h2 class="h4 mb-4">Entrar no sistema</h2>
 
         <?php if ($error): ?>
-            <div class="alert danger"><?= e($error) ?></div>
+            <div class="alert alert-danger"><?= e($error) ?></div>
         <?php endif; ?>
 
-        <form method="post" class="form-grid">
-            <label>
+        <form method="post" class="vstack gap-3">
+            <?= csrf_field() ?>
+            <label class="form-label">
                 Email
-                <input type="email" name="email" required autofocus>
+                <input class="form-control form-control-lg mt-1" type="email" name="email" required autofocus>
             </label>
-            <label>
+            <label class="form-label">
                 Senha
-                <input type="password" name="password" required>
+                <input class="form-control form-control-lg mt-1" type="password" name="password" required>
             </label>
-            <button class="button primary" type="submit">Entrar</button>
+            <button class="btn btn-primary btn-lg w-100" type="submit"><i class="bi bi-box-arrow-in-right"></i> Entrar</button>
         </form>
     </section>
 </main>
 
 <?php require __DIR__ . '/../views/footer.php'; ?>
+

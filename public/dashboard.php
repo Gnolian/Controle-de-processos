@@ -1,101 +1,86 @@
 <?php
 
+use App\Repositories\ProcessRepository;
+use App\Services\DashboardService;
+
 require __DIR__ . '/../app/bootstrap.php';
+require __DIR__ . '/../views/components.php';
 
 $user = require_login();
-$repo = new ProcessRepository();
-$filters = [
-    'q' => trim((string) ($_GET['q'] ?? '')),
-    'status' => trim((string) ($_GET['status'] ?? '')),
-    'owner' => trim((string) ($_GET['owner'] ?? '')),
-];
-$processes = $repo->search($filters, $user);
-$metrics = $repo->metrics($user);
-$pageTitle = 'Painel';
+$pageTitle = 'Painel pessoal';
+$activeNav = 'dashboard';
+$dashboard = new DashboardService();
+$metrics = $dashboard->metrics($user);
+$queue = $dashboard->personalQueue($user);
+$filters = ['q' => '', 'status' => 'Aberto', 'owner' => '', 'deadline' => ''];
+$processes = (new ProcessRepository())->search($filters, $user, 8, 0);
 
 require __DIR__ . '/../views/header.php';
 require __DIR__ . '/../views/nav.php';
 ?>
 
-<main class="shell">
+<main class="content-shell">
     <?php require __DIR__ . '/../views/flash.php'; ?>
 
-    <section class="page-heading">
+    <section class="hero-panel">
         <div>
-            <p class="eyebrow">Painel de acompanhamento</p>
-            <h1>Processos</h1>
+            <p class="section-kicker">Bem-vindo, <?= e($user['name']) ?></p>
+            <h1>Seu painel de processos</h1>
+            <p class="text-secondary mb-0">Acompanhe prazos, gargalos e pendencias sem voltar para a planilha.</p>
         </div>
-        <a class="button primary" href="<?= url('process_form.php') ?>">Novo processo</a>
+        <div class="d-flex gap-2 flex-wrap">
+            <a class="btn btn-light" href="<?= url('processes.php') ?>"><i class="bi bi-search"></i> Buscar processos</a>
+            <a class="btn btn-primary" href="<?= url('process_form.php') ?>"><i class="bi bi-plus-lg"></i> Novo processo</a>
+        </div>
     </section>
 
     <section class="metric-grid">
-        <article class="metric"><span>Total</span><strong><?= $metrics['total'] ?></strong></article>
-        <article class="metric"><span>Abertos</span><strong><?= $metrics['open'] ?></strong></article>
-        <article class="metric urgent"><span>Atrasados</span><strong><?= $metrics['late'] ?></strong></article>
-        <article class="metric attention"><span>Vencem em 7 dias</span><strong><?= $metrics['due_soon'] ?></strong></article>
+        <article class="metric-card"><span>Total</span><strong><?= $metrics['total'] ?></strong><i class="bi bi-collection"></i></article>
+        <article class="metric-card"><span>Abertos</span><strong><?= $metrics['open'] ?></strong><i class="bi bi-folder2-open"></i></article>
+        <article class="metric-card danger"><span>Atrasados</span><strong><?= $metrics['late'] ?></strong><i class="bi bi-exclamation-triangle"></i></article>
+        <article class="metric-card warning"><span>Vencem em 7 dias</span><strong><?= $metrics['due_soon'] ?></strong><i class="bi bi-hourglass-split"></i></article>
     </section>
 
-    <form class="filters" method="get">
-        <label>
-            Buscar
-            <input name="q" value="<?= e($filters['q']) ?>" placeholder="Numero, descricao, orgao, bloco">
-        </label>
-        <label>
-            Status
-            <select name="status">
-                <option value="">Todos</option>
-                <?php foreach (config('dropdowns.status') as $status): ?>
-                    <option value="<?= e($status) ?>" <?= selected($filters['status'], $status) ?>><?= e($status) ?></option>
-                <?php endforeach; ?>
-            </select>
-        </label>
-        <label>
-            Responsavel
-            <input name="owner" value="<?= e($filters['owner']) ?>" placeholder="Nome">
-        </label>
-        <button class="button" type="submit">Filtrar</button>
-        <a class="button ghost" href="<?= url('dashboard.php') ?>">Limpar</a>
-        <a class="button ghost" href="<?= url('export.php?' . http_build_query($filters)) ?>">Exportar CSV</a>
-    </form>
-
-    <section class="table-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th>Processo</th>
-                    <th>Responsavel</th>
-                    <th>Descricao</th>
-                    <th>Prazo</th>
-                    <th>Resposta</th>
-                    <th>Status</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($processes as $process): ?>
-                    <?php
-                        $deadline = $process['external_deadline_mds'] ?: ($process['adjusted_internal_deadline'] ?: $process['internal_deadline_gab']);
-                        $isLate = $deadline && $process['status'] === 'Aberto' && $deadline < date('Y-m-d');
-                    ?>
-                    <tr>
-                        <td><strong><?= e($process['process_number']) ?></strong><small><?= e($process['requesting_agency']) ?></small></td>
-                        <td><?= e($process['response_owner']) ?></td>
-                        <td><?= e($process['general_description']) ?></td>
-                        <td><span class="<?= $isLate ? 'tag late' : 'tag' ?>"><?= e($deadline ?: 'Sem prazo') ?></span></td>
-                        <td><?= e($process['response_status']) ?></td>
-                        <td><span class="status-pill"><?= e($process['status']) ?></span></td>
-                        <td class="actions">
-                            <a href="<?= url('process_form.php?id=' . (int) $process['id']) ?>">Editar</a>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-                <?php if (!$processes): ?>
-                    <tr><td colspan="7" class="empty">Nenhum processo encontrado.</td></tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
+    <section class="row g-4">
+        <div class="col-lg-7">
+            <div class="app-card h-100">
+                <div class="card-head">
+                    <div>
+                        <p class="section-kicker">Fila de trabalho</p>
+                        <h2>Processos abertos prioritarios</h2>
+                    </div>
+                    <a href="<?= url('processes.php?status=Aberto') ?>">Ver todos</a>
+                </div>
+                <div class="list-group list-group-flush">
+                    <?php foreach ($processes as $process): ?>
+                        <a class="list-group-item process-row" href="<?= url('process_detail.php?id=' . (int) $process['id']) ?>">
+                            <div>
+                                <strong><?= e($process['process_number']) ?></strong>
+                                <small><?= e($process['general_description']) ?></small>
+                            </div>
+                            <?= deadline_badge($process) ?>
+                        </a>
+                    <?php endforeach; ?>
+                    <?php if (!$processes): ?>
+                        <div class="empty-state">Nenhum processo aberto para exibir.</div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="app-card h-100">
+                <div class="card-head">
+                    <div>
+                        <p class="section-kicker">Distribuicao</p>
+                        <h2>Status dos processos</h2>
+                    </div>
+                </div>
+                <canvas class="chart-canvas" data-chart='<?= e(json_encode($metrics['by_status'], JSON_UNESCAPED_UNICODE)) ?>'></canvas>
+            </div>
+        </div>
     </section>
 </main>
 
+<?php require __DIR__ . '/../views/app_end.php'; ?>
 <?php require __DIR__ . '/../views/footer.php'; ?>
 
