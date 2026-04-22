@@ -9,15 +9,16 @@ class DashboardService
     public function metrics(array $user): array
     {
         $scope = $this->scope($user);
+        $dateDeadline = $this->dateDeadlineCondition();
 
         return [
             'total' => $this->count("SELECT COUNT(*) FROM processes{$scope}"),
             'open' => $this->count("SELECT COUNT(*) FROM processes{$scope}" . ($scope ? ' AND' : ' WHERE') . " status = 'Aberto'"),
             'done' => $this->count("SELECT COUNT(*) FROM processes{$scope}" . ($scope ? ' AND' : ' WHERE') . " response_status = 'Concluido'"),
             'archived' => $this->count("SELECT COUNT(*) FROM processes{$scope}" . ($scope ? ' AND' : ' WHERE') . " status LIKE 'Arquivado%'"),
-            'late' => $this->count("SELECT COUNT(*) FROM processes{$scope}" . ($scope ? ' AND' : ' WHERE') . " status = 'Aberto' AND deadline_type = 'data' AND COALESCE(external_deadline_mds, adjusted_internal_deadline, internal_deadline_gab) < CURDATE()"),
-            'due_tomorrow' => $this->count("SELECT COUNT(*) FROM processes{$scope}" . ($scope ? ' AND' : ' WHERE') . " status = 'Aberto' AND deadline_type = 'data' AND COALESCE(external_deadline_mds, adjusted_internal_deadline, internal_deadline_gab) = DATE_ADD(CURDATE(), INTERVAL 1 DAY)"),
-            'due_soon' => $this->count("SELECT COUNT(*) FROM processes{$scope}" . ($scope ? ' AND' : ' WHERE') . " status = 'Aberto' AND deadline_type = 'data' AND COALESCE(external_deadline_mds, adjusted_internal_deadline, internal_deadline_gab) BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY)"),
+            'late' => $this->count("SELECT COUNT(*) FROM processes{$scope}" . ($scope ? ' AND' : ' WHERE') . " status = 'Aberto' AND {$dateDeadline} AND COALESCE(external_deadline_mds, adjusted_internal_deadline, internal_deadline_gab) < CURDATE()"),
+            'due_tomorrow' => $this->count("SELECT COUNT(*) FROM processes{$scope}" . ($scope ? ' AND' : ' WHERE') . " status = 'Aberto' AND {$dateDeadline} AND COALESCE(external_deadline_mds, adjusted_internal_deadline, internal_deadline_gab) = DATE_ADD(CURDATE(), INTERVAL 1 DAY)"),
+            'due_soon' => $this->count("SELECT COUNT(*) FROM processes{$scope}" . ($scope ? ' AND' : ' WHERE') . " status = 'Aberto' AND {$dateDeadline} AND COALESCE(external_deadline_mds, adjusted_internal_deadline, internal_deadline_gab) BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY)"),
             'review_pending' => $this->count("SELECT COUNT(*) FROM processes{$scope}" . ($scope ? ' AND' : ' WHERE') . " andrea_review_status IN ('A iniciar', 'Em andamento')"),
             'signature_pending' => $this->count("SELECT COUNT(*) FROM processes{$scope}" . ($scope ? ' AND' : ' WHERE') . " signed_status IN ('A iniciar', 'Em andamento')"),
             'by_status' => $this->group('status', $scope),
@@ -32,7 +33,8 @@ class DashboardService
 
     public function personalQueue(array $user): array
     {
-        $stmt = \db()->prepare("SELECT * FROM processes WHERE (created_by = ? OR response_owner LIKE ?) AND status = 'Aberto' ORDER BY deadline_type = 'tempo_habil', COALESCE(external_deadline_mds, adjusted_internal_deadline, internal_deadline_gab) ASC LIMIT 8");
+        $deadlineOrder = $this->hasColumn('processes', 'deadline_type') ? "deadline_type = 'tempo_habil'," : '';
+        $stmt = \db()->prepare("SELECT * FROM processes WHERE (created_by = ? OR response_owner LIKE ?) AND status = 'Aberto' ORDER BY {$deadlineOrder} COALESCE(external_deadline_mds, adjusted_internal_deadline, internal_deadline_gab) ASC LIMIT 8");
         $stmt->execute([$user['id'], '%' . $user['name'] . '%']);
 
         return $stmt->fetchAll();
@@ -103,5 +105,25 @@ class DashboardService
             GROUP BY label
             ORDER BY total DESC, label ASC
             LIMIT 12")->fetchAll();
+    }
+
+    private function dateDeadlineCondition(): string
+    {
+        return $this->hasColumn('processes', 'deadline_type') ? "deadline_type = 'data'" : '1 = 1';
+    }
+
+    private function hasColumn(string $table, string $column): bool
+    {
+        static $cache = [];
+        $key = $table . '.' . $column;
+        if (array_key_exists($key, $cache)) {
+            return $cache[$key];
+        }
+
+        $stmt = \db()->prepare('SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?');
+        $stmt->execute([$table, $column]);
+        $cache[$key] = (int) $stmt->fetchColumn() > 0;
+
+        return $cache[$key];
     }
 }

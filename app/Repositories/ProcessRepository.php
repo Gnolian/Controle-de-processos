@@ -56,10 +56,13 @@ class ProcessRepository
         'Bloco interno',
     ];
 
+    private ?bool $hasDeadlineType = null;
+
     public function search(array $filters, array $user, int $limit = 50, int $offset = 0): array
     {
         [$where, $params] = $this->buildFilters($filters, $user);
-        $sql = 'SELECT p.*, u.name AS created_by_name
+        $selectDeadlineType = $this->hasDeadlineType() ? '' : ", 'data' AS deadline_type";
+        $sql = 'SELECT p.*, u.name AS created_by_name' . $selectDeadlineType . '
                 FROM processes p
                 LEFT JOIN users u ON u.id = p.created_by';
         if ($where) {
@@ -102,7 +105,8 @@ class ProcessRepository
 
     public function find(int $id, array $user): ?array
     {
-        $stmt = \db()->prepare('SELECT p.*, u.name AS created_by_name
+        $selectDeadlineType = $this->hasDeadlineType() ? '' : ", 'data' AS deadline_type";
+        $stmt = \db()->prepare('SELECT p.*, u.name AS created_by_name' . $selectDeadlineType . '
             FROM processes p
             LEFT JOIN users u ON u.id = p.created_by
             WHERE p.id = ?');
@@ -131,10 +135,10 @@ class ProcessRepository
 
     public function create(array $payload, array $user): int
     {
-        $columns = array_merge(self::COLUMNS, ['created_by']);
+        $columns = array_merge($this->databaseColumns(), ['created_by']);
         $placeholders = implode(', ', array_fill(0, count($columns), '?'));
         $sql = 'INSERT INTO processes (' . implode(', ', $columns) . ') VALUES (' . $placeholders . ')';
-        $values = array_map(static fn (string $column) => $payload[$column] ?? null, self::COLUMNS);
+        $values = array_map(static fn (string $column) => $payload[$column] ?? null, $this->databaseColumns());
         $values[] = $user['id'];
         \db()->prepare($sql)->execute($values);
 
@@ -143,8 +147,8 @@ class ProcessRepository
 
     public function update(int $id, array $payload): void
     {
-        $sets = implode(', ', array_map(static fn (string $column) => $column . ' = ?', self::COLUMNS));
-        $values = array_map(static fn (string $column) => $payload[$column] ?? null, self::COLUMNS);
+        $sets = implode(', ', array_map(static fn (string $column) => $column . ' = ?', $this->databaseColumns()));
+        $values = array_map(static fn (string $column) => $payload[$column] ?? null, $this->databaseColumns());
         $values[] = $id;
         \db()->prepare('UPDATE processes SET ' . $sets . ' WHERE id = ?')->execute($values);
     }
@@ -233,18 +237,18 @@ class ProcessRepository
         }
 
         if (($filters['deadline'] ?? '') === 'late') {
-            $where[] = "p.status = 'Aberto' AND p.deadline_type = 'data' AND COALESCE(p.external_deadline_mds, p.adjusted_internal_deadline, p.internal_deadline_gab) < CURDATE()";
+            $where[] = "p.status = 'Aberto' AND " . $this->dateDeadlineCondition('p') . " AND COALESCE(p.external_deadline_mds, p.adjusted_internal_deadline, p.internal_deadline_gab) < CURDATE()";
         }
 
         if (($filters['deadline'] ?? '') === 'tomorrow') {
-            $where[] = "p.status = 'Aberto' AND p.deadline_type = 'data' AND COALESCE(p.external_deadline_mds, p.adjusted_internal_deadline, p.internal_deadline_gab) = DATE_ADD(CURDATE(), INTERVAL 1 DAY)";
+            $where[] = "p.status = 'Aberto' AND " . $this->dateDeadlineCondition('p') . " AND COALESCE(p.external_deadline_mds, p.adjusted_internal_deadline, p.internal_deadline_gab) = DATE_ADD(CURDATE(), INTERVAL 1 DAY)";
         }
 
         if (($filters['deadline'] ?? '') === 'three_days') {
-            $where[] = "p.status = 'Aberto' AND p.deadline_type = 'data' AND COALESCE(p.external_deadline_mds, p.adjusted_internal_deadline, p.internal_deadline_gab) BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY)";
+            $where[] = "p.status = 'Aberto' AND " . $this->dateDeadlineCondition('p') . " AND COALESCE(p.external_deadline_mds, p.adjusted_internal_deadline, p.internal_deadline_gab) BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY)";
         }
 
-        if (($filters['deadline'] ?? '') === 'tempo_habil') {
+        if (($filters['deadline'] ?? '') === 'tempo_habil' && $this->hasDeadlineType()) {
             $where[] = "p.deadline_type = 'tempo_habil'";
         }
 
@@ -261,5 +265,32 @@ class ProcessRepository
         $name = strtolower((string) ($user['name'] ?? ''));
 
         return $name !== '' && strpos($owner, $name) !== false;
+    }
+
+    private function databaseColumns(): array
+    {
+        if ($this->hasDeadlineType()) {
+            return self::COLUMNS;
+        }
+
+        return array_values(array_filter(self::COLUMNS, static fn (string $column) => $column !== 'deadline_type'));
+    }
+
+    private function dateDeadlineCondition(string $alias): string
+    {
+        return $this->hasDeadlineType() ? "{$alias}.deadline_type = 'data'" : '1 = 1';
+    }
+
+    private function hasDeadlineType(): bool
+    {
+        if ($this->hasDeadlineType !== null) {
+            return $this->hasDeadlineType;
+        }
+
+        $stmt = \db()->prepare('SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?');
+        $stmt->execute(['processes', 'deadline_type']);
+        $this->hasDeadlineType = (int) $stmt->fetchColumn() > 0;
+
+        return $this->hasDeadlineType;
     }
 }
