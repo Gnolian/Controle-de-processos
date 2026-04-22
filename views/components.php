@@ -29,9 +29,13 @@ function workflow_badge(?string $status): string
 
 function deadline_badge(array $process): string
 {
+    if (($process['deadline_type'] ?? 'data') === 'tempo_habil') {
+        return '<span class="badge rounded-pill text-bg-secondary"><i class="bi bi-briefcase"></i> Tempo Habil</span>';
+    }
+
     $deadline = $process['external_deadline_mds'] ?: ($process['adjusted_internal_deadline'] ?: $process['internal_deadline_gab']);
     if (!$deadline) {
-        return '<span class="badge rounded-pill text-bg-light">Sem prazo</span>';
+        return '<span class="badge rounded-pill text-bg-secondary"><i class="bi bi-briefcase"></i> Tempo Habil</span>';
     }
 
     $today = strtotime(date('Y-m-d'));
@@ -49,31 +53,11 @@ function deadline_badge(array $process): string
     return '<span class="badge rounded-pill text-bg-success"><i class="bi bi-check2-circle"></i> ' . e(format_date($deadline)) . '</span>';
 }
 
-function sync_badge(?string $status): string
-{
-    $class = match ($status) {
-        'success' => 'text-bg-success',
-        'failed' => 'text-bg-danger',
-        'pending' => 'text-bg-warning',
-        'info' => 'text-bg-info',
-        default => 'text-bg-secondary',
-    };
-
-    $label = match ($status) {
-        'success' => 'Sincronizado',
-        'failed' => 'Falhou',
-        'pending' => 'Pendente',
-        'info' => 'Info',
-        default => 'Sem estado',
-    };
-
-    return '<span class="badge rounded-pill ' . $class . '">' . $label . '</span>';
-}
-
 function process_defaults(?array $process = null): array
 {
     $defaults = array_fill_keys(ProcessRepository::COLUMNS, '');
     $defaults['updated_at'] = date('Y-m-d');
+    $defaults['deadline_type'] = 'data';
     $defaults['response_status'] = 'A iniciar';
     $defaults['andrea_review_status'] = 'N/A';
     $defaults['signed_status'] = 'N/A';
@@ -96,12 +80,29 @@ function field_input(string $name, string $label, array $values, string $type = 
     <?php
 }
 
-function field_textarea(string $name, string $label, array $values, int $rows = 4): void
+function field_select_assoc(string $name, string $label, array $options, array $values, string $icon = 'bi-list-check', bool $required = false): void
+{
+    ?>
+    <div class="col">
+        <label class="form-label" for="<?= e($name) ?>"><?= e($label) ?></label>
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi <?= e($icon) ?>"></i></span>
+            <select class="form-select" id="<?= e($name) ?>" name="<?= e($name) ?>" <?= $required ? 'required' : '' ?>>
+                <?php foreach ($options as $value => $labelText): ?>
+                    <option value="<?= e($value) ?>" <?= selected((string) ($values[$name] ?? ''), (string) $value) ?>><?= e($labelText) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+    </div>
+    <?php
+}
+
+function field_textarea(string $name, string $label, array $values, int $rows = 4, bool $required = false): void
 {
     ?>
     <div class="col-12">
         <label class="form-label" for="<?= e($name) ?>"><?= e($label) ?></label>
-        <textarea class="form-control" id="<?= e($name) ?>" name="<?= e($name) ?>" rows="<?= $rows ?>"><?= e((string) $values[$name]) ?></textarea>
+        <textarea class="form-control" id="<?= e($name) ?>" name="<?= e($name) ?>" rows="<?= $rows ?>" <?= $required ? 'required' : '' ?>><?= e((string) $values[$name]) ?></textarea>
     </div>
     <?php
 }

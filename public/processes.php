@@ -83,7 +83,9 @@ require __DIR__ . '/../views/nav.php';
                 <select class="form-select" name="deadline">
                     <option value="">Todos</option>
                     <option value="late" <?= selected($filters['deadline'], 'late') ?>>Atrasados</option>
-                    <option value="seven_days" <?= selected($filters['deadline'], 'seven_days') ?>>7 dias</option>
+                    <option value="tomorrow" <?= selected($filters['deadline'], 'tomorrow') ?>>Amanha</option>
+                    <option value="three_days" <?= selected($filters['deadline'], 'three_days') ?>>3 dias</option>
+                    <option value="tempo_habil" <?= selected($filters['deadline'], 'tempo_habil') ?>>Tempo Habil</option>
                 </select>
             </div>
             <div class="col-lg-3">
@@ -112,7 +114,6 @@ require __DIR__ . '/../views/nav.php';
                         <th>Prazo</th>
                         <th>Fluxo</th>
                         <th>Status</th>
-                        <th>Sync</th>
                         <th class="text-end">Acoes</th>
                     </tr>
                 </thead>
@@ -125,16 +126,14 @@ require __DIR__ . '/../views/nav.php';
                             <td><?= deadline_badge($process) ?></td>
                             <td><?= workflow_badge($process['response_status']) ?></td>
                             <td><?= status_badge($process['status']) ?></td>
-                            <td><?= sync_badge($process['sync_status'] ?? null) ?></td>
                             <td class="text-end actions-cell">
                                 <a class="btn btn-sm btn-light" href="<?= url('process_detail.php?id=' . (int) $process['id']) ?>" title="Detalhes"><i class="bi bi-eye"></i></a>
                                 <a class="btn btn-sm btn-light" href="<?= url('process_form.php?id=' . (int) $process['id']) ?>" title="Editar"><i class="bi bi-pencil"></i></a>
-                                <a class="btn btn-sm btn-light" href="<?= url('sync_action.php?id=' . (int) $process['id']) ?>" title="Reenviar para planilha"><i class="bi bi-arrow-repeat"></i></a>
                             </td>
                         </tr>
                     <?php endforeach; ?>
                     <?php if (!$processes): ?>
-                        <tr><td colspan="8"><div class="empty-state">Nenhum processo encontrado.</div></td></tr>
+                        <tr><td colspan="7"><div class="empty-state">Nenhum processo encontrado.</div></td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>

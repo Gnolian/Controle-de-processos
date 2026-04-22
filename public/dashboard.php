@@ -38,7 +38,7 @@ require __DIR__ . '/../views/nav.php';
         <article class="metric-card"><span>Total</span><strong><?= $metrics['total'] ?></strong><i class="bi bi-collection"></i></article>
         <article class="metric-card"><span>Abertos</span><strong><?= $metrics['open'] ?></strong><i class="bi bi-folder2-open"></i></article>
         <article class="metric-card danger"><span>Atrasados</span><strong><?= $metrics['late'] ?></strong><i class="bi bi-exclamation-triangle"></i></article>
-        <article class="metric-card warning"><span>Vencem em 7 dias</span><strong><?= $metrics['due_soon'] ?></strong><i class="bi bi-hourglass-split"></i></article>
+        <article class="metric-card warning"><span>Vencem em 3 dias</span><strong><?= $metrics['due_soon'] ?></strong><i class="bi bi-hourglass-split"></i></article>
     </section>
 
     <section class="row g-4">
@@ -83,4 +83,3 @@ require __DIR__ . '/../views/nav.php';
 
 <?php require __DIR__ . '/../views/app_end.php'; ?>
 <?php require __DIR__ . '/../views/footer.php'; ?>
-

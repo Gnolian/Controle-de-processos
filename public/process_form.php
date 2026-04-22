@@ -19,8 +19,8 @@ if ($id && !$process) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         verify_csrf();
-        $savedId = (new ProcessService())->save($_POST, $user, $id, true);
-        flash('Processo salvo. A sincronizacao com a planilha foi tentada automaticamente.');
+        $savedId = (new ProcessService())->save($_POST, $user, $id);
+        flash('Processo salvo com sucesso.');
         redirect('process_detail.php?id=' . $savedId);
     } catch (Throwable $exception) {
         flash($exception->getMessage(), 'danger');
@@ -54,9 +54,10 @@ require __DIR__ . '/../views/nav.php';
             <div class="row row-cols-1 row-cols-md-2 g-3">
                 <?php field_input('process_number', 'Numero do Processo', $process, 'text', true, 'bi-hash'); ?>
                 <?php field_input('updated_at', 'DATA DA ATUALIZACAO', $process, 'date', false, 'bi-calendar-event'); ?>
-                <?php field_input('response_owner', 'Responsavel pela Resposta', $process, 'text', false, 'bi-person'); ?>
-                <?php field_input('deadline_days', 'Prazo (em dias)', $process, 'number', false, 'bi-clock'); ?>
-                <?php field_input('requesting_agency', 'Orgao Solicitante', $process, 'text', false, 'bi-building'); ?>
+                <?php field_input('response_owner', 'Responsavel pela Resposta', $process, 'text', true, 'bi-person'); ?>
+                <?php field_input('deadline_days', 'Prazo (em dias)', $process, 'number', true, 'bi-clock'); ?>
+                <?php field_select_assoc('deadline_type', 'Tipo de prazo', ['data' => 'Data definida', 'tempo_habil' => 'Tempo Habil'], $process, 'bi-briefcase', true); ?>
+                <?php field_input('requesting_agency', 'Orgao Solicitante', $process, 'text', true, 'bi-building'); ?>
                 <?php field_input('internal_block', 'Bloco interno', $process, 'text', false, 'bi-box'); ?>
             </div>
         </div>
@@ -64,7 +65,7 @@ require __DIR__ . '/../views/nav.php';
         <div class="form-section">
             <h2>Descricoes e anotacoes</h2>
             <div class="row g-3">
-                <?php field_textarea('general_description', 'Descricao Geral', $process, 3); ?>
+                <?php field_textarea('general_description', 'Descricao Geral', $process, 3, true); ?>
                 <?php field_textarea('detailed_description', 'Descricao Detalhada', $process, 4); ?>
                 <?php field_textarea('notes', 'Comentarios/anotacoes', $process, 3); ?>
             </div>
@@ -72,12 +73,13 @@ require __DIR__ . '/../views/nav.php';
 
         <div class="form-section">
             <h2>Prazos e revisao</h2>
+            <p class="text-secondary">Se o processo for de Tempo Habil, selecione esse tipo de prazo na identificacao. Caso contrario, preencha todos os campos de data desta secao.</p>
             <div class="row row-cols-1 row-cols-md-2 g-3">
                 <?php field_input('gab_signature_date', 'Data de assinatura (Oficio GAB)', $process, 'date', false, 'bi-pen'); ?>
                 <?php field_input('internal_deadline_gab', 'Prazo Interno (OFICIO GAB/SNBA)', $process, 'date', false, 'bi-calendar-week'); ?>
                 <?php field_input('adjusted_internal_deadline', 'Prazo Interno AJUSTADO', $process, 'date', false, 'bi-calendar-check'); ?>
                 <?php field_input('external_deadline_mds', 'Prazo Externo/MDS', $process, 'date', false, 'bi-calendar2-range'); ?>
-                <?php field_input('review_owner', 'Responsavel pela Revisao', $process, 'text', false, 'bi-person-check'); ?>
+                <?php field_input('review_owner', 'Responsavel pela Revisao', $process, 'text', true, 'bi-person-check'); ?>
                 <?php field_input('gab_sent_date', 'Data envio GAB', $process, 'date', false, 'bi-send'); ?>
             </div>
         </div>
@@ -94,7 +96,7 @@ require __DIR__ . '/../views/nav.php';
         </div>
 
         <div class="form-actions sticky-actions">
-            <button class="btn btn-primary" type="submit"><i class="bi bi-save"></i> Salvar e sincronizar</button>
+            <button class="btn btn-primary" type="submit"><i class="bi bi-save"></i> Salvar processo</button>
             <?php if ($id): ?>
                 <button class="btn btn-outline-danger" type="submit" formaction="<?= url('delete.php?id=' . $id) ?>" formmethod="post" data-confirm="Excluir este processo? Essa acao nao pode ser desfeita."><i class="bi bi-trash"></i> Excluir</button>
             <?php endif; ?>

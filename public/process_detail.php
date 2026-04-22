@@ -33,12 +33,10 @@ require __DIR__ . '/../views/nav.php';
             <div class="d-flex gap-2 flex-wrap">
                 <?= status_badge($process['status']) ?>
                 <?= deadline_badge($process) ?>
-                <?= sync_badge($process['sync_status'] ?? null) ?>
             </div>
         </div>
         <div class="d-flex gap-2 flex-wrap">
             <a class="btn btn-light" href="<?= url('process_form.php?id=' . $id) ?>"><i class="bi bi-pencil"></i> Editar</a>
-            <a class="btn btn-primary" href="<?= url('sync_action.php?id=' . $id) ?>"><i class="bi bi-arrow-repeat"></i> Reenviar para planilha</a>
         </div>
     </section>
 
@@ -51,6 +49,7 @@ require __DIR__ . '/../views/nav.php';
                     <dt>Orgao solicitante</dt><dd><?= e($process['requesting_agency'] ?: '-') ?></dd>
                     <dt>Responsavel pela revisao</dt><dd><?= e($process['review_owner'] ?: '-') ?></dd>
                     <dt>Bloco interno</dt><dd><?= e($process['internal_block'] ?: '-') ?></dd>
+                    <dt>Tipo de prazo</dt><dd><?= ($process['deadline_type'] ?? 'data') === 'tempo_habil' ? 'Tempo Habil' : 'Data definida' ?></dd>
                     <dt>Prazo externo/MDS</dt><dd><?= e(format_date($process['external_deadline_mds'])) ?></dd>
                     <dt>Data envio GAB</dt><dd><?= e(format_date($process['gab_sent_date'])) ?></dd>
                 </dl>
@@ -70,14 +69,6 @@ require __DIR__ . '/../views/nav.php';
                     <li><span>Assinado</span><?= workflow_badge($process['signed_status']) ?></li>
                     <li><span>Enviado Gab</span><?= workflow_badge($process['sent_gab_status']) ?></li>
                 </ul>
-            </div>
-            <div class="app-card mt-4">
-                <div class="card-head"><h2>Sincronizacao</h2></div>
-                <p class="mb-1"><?= sync_badge($process['sync_status'] ?? null) ?></p>
-                <small class="text-secondary d-block">Ultima sync: <?= e($process['last_synced_at'] ?: '-') ?></small>
-                <?php if (!empty($process['last_error'])): ?>
-                    <div class="alert alert-danger mt-3 mb-0"><?= e($process['last_error']) ?></div>
-                <?php endif; ?>
             </div>
         </div>
     </section>
@@ -105,4 +96,3 @@ require __DIR__ . '/../views/nav.php';
 
 <?php require __DIR__ . '/../views/app_end.php'; ?>
 <?php require __DIR__ . '/../views/footer.php'; ?>
-

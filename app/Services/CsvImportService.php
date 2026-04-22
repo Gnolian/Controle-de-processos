@@ -6,20 +6,17 @@ namespace App\Services;
 
 use App\Repositories\AuditLogRepository;
 use App\Repositories\ProcessRepository;
-use App\Repositories\SyncRepository;
 use RuntimeException;
 
 class CsvImportService
 {
     private ProcessRepository $processes;
     private AuditLogRepository $audit;
-    private SyncRepository $sync;
 
-    public function __construct(?ProcessRepository $processes = null, ?AuditLogRepository $audit = null, ?SyncRepository $sync = null)
+    public function __construct(?ProcessRepository $processes = null, ?AuditLogRepository $audit = null)
     {
         $this->processes = $processes ?? new ProcessRepository();
         $this->audit = $audit ?? new AuditLogRepository();
-        $this->sync = $sync ?? new SyncRepository();
     }
 
     public function importUploaded(string $path, array $user): array
@@ -50,12 +47,10 @@ class CsvImportService
             if ($existing) {
                 $this->processes->update((int) $existing['id'], $payload);
                 $this->audit->recordProcessChanges((int) $existing['id'], (int) $user['id'], $existing, $payload, 'importacao manual csv');
-                $this->sync->markPending((int) $existing['id']);
                 $updated++;
             } else {
                 $id = $this->processes->create($payload, $user);
                 $this->audit->recordProcessChanges($id, (int) $user['id'], [], $payload, 'importacao manual csv');
-                $this->sync->markPending($id);
                 $created++;
             }
         }
@@ -159,6 +154,7 @@ class CsvImportService
             'updated_at' => $this->parseDate($this->value($row, $map, 'updated_at')),
             'response_owner' => $this->value($row, $map, 'response_owner'),
             'deadline_days' => $this->parseInt($this->value($row, $map, 'deadline_days')),
+            'deadline_type' => $this->deadlineType($row, $map),
             'general_description' => $this->value($row, $map, 'general_description'),
             'detailed_description' => $this->value($row, $map, 'detailed_description'),
             'notes' => $this->value($row, $map, 'notes'),
@@ -225,6 +221,15 @@ class CsvImportService
     private function parseInt(string $value): ?int
     {
         return ctype_digit($value) ? (int) $value : null;
+    }
+
+    private function deadlineType(array $row, array $map): string
+    {
+        $hasDate = $this->parseDate($this->value($row, $map, 'internal_deadline_gab'))
+            || $this->parseDate($this->value($row, $map, 'adjusted_internal_deadline'))
+            || $this->parseDate($this->value($row, $map, 'external_deadline_mds'));
+
+        return $hasDate ? 'data' : 'tempo_habil';
     }
 
     private function workflow(string $value, string $default = 'N/A'): string

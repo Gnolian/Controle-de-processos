@@ -6,23 +6,20 @@ namespace App\Services;
 
 use App\Repositories\AuditLogRepository;
 use App\Repositories\ProcessRepository;
-use App\Repositories\SyncRepository;
 use RuntimeException;
 
 class ProcessService
 {
     private ProcessRepository $processes;
     private AuditLogRepository $audit;
-    private SyncRepository $sync;
 
-    public function __construct(?ProcessRepository $processes = null, ?AuditLogRepository $audit = null, ?SyncRepository $sync = null)
+    public function __construct(?ProcessRepository $processes = null, ?AuditLogRepository $audit = null)
     {
         $this->processes = $processes ?? new ProcessRepository();
         $this->audit = $audit ?? new AuditLogRepository();
-        $this->sync = $sync ?? new SyncRepository();
     }
 
-    public function save(array $data, array $user, ?int $id = null, bool $syncNow = true): int
+    public function save(array $data, array $user, ?int $id = null): int
     {
         $payload = $this->processes->buildPayload($data);
         $this->validate($payload);
@@ -49,11 +46,6 @@ class ProcessService
             $this->audit->recordProcessChanges($id, (int) $user['id'], $before, $payload);
         }
 
-        $this->sync->markPending($id);
-        if ($syncNow) {
-            (new SyncService())->syncProcess($id, $user);
-        }
-
         return $id;
     }
 
@@ -72,6 +64,24 @@ class ProcessService
     {
         if ($payload['process_number'] === '') {
             throw new RuntimeException('Informe o numero do processo.');
+        }
+
+        foreach (['response_owner', 'requesting_agency', 'general_description', 'review_owner'] as $field) {
+            if (($payload[$field] ?? '') === '') {
+                throw new RuntimeException('Preencha todos os campos obrigatorios.');
+            }
+        }
+
+        if ($payload['deadline_days'] === null) {
+            throw new RuntimeException('Informe o prazo em dias.');
+        }
+
+        if ($payload['deadline_type'] === 'data') {
+            foreach (['gab_signature_date', 'internal_deadline_gab', 'adjusted_internal_deadline', 'external_deadline_mds', 'gab_sent_date'] as $field) {
+                if (($payload[$field] ?? null) === null) {
+                    throw new RuntimeException('Preencha todos os campos de prazos e revisao ou selecione Tempo Habil.');
+                }
+            }
         }
 
         foreach (['response_status', 'andrea_review_status', 'signed_status', 'sent_gab_status'] as $field) {

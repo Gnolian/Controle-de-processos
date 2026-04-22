@@ -2,10 +2,7 @@ CREATE DATABASE IF NOT EXISTS controle_processos CHARACTER SET utf8mb4 COLLATE u
 USE controle_processos;
 
 SET FOREIGN_KEY_CHECKS = 0;
-DROP TABLE IF EXISTS sync_logs;
-DROP TABLE IF EXISTS process_sync_state;
 DROP TABLE IF EXISTS audit_logs;
-DROP TABLE IF EXISTS integration_settings;
 DROP TABLE IF EXISTS processes;
 DROP TABLE IF EXISTS users;
 SET FOREIGN_KEY_CHECKS = 1;
@@ -26,6 +23,7 @@ CREATE TABLE processes (
     updated_at DATE NULL,
     response_owner VARCHAR(120) NULL,
     deadline_days INT NULL,
+    deadline_type ENUM('data', 'tempo_habil') NOT NULL DEFAULT 'data',
     general_description TEXT NULL,
     detailed_description TEXT NULL,
     notes TEXT NULL,
@@ -67,58 +65,15 @@ CREATE TABLE audit_logs (
     CONSTRAINT fk_audit_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
-CREATE TABLE integration_settings (
-    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    setting_key VARCHAR(120) NOT NULL UNIQUE,
-    setting_value TEXT NULL,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
-CREATE TABLE process_sync_state (
-    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    process_id INT UNSIGNED NOT NULL UNIQUE,
-    excel_row_index INT NULL,
-    sync_status ENUM('pending', 'success', 'failed') NOT NULL DEFAULT 'pending',
-    last_synced_at DATETIME NULL,
-    last_error TEXT NULL,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_sync_status (sync_status),
-    CONSTRAINT fk_sync_state_process FOREIGN KEY (process_id) REFERENCES processes(id) ON DELETE CASCADE
-);
-
-CREATE TABLE sync_logs (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    process_id INT UNSIGNED NULL,
-    status ENUM('success', 'failed', 'info') NOT NULL,
-    message TEXT NOT NULL,
-    payload JSON NULL,
-    response JSON NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_sync_process (process_id),
-    INDEX idx_sync_status_created (status, created_at),
-    CONSTRAINT fk_sync_logs_process FOREIGN KEY (process_id) REFERENCES processes(id) ON DELETE SET NULL
-);
-
 INSERT INTO users (name, email, password_hash, role) VALUES
 ('Administrador', 'admin@local', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 'admin');
-
-INSERT INTO integration_settings (setting_key, setting_value) VALUES
-('sync_enabled', '0'),
-('tenant_id', ''),
-('client_id', ''),
-('client_secret', ''),
-('redirect_uri', 'http://localhost:8080/controle-de-processos/public/graph_callback.php'),
-('drive_id', ''),
-('item_id', ''),
-('table_name', 'Tabela1'),
-('worksheet_name', ''),
-('refresh_token', '');
 
 INSERT INTO processes (
     process_number,
     updated_at,
     response_owner,
     deadline_days,
+    deadline_type,
     general_description,
     detailed_description,
     notes,
@@ -135,6 +90,4 @@ INSERT INTO processes (
     internal_block,
     created_by
 ) VALUES
-('71000.000001/2026-10', CURDATE(), 'Equipe Tecnica', 10, 'Exemplo de processo aberto', 'Registro de demonstracao para testar o painel.', 'Aguardando minuta da area responsavel.', 'SNBA', DATE_ADD(CURDATE(), INTERVAL 5 DAY), DATE_ADD(CURDATE(), INTERVAL 7 DAY), DATE_ADD(CURDATE(), INTERVAL 10 DAY), 'Andrea', 'Em andamento', 'A iniciar', 'N/A', 'N/A', 'Aberto', 'Bloco 123', 1);
-
-INSERT INTO process_sync_state (process_id, sync_status) VALUES (1, 'pending');
+('71000.000001/2026-10', CURDATE(), 'Equipe Tecnica', 10, 'data', 'Exemplo de processo aberto', 'Registro de demonstracao para testar o painel.', 'Aguardando minuta da area responsavel.', 'SNBA', DATE_ADD(CURDATE(), INTERVAL 5 DAY), DATE_ADD(CURDATE(), INTERVAL 7 DAY), DATE_ADD(CURDATE(), INTERVAL 10 DAY), 'Andrea', 'Em andamento', 'A iniciar', 'N/A', 'N/A', 'Aberto', 'Bloco 123', 1);

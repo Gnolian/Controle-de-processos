@@ -13,6 +13,7 @@ class ProcessRepository
         'updated_at',
         'response_owner',
         'deadline_days',
+        'deadline_type',
         'general_description',
         'detailed_description',
         'notes',
@@ -36,6 +37,7 @@ class ProcessRepository
         'DATA DA ATUALIZACAO',
         'Responsavel pela Resposta',
         'Prazo (em dias)',
+        'Tipo de prazo',
         'Descricao Geral',
         'Descricao Detalhada',
         'Comentarios/anotacoes',
@@ -57,10 +59,9 @@ class ProcessRepository
     public function search(array $filters, array $user, int $limit = 50, int $offset = 0): array
     {
         [$where, $params] = $this->buildFilters($filters, $user);
-        $sql = 'SELECT p.*, u.name AS created_by_name, ps.sync_status, ps.last_synced_at, ps.last_error
+        $sql = 'SELECT p.*, u.name AS created_by_name
                 FROM processes p
-                LEFT JOIN users u ON u.id = p.created_by
-                LEFT JOIN process_sync_state ps ON ps.process_id = p.id';
+                LEFT JOIN users u ON u.id = p.created_by';
         if ($where) {
             $sql .= ' WHERE ' . implode(' AND ', $where);
         }
@@ -101,10 +102,9 @@ class ProcessRepository
 
     public function find(int $id, array $user): ?array
     {
-        $stmt = \db()->prepare('SELECT p.*, u.name AS created_by_name, ps.sync_status, ps.excel_row_index, ps.last_synced_at, ps.last_error
+        $stmt = \db()->prepare('SELECT p.*, u.name AS created_by_name
             FROM processes p
             LEFT JOIN users u ON u.id = p.created_by
-            LEFT JOIN process_sync_state ps ON ps.process_id = p.id
             WHERE p.id = ?');
         $stmt->execute([$id]);
         $process = $stmt->fetch();
@@ -113,7 +113,7 @@ class ProcessRepository
             return null;
         }
 
-        if (!\can_manage($user) && (int) $process['created_by'] !== (int) $user['id']) {
+        if (!\can_manage($user) && !$this->isAssignedToUser($process, $user)) {
             return null;
         }
 
@@ -166,6 +166,11 @@ class ProcessRepository
         }
 
         $payload['deadline_days'] = $payload['deadline_days'] !== '' ? (int) $payload['deadline_days'] : null;
+        $hasAnyDeadline = $payload['internal_deadline_gab'] || $payload['adjusted_internal_deadline'] || $payload['external_deadline_mds'];
+        $payload['deadline_type'] = $payload['deadline_type'] ?: ($hasAnyDeadline ? 'data' : 'tempo_habil');
+        if (!in_array($payload['deadline_type'], ['data', 'tempo_habil'], true)) {
+            $payload['deadline_type'] = 'data';
+        }
         $payload['updated_at'] = $payload['updated_at'] ?: date('Y-m-d');
         $payload['response_status'] = $payload['response_status'] ?: 'A iniciar';
         $payload['andrea_review_status'] = $payload['andrea_review_status'] ?: 'N/A';
@@ -186,7 +191,11 @@ class ProcessRepository
 
     public function scopeWhere(array $user, string $alias = 'p'): string
     {
-        return \can_manage($user) ? '' : " WHERE {$alias}.created_by = " . (int) $user['id'];
+        if (\can_manage($user)) {
+            return '';
+        }
+
+        return " WHERE ({$alias}.created_by = " . (int) $user['id'] . " OR {$alias}.response_owner LIKE " . \db()->quote('%' . $user['name'] . '%') . ')';
     }
 
     private function buildFilters(array $filters, array $user): array
@@ -195,8 +204,9 @@ class ProcessRepository
         $params = [];
 
         if (!\can_manage($user)) {
-            $where[] = 'p.created_by = ?';
+            $where[] = '(p.created_by = ? OR p.response_owner LIKE ?)';
             $params[] = $user['id'];
+            $params[] = '%' . $user['name'] . '%';
         }
 
         if (($filters['q'] ?? '') !== '') {
@@ -223,13 +233,33 @@ class ProcessRepository
         }
 
         if (($filters['deadline'] ?? '') === 'late') {
-            $where[] = "p.status = 'Aberto' AND COALESCE(p.external_deadline_mds, p.adjusted_internal_deadline, p.internal_deadline_gab) < CURDATE()";
+            $where[] = "p.status = 'Aberto' AND p.deadline_type = 'data' AND COALESCE(p.external_deadline_mds, p.adjusted_internal_deadline, p.internal_deadline_gab) < CURDATE()";
         }
 
-        if (($filters['deadline'] ?? '') === 'seven_days') {
-            $where[] = "p.status = 'Aberto' AND COALESCE(p.external_deadline_mds, p.adjusted_internal_deadline, p.internal_deadline_gab) BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)";
+        if (($filters['deadline'] ?? '') === 'tomorrow') {
+            $where[] = "p.status = 'Aberto' AND p.deadline_type = 'data' AND COALESCE(p.external_deadline_mds, p.adjusted_internal_deadline, p.internal_deadline_gab) = DATE_ADD(CURDATE(), INTERVAL 1 DAY)";
+        }
+
+        if (($filters['deadline'] ?? '') === 'three_days') {
+            $where[] = "p.status = 'Aberto' AND p.deadline_type = 'data' AND COALESCE(p.external_deadline_mds, p.adjusted_internal_deadline, p.internal_deadline_gab) BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY)";
+        }
+
+        if (($filters['deadline'] ?? '') === 'tempo_habil') {
+            $where[] = "p.deadline_type = 'tempo_habil'";
         }
 
         return [$where, $params];
+    }
+
+    private function isAssignedToUser(array $process, array $user): bool
+    {
+        if ((int) $process['created_by'] === (int) $user['id']) {
+            return true;
+        }
+
+        $owner = strtolower((string) ($process['response_owner'] ?? ''));
+        $name = strtolower((string) ($user['name'] ?? ''));
+
+        return $name !== '' && strpos($owner, $name) !== false;
     }
 }
