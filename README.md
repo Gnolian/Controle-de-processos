@@ -24,6 +24,7 @@ Aplicacao interna em PHP/MySQL para substituir o preenchimento manual de uma pla
 - `processes.php`: lista e filtros de processos.
 - `process_form.php`: cadastro/edicao.
 - `process_detail.php`: detalhes do processo.
+- `import.php`: importacao CSV da planilha.
 - `audit.php`: trilha de auditoria.
 - `sync.php`: status e reenvio de sincronizacao.
 - `settings.php`: configuracao SharePoint/Graph.
@@ -139,6 +140,7 @@ Quando um processo e criado ou atualizado:
 
 Use:
 
+- `Importar CSV`: importa a planilha exportada do SharePoint/Excel para alimentar o banco no servidor.
 - `Sincronizar agora`: em detalhes do processo.
 - `Reenviar falhas`: em `Sincronizacao`.
 - `Testar conexao`: em `Sincronizacao`.

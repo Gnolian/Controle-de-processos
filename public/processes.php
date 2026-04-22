@@ -38,6 +38,9 @@ require __DIR__ . '/../views/nav.php';
         </div>
         <div class="d-flex gap-2">
             <a class="btn btn-outline-primary" href="<?= url('export.php?' . http_build_query($filters)) ?>"><i class="bi bi-download"></i> CSV</a>
+            <?php if (can_manage($user)): ?>
+                <a class="btn btn-outline-primary" href="<?= url('import.php') ?>"><i class="bi bi-cloud-upload"></i> Importar</a>
+            <?php endif; ?>
             <a class="btn btn-primary" href="<?= url('process_form.php') ?>"><i class="bi bi-plus-lg"></i> Novo</a>
         </div>
     </section>
@@ -149,4 +152,3 @@ require __DIR__ . '/../views/nav.php';
 
 <?php require __DIR__ . '/../views/app_end.php'; ?>
 <?php require __DIR__ . '/../views/footer.php'; ?>
-
