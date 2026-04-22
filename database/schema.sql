@@ -107,7 +107,7 @@ INSERT INTO integration_settings (setting_key, setting_value) VALUES
 ('tenant_id', ''),
 ('client_id', ''),
 ('client_secret', ''),
-('redirect_uri', 'http://localhost/controle_processos/public/graph_callback.php'),
+('redirect_uri', 'http://localhost:8080/controle-de-processos/public/graph_callback.php'),
 ('drive_id', ''),
 ('item_id', ''),
 ('table_name', 'Tabela1'),
@@ -138,4 +138,3 @@ INSERT INTO processes (
 ('71000.000001/2026-10', CURDATE(), 'Equipe Tecnica', 10, 'Exemplo de processo aberto', 'Registro de demonstracao para testar o painel.', 'Aguardando minuta da area responsavel.', 'SNBA', DATE_ADD(CURDATE(), INTERVAL 5 DAY), DATE_ADD(CURDATE(), INTERVAL 7 DAY), DATE_ADD(CURDATE(), INTERVAL 10 DAY), 'Andrea', 'Em andamento', 'A iniciar', 'N/A', 'N/A', 'Aberto', 'Bloco 123', 1);
 
 INSERT INTO process_sync_state (process_id, sync_status) VALUES (1, 'pending');
-

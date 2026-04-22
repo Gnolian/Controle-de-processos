@@ -61,12 +61,12 @@ views/
 
 ## Instalacao no XAMPP
 
-1. Copie a pasta `controle_processos` para `C:\xampp\htdocs\controle_processos`.
+1. Copie a pasta do projeto para `C:\xampp\htdocs\controle-de-processos`.
 2. Inicie `Apache` e `MySQL` no painel do XAMPP.
 3. Abra `http://localhost/phpmyadmin`.
 4. Importe `database/schema.sql`.
 5. Se necessario, ajuste banco, usuario e senha em `app/config.php`.
-6. Acesse `http://localhost/controle_processos/public/`.
+6. Acesse `http://localhost:8080/controle-de-processos/public/`.
 
 > O `schema.sql` recria as tabelas. Se ja houver dados reais, faca backup antes de importar.
 
@@ -85,7 +85,7 @@ No Microsoft Entra ID:
 
 1. Registre um aplicativo.
 2. Configure uma Redirect URI web:
-   `http://localhost/controle_processos/public/graph_callback.php`
+   `http://localhost:8080/controle-de-processos/public/graph_callback.php`
 3. Adicione permissoes delegadas:
    - `Files.ReadWrite`
    - `offline_access`

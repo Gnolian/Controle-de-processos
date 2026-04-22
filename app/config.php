@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 return [
     'app_name' => 'Controle de Processos',
-    'base_path' => '/controle_processos/public',
+    'base_path' => '/controle-de-processos/public',
     'database' => [
         'host' => '127.0.0.1',
         'port' => '3306',
