@@ -70,6 +70,16 @@ views/
 
 > O `schema.sql` recria as tabelas. Se ja houver dados reais, faca backup antes de importar.
 
+## Atualizando uma instalacao antiga
+
+Se voce ja tinha importado uma versao anterior do banco e recebeu erro dizendo que `process_sync_state`, `audit_logs`, `sync_logs` ou `integration_settings` nao existem, nao reimporte o `schema.sql` se quiser preservar dados.
+
+Nesse caso, importe apenas:
+
+`database/migrations/001_add_audit_sync_graph_tables.sql`
+
+Esse arquivo cria as novas tabelas sem apagar processos e usuarios existentes.
+
 ## Acesso inicial
 
 - Email: `admin@local`
