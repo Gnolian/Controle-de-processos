@@ -9,144 +9,235 @@ use RuntimeException;
 
 class AuditCsvImportService
 {
+    private const AUDIT_HEADERS = [
+        'audit_code',
+        'audit_nup',
+        'audit_year',
+        'process_status',
+        'requesting_body',
+        'audit_type',
+        'objective',
+        'theme',
+        'classification',
+        'audit_phase',
+        'current_owner',
+        'start_date',
+        'has_diligence',
+        'last_response_sent_date',
+        'preliminary_document',
+        'stage2_deadline_days',
+        'comments_due_date',
+        'stage2_final_response',
+        'final_report',
+        'stage2_service_deadline_days',
+        'stage2_final_deadline',
+        'stage2_final_answer',
+        'stage2_status',
+        'accord_report',
+        'accord_report_date',
+        'stage3_status',
+        'control_point',
+        'related_processes',
+        'notes',
+    ];
+
+    private const ITEM_HEADERS = [
+        'audit_code',
+        'item_kind',
+        'item_code',
+        'item_description',
+        'compliance_deadline_days',
+        'compliance_start_date',
+        'control_body_status',
+        'dgba_status',
+        'item_control_point',
+        'stage3_status',
+        'monitor_1_start_date',
+        'monitor_1_deadline_days',
+        'monitor_1_final_deadline',
+        'monitor_1_response',
+        'monitor_2_start_date',
+        'monitor_2_deadline_days',
+        'monitor_2_final_deadline',
+        'monitor_2_response',
+        'monitor_3_start_date',
+        'monitor_3_deadline_days',
+        'monitor_3_final_deadline',
+        'monitor_3_response',
+        'monitor_4_start_date',
+        'monitor_4_deadline_days',
+        'monitor_4_final_deadline',
+        'monitor_4_response',
+    ];
+
     public function __construct(private readonly AuditRepository $audits = new AuditRepository())
     {
     }
 
-    public function importUploaded(string $path, array $user): array
+    public function importNormalizedUploads(string $auditsPath, string $itemsPath, array $user): array
     {
-        $rows = $this->readRows($path);
-        if (count($rows) < 3) {
-            throw new RuntimeException('CSV de auditorias invalido.');
+        $auditRows = $this->readAssociativeRows($auditsPath, self::AUDIT_HEADERS);
+        $itemRows = $this->readAssociativeRows($itemsPath, self::ITEM_HEADERS);
+
+        if ($auditRows === []) {
+            throw new RuntimeException('O CSV tratado de auditorias nao possui linhas validas.');
         }
 
-        $dataRows = array_slice($rows, 2);
-        $currentAudit = null;
-        $buffer = [];
-        $count = 0;
-
-        foreach ($dataRows as $row) {
-            if ($this->rowEmpty($row)) {
+        $itemsByAudit = [];
+        foreach ($itemRows as $row) {
+            $auditCode = trim((string) ($row['audit_code'] ?? ''));
+            if ($auditCode === '') {
                 continue;
             }
 
-            if ($this->cell($row, 0) !== '') {
-                if ($currentAudit !== null) {
-                    $this->persistAudit($currentAudit, $buffer, (int) $user['id']);
-                    $count++;
-                }
-                $currentAudit = $this->mapAudit($row);
-                $buffer = [];
+            $normalizedItem = $this->mapNormalizedItem($row);
+            if ($normalizedItem === null) {
+                continue;
             }
 
-            if ($currentAudit !== null && $this->cell($row, 25) !== '' && $this->normalizeKind($this->cell($row, 25)) !== 'N/A') {
-                $buffer[] = $this->mapItem($row);
+            $itemsByAudit[$auditCode][] = $normalizedItem;
+        }
+
+        $processed = 0;
+        foreach ($auditRows as $row) {
+            $audit = $this->mapNormalizedAudit($row);
+            if ($audit === null) {
+                continue;
             }
+
+            $auditId = $this->audits->upsertAudit($audit, (int) $user['id']);
+            $this->audits->replaceItems($auditId, $itemsByAudit[$audit['audit_code']] ?? []);
+            $processed++;
         }
 
-        if ($currentAudit !== null) {
-            $this->persistAudit($currentAudit, $buffer, (int) $user['id']);
-            $count++;
-        }
-
-        return ['audits' => $count];
+        return [
+            'audits' => $processed,
+            'items' => count($itemRows),
+        ];
     }
 
-    private function persistAudit(array $audit, array $items, int $userId): void
-    {
-        $auditId = $this->audits->upsertAudit($audit, $userId);
-        $this->audits->replaceItems($auditId, $items);
-    }
-
-    private function readRows(string $path): array
+    private function readAssociativeRows(string $path, array $requiredHeaders): array
     {
         if (!is_file($path)) {
             throw new RuntimeException('Arquivo CSV nao encontrado.');
         }
 
-        $content = file_get_contents($path);
-        if ($content === false) {
-            throw new RuntimeException('Nao foi possivel ler o CSV.');
+        $handle = fopen($path, 'r');
+        if ($handle === false) {
+            throw new RuntimeException('Nao foi possivel abrir o CSV.');
         }
 
-        $content = preg_replace('/^\xEF\xBB\xBF/', '', $content) ?? $content;
-        $stream = fopen('php://temp', 'r+');
-        fwrite($stream, $content);
-        rewind($stream);
+        $headerRow = fgetcsv($handle, 0, ';');
+        if ($headerRow === false) {
+            fclose($handle);
+            throw new RuntimeException('CSV vazio ou invalido.');
+        }
+
+        $headers = array_map(fn ($value) => $this->normalizeHeader((string) $value), $headerRow);
+        $missing = array_diff($requiredHeaders, $headers);
+        if ($missing !== []) {
+            fclose($handle);
+            throw new RuntimeException('CSV tratado invalido. Colunas ausentes: ' . implode(', ', $missing));
+        }
 
         $rows = [];
-        while (($row = fgetcsv($stream, 0, ';')) !== false) {
-            $rows[] = array_map(fn ($value) => $this->fixText((string) $value), $row);
+        while (($row = fgetcsv($handle, 0, ';')) !== false) {
+            $assoc = [];
+            foreach ($headers as $index => $header) {
+                $assoc[$header] = $this->fixText((string) ($row[$index] ?? ''));
+            }
+
+            if ($this->rowEmpty($assoc)) {
+                continue;
+            }
+
+            $rows[] = $assoc;
         }
-        fclose($stream);
+
+        fclose($handle);
 
         return $rows;
     }
 
-    private function mapAudit(array $row): array
+    private function mapNormalizedAudit(array $row): ?array
     {
+        $auditCode = trim((string) ($row['audit_code'] ?? ''));
+        if ($auditCode === '') {
+            return null;
+        }
+
         return [
-            'audit_code' => $this->cell($row, 0),
-            'audit_nup' => $this->cell($row, 1),
-            'audit_year' => $this->parseInt($this->cell($row, 2)),
-            'process_status' => $this->cell($row, 3),
-            'requesting_body' => $this->cell($row, 4),
-            'audit_type' => $this->cell($row, 5),
-            'objective' => $this->cell($row, 6),
-            'theme' => $this->cell($row, 7),
-            'classification' => $this->cell($row, 8),
-            'audit_phase' => $this->cell($row, 9),
-            'current_owner' => $this->cell($row, 10),
-            'start_date' => $this->parseDate($this->cell($row, 11)),
-            'has_diligence' => $this->parseBool($this->cell($row, 12)),
-            'last_response_sent_date' => $this->parseDate($this->cell($row, 13)),
-            'preliminary_document' => $this->cell($row, 14),
-            'stage2_deadline_days' => $this->parseInt($this->cell($row, 15)),
-            'comments_due_date' => $this->parseDate($this->cell($row, 16)),
-            'stage2_final_response' => $this->parseDate($this->cell($row, 17)),
-            'final_report' => $this->cell($row, 18),
-            'stage2_service_deadline_days' => $this->parseInt($this->cell($row, 19)),
-            'stage2_final_deadline' => $this->parseDate($this->cell($row, 20)),
-            'stage2_final_answer' => $this->cell($row, 21),
-            'stage2_status' => $this->cell($row, 22),
-            'accord_report' => $this->cell($row, 23),
-            'accord_report_date' => $this->parseDate($this->cell($row, 24)),
-            'stage3_status' => $this->cell($row, 32),
-            'control_point' => $this->cell($row, 60) ?: $this->cell($row, 31),
-            'related_processes' => $this->cell($row, 61),
-            'notes' => $this->cell($row, 62) ?: $this->cell($row, 87),
+            'audit_code' => $auditCode,
+            'audit_nup' => $this->nullableText($row['audit_nup'] ?? ''),
+            'audit_year' => $this->parseInt($row['audit_year'] ?? ''),
+            'process_status' => $this->nullableText($row['process_status'] ?? ''),
+            'requesting_body' => $this->nullableText($row['requesting_body'] ?? ''),
+            'audit_type' => $this->nullableText($row['audit_type'] ?? ''),
+            'objective' => $this->nullableText($row['objective'] ?? ''),
+            'theme' => $this->nullableText($row['theme'] ?? ''),
+            'classification' => $this->nullableText($row['classification'] ?? ''),
+            'audit_phase' => $this->nullableText($row['audit_phase'] ?? ''),
+            'current_owner' => $this->nullableText($row['current_owner'] ?? ''),
+            'start_date' => $this->parseDate($row['start_date'] ?? ''),
+            'has_diligence' => $this->parseBool($row['has_diligence'] ?? ''),
+            'last_response_sent_date' => $this->parseDate($row['last_response_sent_date'] ?? ''),
+            'preliminary_document' => $this->nullableText($row['preliminary_document'] ?? ''),
+            'stage2_deadline_days' => $this->parseInt($row['stage2_deadline_days'] ?? ''),
+            'comments_due_date' => $this->parseDate($row['comments_due_date'] ?? ''),
+            'stage2_final_response' => $this->parseDate($row['stage2_final_response'] ?? ''),
+            'final_report' => $this->nullableText($row['final_report'] ?? ''),
+            'stage2_service_deadline_days' => $this->parseInt($row['stage2_service_deadline_days'] ?? ''),
+            'stage2_final_deadline' => $this->parseDate($row['stage2_final_deadline'] ?? ''),
+            'stage2_final_answer' => $this->nullableText($row['stage2_final_answer'] ?? ''),
+            'stage2_status' => $this->nullableText($row['stage2_status'] ?? ''),
+            'accord_report' => $this->nullableText($row['accord_report'] ?? ''),
+            'accord_report_date' => $this->parseDate($row['accord_report_date'] ?? ''),
+            'stage3_status' => $this->nullableText($row['stage3_status'] ?? ''),
+            'control_point' => $this->nullableText($row['control_point'] ?? ''),
+            'related_processes' => $this->nullableText($row['related_processes'] ?? ''),
+            'notes' => $this->nullableText($row['notes'] ?? ''),
         ];
     }
 
-    private function mapItem(array $row): array
+    private function mapNormalizedItem(array $row): ?array
     {
+        $kind = $this->normalizeKind($row['item_kind'] ?? '');
+        if ($kind === null) {
+            return null;
+        }
+
         return [
-            'item_code' => $this->cell($row, 25),
-            'item_kind' => $this->normalizeKind($this->cell($row, 25)),
-            'item_description' => $this->cell($row, 26),
-            'compliance_deadline_days' => $this->parseInt($this->cell($row, 27)),
-            'compliance_start_date' => $this->parseDate($this->cell($row, 28)),
-            'control_body_status' => $this->cell($row, 29),
-            'dgba_status' => $this->cell($row, 30),
-            'item_control_point' => $this->cell($row, 31),
-            'stage3_status' => $this->cell($row, 32),
-            'monitor_1_start_date' => $this->parseDate($this->cell($row, 33)),
-            'monitor_1_deadline_days' => $this->parseInt($this->cell($row, 34)),
-            'monitor_1_final_deadline' => $this->parseDate($this->cell($row, 35)),
-            'monitor_1_response' => $this->cell($row, 36),
-            'monitor_2_start_date' => $this->parseDate($this->cell($row, 37)),
-            'monitor_2_deadline_days' => $this->parseInt($this->cell($row, 38)),
-            'monitor_2_final_deadline' => $this->parseDate($this->cell($row, 39)),
-            'monitor_2_response' => $this->cell($row, 40),
-            'monitor_3_start_date' => $this->parseDate($this->cell($row, 43)),
-            'monitor_3_deadline_days' => $this->parseInt($this->cell($row, 44)),
-            'monitor_3_final_deadline' => $this->parseDate($this->cell($row, 45)),
-            'monitor_3_response' => $this->cell($row, 46),
-            'monitor_4_start_date' => $this->parseDate($this->cell($row, 49)),
-            'monitor_4_deadline_days' => $this->parseInt($this->cell($row, 50)),
-            'monitor_4_final_deadline' => $this->parseDate($this->cell($row, 51)),
-            'monitor_4_response' => $this->cell($row, 52),
+            'item_code' => $this->nullableText($row['item_code'] ?? '') ?: $kind,
+            'item_kind' => $kind,
+            'item_description' => $this->nullableText($row['item_description'] ?? ''),
+            'compliance_deadline_days' => $this->parseInt($row['compliance_deadline_days'] ?? ''),
+            'compliance_start_date' => $this->parseDate($row['compliance_start_date'] ?? ''),
+            'control_body_status' => $this->nullableText($row['control_body_status'] ?? ''),
+            'dgba_status' => $this->nullableText($row['dgba_status'] ?? ''),
+            'item_control_point' => $this->nullableText($row['item_control_point'] ?? ''),
+            'stage3_status' => $this->nullableText($row['stage3_status'] ?? ''),
+            'monitor_1_start_date' => $this->parseDate($row['monitor_1_start_date'] ?? ''),
+            'monitor_1_deadline_days' => $this->parseInt($row['monitor_1_deadline_days'] ?? ''),
+            'monitor_1_final_deadline' => $this->parseDate($row['monitor_1_final_deadline'] ?? ''),
+            'monitor_1_response' => $this->nullableText($row['monitor_1_response'] ?? ''),
+            'monitor_2_start_date' => $this->parseDate($row['monitor_2_start_date'] ?? ''),
+            'monitor_2_deadline_days' => $this->parseInt($row['monitor_2_deadline_days'] ?? ''),
+            'monitor_2_final_deadline' => $this->parseDate($row['monitor_2_final_deadline'] ?? ''),
+            'monitor_2_response' => $this->nullableText($row['monitor_2_response'] ?? ''),
+            'monitor_3_start_date' => $this->parseDate($row['monitor_3_start_date'] ?? ''),
+            'monitor_3_deadline_days' => $this->parseInt($row['monitor_3_deadline_days'] ?? ''),
+            'monitor_3_final_deadline' => $this->parseDate($row['monitor_3_final_deadline'] ?? ''),
+            'monitor_3_response' => $this->nullableText($row['monitor_3_response'] ?? ''),
+            'monitor_4_start_date' => $this->parseDate($row['monitor_4_start_date'] ?? ''),
+            'monitor_4_deadline_days' => $this->parseInt($row['monitor_4_deadline_days'] ?? ''),
+            'monitor_4_final_deadline' => $this->parseDate($row['monitor_4_final_deadline'] ?? ''),
+            'monitor_4_response' => $this->nullableText($row['monitor_4_response'] ?? ''),
         ];
+    }
+
+    private function normalizeHeader(string $value): string
+    {
+        return strtolower(trim(preg_replace('/^\xEF\xBB\xBF/', '', $value) ?? $value));
     }
 
     private function rowEmpty(array $row): bool
@@ -156,12 +247,18 @@ class AuditCsvImportService
                 return false;
             }
         }
+
         return true;
     }
 
-    private function cell(array $row, int $index): string
+    private function nullableText(string $value): ?string
     {
-        return trim((string) ($row[$index] ?? ''));
+        $value = trim($value);
+        if ($value === '' || in_array($this->normalizeToken($value), ['N/A', 'NAO INFORMADO'], true)) {
+            return null;
+        }
+
+        return $value;
     }
 
     private function fixText(string $value): string
@@ -171,22 +268,13 @@ class AuditCsvImportService
             return '';
         }
 
-        $converted = @iconv('ISO-8859-1', 'UTF-8//IGNORE', $value);
-        $value = $converted !== false ? $converted : $value;
-        $double = @utf8_decode($value);
-        if ($double !== false) {
-            $reconverted = @iconv('ISO-8859-1', 'UTF-8//IGNORE', $double);
-            if ($reconverted !== false && preg_match('/[ÁÉÍÓÚÃÕÇáéíóúãõç]/u', $reconverted)) {
-                $value = $reconverted;
-            }
-        }
-
         return preg_replace('/\s+/', ' ', $value) ?? $value;
     }
 
     private function parseDate(string $value): ?string
     {
-        if ($value === '' || in_array(strtoupper($value), ['N/A', 'NÃO', 'NAO'], true)) {
+        $value = trim($value);
+        if ($value === '' || in_array($this->normalizeToken($value), ['N/A', 'NAO'], true)) {
             return null;
         }
 
@@ -200,22 +288,34 @@ class AuditCsvImportService
 
     private function parseInt(string $value): ?int
     {
-        return ctype_digit($value) ? (int) $value : null;
+        $value = trim($value);
+        if ($value === '' || in_array($this->normalizeToken($value), ['N/A', 'NAO'], true)) {
+            return null;
+        }
+
+        return preg_match('/^\d+$/', $value) ? (int) $value : null;
     }
 
     private function parseBool(string $value): int
     {
-        return in_array(strtoupper($value), ['SIM', 'S'], true) ? 1 : 0;
+        return in_array($this->normalizeToken($value), ['SIM', 'S'], true) ? 1 : 0;
     }
 
-    private function normalizeKind(string $value): string
+    private function normalizeKind(string $value): ?string
     {
-        return match (strtoupper($value)) {
-            'DETERMINAÇÃO', 'DETERMINACAO' => 'DETERMINAÇÃO',
-            'RECOMENDAÇÃO', 'RECOMENDACAO' => 'RECOMENDAÇÃO',
-            'CIÊNCIA', 'CIENCIA' => 'CIÊNCIA',
-            default => 'N/A',
+        return match ($this->normalizeToken($value)) {
+            'DETERMINACAO' => 'DETERMINACAO',
+            'RECOMENDACAO' => 'RECOMENDACAO',
+            'CIENCIA' => 'CIENCIA',
+            default => null,
         };
     }
-}
 
+    private function normalizeToken(string $value): string
+    {
+        $value = strtoupper(trim($value));
+        $normalized = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+        $value = $normalized !== false ? $normalized : $value;
+        return preg_replace('/[^A-Z0-9]+/', '', $value) ?? $value;
+    }
+}

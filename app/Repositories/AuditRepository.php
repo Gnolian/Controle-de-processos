@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
-use PDO;
-
 class AuditRepository
 {
     public function upsertAudit(array $payload, ?int $userId = null): int
@@ -118,9 +116,9 @@ class AuditRepository
 
         $sql = 'SELECT a.*,
                 COUNT(ai.id) AS total_items,
-                SUM(ai.item_kind = "DETERMINAÇÃO") AS total_determinacoes,
-                SUM(ai.item_kind = "RECOMENDAÇÃO") AS total_recomendacoes,
-                SUM(ai.item_kind = "CIÊNCIA") AS total_ciencias
+                SUM(ai.item_kind = "DETERMINACAO") AS total_determinacoes,
+                SUM(ai.item_kind = "RECOMENDACAO") AS total_recomendacoes,
+                SUM(ai.item_kind = "CIENCIA") AS total_ciencias
             FROM audits a
             LEFT JOIN audit_items ai ON ai.audit_id = a.id';
         if ($where) {
@@ -173,13 +171,13 @@ class AuditRepository
     public function itemTotalsPerAudit(): array
     {
         return \db()->query('SELECT a.id, a.audit_code, a.audit_nup, a.requesting_body,
-                SUM(ai.item_kind = "DETERMINAÇÃO") AS determinacoes,
-                SUM(ai.item_kind = "RECOMENDAÇÃO") AS recomendacoes,
-                SUM(ai.item_kind = "CIÊNCIA") AS ciencias,
+                SUM(ai.item_kind = "DETERMINACAO") AS determinacoes,
+                SUM(ai.item_kind = "RECOMENDACAO") AS recomendacoes,
+                SUM(ai.item_kind = "CIENCIA") AS ciencias,
                 COUNT(ai.id) AS total
             FROM audits a
             INNER JOIN audit_items ai ON ai.audit_id = a.id
-            WHERE ai.item_kind IN ("DETERMINAÇÃO", "RECOMENDAÇÃO", "CIÊNCIA")
+            WHERE ai.item_kind IN ("DETERMINACAO", "RECOMENDACAO", "CIENCIA")
             GROUP BY a.id, a.audit_code, a.audit_nup, a.requesting_body
             HAVING total > 0
             ORDER BY total DESC, a.audit_code ASC')->fetchAll();
@@ -194,4 +192,3 @@ class AuditRepository
         return $audit ?: null;
     }
 }
-

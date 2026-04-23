@@ -54,10 +54,10 @@ require __DIR__ . '/../views/nav.php';
         <div>
             <p class="section-kicker">CGU e TCU</p>
             <h1>Painel de auditorias</h1>
-            <p class="text-secondary mb-0">Controle interativo das auditorias, fases e determinações com acesso restrito.</p>
+            <p class="text-secondary mb-0">Controle interativo das auditorias, fases e itens com acesso restrito.</p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
-            <a class="btn btn-outline-primary <?= !$moduleReady ? 'disabled' : '' ?>" href="<?= $moduleReady ? url('audit_import.php') : '#' ?>"><i class="bi bi-cloud-upload"></i> Importar base</a>
+            <a class="btn btn-outline-primary <?= !$moduleReady ? 'disabled' : '' ?>" href="<?= $moduleReady ? url('audit_import.php') : '#' ?>"><i class="bi bi-cloud-upload"></i> Importar base tratada</a>
             <a class="btn btn-outline-secondary" href="<?= url('audits.php') ?>"><i class="bi bi-arrow-clockwise"></i> Limpar filtros</a>
         </div>
     </section>
@@ -69,7 +69,7 @@ require __DIR__ . '/../views/nav.php';
                 <input class="form-control" name="q" value="<?= e($filters['q']) ?>" placeholder="Codigo, NUP, tema ou objetivo" <?= !$moduleReady ? 'disabled' : '' ?>>
             </div>
             <div class="col-lg-2">
-                <label class="form-label">Órgão</label>
+                <label class="form-label">Orgao</label>
                 <input class="form-control" name="requesting_body" value="<?= e($filters['requesting_body']) ?>" <?= !$moduleReady ? 'disabled' : '' ?>>
             </div>
             <div class="col-lg-3">
@@ -81,20 +81,20 @@ require __DIR__ . '/../views/nav.php';
                 <input class="form-control" name="audit_phase" value="<?= e($filters['audit_phase']) ?>" <?= !$moduleReady ? 'disabled' : '' ?>>
             </div>
             <div class="col-lg-2">
-                <label class="form-label">Diligência</label>
+                <label class="form-label">Diligencia</label>
                 <select class="form-select" name="diligence" <?= !$moduleReady ? 'disabled' : '' ?>>
                     <option value="">Todas</option>
-                    <option value="1" <?= selected($filters['diligence'], '1') ?>>Em diligência</option>
-                    <option value="0" <?= selected($filters['diligence'], '0') ?>>Sem diligência</option>
+                    <option value="1" <?= selected($filters['diligence'], '1') ?>>Em diligencia</option>
+                    <option value="0" <?= selected($filters['diligence'], '0') ?>>Sem diligencia</option>
                 </select>
             </div>
             <div class="col-lg-3">
                 <label class="form-label">Tipo de item</label>
                 <select class="form-select" name="item_kind" <?= !$moduleReady ? 'disabled' : '' ?>>
                     <option value="">Todos</option>
-                    <option value="DETERMINAÇÃO" <?= selected($filters['item_kind'], 'DETERMINAÇÃO') ?>>Determinação</option>
-                    <option value="RECOMENDAÇÃO" <?= selected($filters['item_kind'], 'RECOMENDAÇÃO') ?>>Recomendação</option>
-                    <option value="CIÊNCIA" <?= selected($filters['item_kind'], 'CIÊNCIA') ?>>Ciência</option>
+                    <option value="DETERMINACAO" <?= selected($filters['item_kind'], 'DETERMINACAO') ?>>Determinacao</option>
+                    <option value="RECOMENDACAO" <?= selected($filters['item_kind'], 'RECOMENDACAO') ?>>Recomendacao</option>
+                    <option value="CIENCIA" <?= selected($filters['item_kind'], 'CIENCIA') ?>>Ciencia</option>
                 </select>
             </div>
             <div class="col-lg-3 d-flex gap-2">
@@ -107,15 +107,15 @@ require __DIR__ . '/../views/nav.php';
     <section class="row g-4">
         <div class="col-lg-6">
             <div class="app-card h-100">
-                <div class="card-head"><h2>Auditorias por órgão solicitante</h2></div>
+                <div class="card-head"><h2>Auditorias por orgao solicitante</h2></div>
                 <canvas class="chart-canvas bar" data-chart='<?= e(json_encode($byBody, JSON_UNESCAPED_UNICODE)) ?>'></canvas>
             </div>
         </div>
         <div class="col-lg-6">
             <div class="app-card h-100">
-                <div class="card-head"><h2>Diligências e fases</h2></div>
+                <div class="card-head"><h2>Diligencias e fases</h2></div>
                 <a class="metric-inline d-block mb-3" href="<?= url('audits.php?diligence=1') ?>">
-                    <span>Auditorias em diligência</span>
+                    <span>Auditorias em diligencia</span>
                     <strong><?= $diligence['in_diligence'] ?></strong>
                 </a>
                 <canvas class="chart-canvas" data-chart='<?= e(json_encode($phases, JSON_UNESCAPED_UNICODE)) ?>'></canvas>
@@ -132,10 +132,10 @@ require __DIR__ . '/../views/nav.php';
         </div>
         <div class="col-lg-7">
             <div class="app-card h-100">
-                <div class="card-head"><h2>Determinações, recomendações e ciência por auditoria</h2></div>
+                <div class="card-head"><h2>Determinacoes, recomendacoes e ciencia por auditoria</h2></div>
                 <div class="table-responsive">
                     <table class="table modern-table mb-0">
-                        <thead><tr><th>Auditoria</th><th>Órgão</th><th>Determ.</th><th>Recom.</th><th>Ciência</th><th>Total</th></tr></thead>
+                        <thead><tr><th>Auditoria</th><th>Orgao</th><th>Determ.</th><th>Recom.</th><th>Ciencia</th><th>Total</th></tr></thead>
                         <tbody>
                             <?php foreach ($itemTotals as $row): ?>
                                 <tr class="clickable-row" data-href="<?= url('audit_detail.php?id=' . (int) $row['id']) ?>">
@@ -158,7 +158,7 @@ require __DIR__ . '/../views/nav.php';
         <div class="card-head p-4 pb-0"><h2>Auditorias</h2><span class="text-secondary"><?= count($audits) ?> resultado(s)</span></div>
         <div class="table-responsive">
             <table class="table modern-table mb-0">
-                <thead><tr><th>Código</th><th>Órgão</th><th>Tipo</th><th>Fase</th><th>Diligência</th><th>Itens</th><th></th></tr></thead>
+                <thead><tr><th>Codigo</th><th>Orgao</th><th>Tipo</th><th>Fase</th><th>Diligencia</th><th>Itens</th><th></th></tr></thead>
                 <tbody>
                     <?php foreach ($audits as $audit): ?>
                         <tr class="clickable-row" data-href="<?= url('audit_detail.php?id=' . (int) $audit['id']) ?>">
@@ -166,7 +166,7 @@ require __DIR__ . '/../views/nav.php';
                             <td><?= e($audit['requesting_body']) ?></td>
                             <td><?= e($audit['audit_type']) ?></td>
                             <td><?= e($audit['audit_phase'] ?: '-') ?></td>
-                            <td><?= $audit['has_diligence'] ? '<span class="badge text-bg-warning">Em diligência</span>' : '<span class="badge text-bg-secondary">Nao</span>' ?></td>
+                            <td><?= $audit['has_diligence'] ? '<span class="badge text-bg-warning">Em diligencia</span>' : '<span class="badge text-bg-secondary">Nao</span>' ?></td>
                             <td><?= (int) $audit['total_items'] ?></td>
                             <td class="text-end"><a class="btn btn-sm btn-light" href="<?= url('audit_detail.php?id=' . (int) $audit['id']) ?>"><i class="bi bi-eye"></i></a></td>
                         </tr>

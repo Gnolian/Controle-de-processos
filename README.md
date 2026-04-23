@@ -6,14 +6,14 @@ Aplicacao interna em PHP/MySQL para substituir o preenchimento manual de uma pla
 
 - Login por sessao com perfis `servidor`, `coordenador` e `admin`.
 - Dashboard pessoal do usuario logado.
-- Dashboard gerencial com indicadores, ranking e graficos.
-- Area restrita de auditorias CGU/TCU com painéis interativos e detalhe da auditoria.
+- Dashboard gerencial com indicadores e graficos.
+- Area restrita de auditorias CGU/TCU com paineis interativos e detalhe da auditoria.
 - Lista de processos com busca global, filtros, paginacao e acoes rapidas.
 - Formulario organizado nas mesmas colunas da planilha.
 - Tela de detalhes do processo com fluxo, prazos, status e historico.
 - Auditoria campo a campo: quem alterou, quando, antes, depois e origem.
 - Exportacao CSV no formato da planilha.
-- Importacao CSV da planilha exportada do Excel/SharePoint.
+- Importacao CSV da planilha de processos.
 
 ## Telas
 
@@ -21,13 +21,13 @@ Aplicacao interna em PHP/MySQL para substituir o preenchimento manual de uma pla
 - `dashboard.php`: painel pessoal.
 - `management.php`: painel gerencial da coordenacao.
 - `processes.php`: lista e filtros de processos.
-- `process_form.php`: cadastro/edicao.
+- `process_form.php`: cadastro e edicao.
 - `process_detail.php`: detalhes do processo.
-- `import.php`: importacao CSV da planilha.
+- `import.php`: importacao CSV da planilha de processos.
 - `audit.php`: trilha de auditoria.
 - `audits.php`: painel de auditorias.
 - `audit_detail.php`: identificacao e itens da auditoria.
-- `audit_import.php`: importacao da base CSV de auditorias.
+- `audit_import.php`: importacao da base tratada de auditorias.
 - `users.php`: administracao de usuarios.
 
 ## Estrutura
@@ -46,6 +46,7 @@ app/
     DashboardService.php
     ProcessService.php
 database/
+  migrations/
   schema.sql
 public/
   assets/
@@ -74,10 +75,10 @@ Se voce ja tinha importado uma versao anterior do banco, nao reimporte o `schema
 
 Nesse caso, importe as migrations em ordem:
 
-`database/migrations/001_add_audit_tables.sql`
-`database/migrations/002_add_deadline_type.sql`
-`database/migrations/003_remove_legacy_integration_tables.sql`
-`database/migrations/004_add_audits_module.sql`
+- `database/migrations/001_add_audit_tables.sql`
+- `database/migrations/002_add_deadline_type.sql`
+- `database/migrations/003_remove_legacy_integration_tables.sql`
+- `database/migrations/004_add_audits_module.sql`
 
 Esses arquivos atualizam auditoria, adicionam o tipo de prazo `Tempo Habil`, removem as antigas tabelas de sincronizacao e criam o modulo de auditorias.
 
@@ -88,18 +89,30 @@ Esses arquivos atualizam auditoria, adicionam o tipo de prazo `Tempo Habil`, rem
 
 No primeiro login, o sistema aceita a senha inicial legada e regrava o hash usando `password_hash`.
 
-## Importacao CSV
+## Importacao CSV de processos
 
 - `Importar CSV`: importa a planilha exportada do SharePoint/Excel para alimentar o banco no servidor.
 - O numero do processo e usado como chave para atualizar registros existentes e inserir novos.
-- Processos sem prazo interno/externo sao marcados como `Tempo Habil`.
+- Processos sem prazo interno ou externo sao marcados como `Tempo Habil`.
 
 ## Modulo de auditorias
 
 - O acesso e permitido para `admin`, `coordenador` e usuarios com a chave `audit_access`.
 - A liberacao e feita na tela `Usuarios`.
-- O importador de auditorias le o CSV exportado da base, consolida a auditoria principal e vincula determinacoes, recomendacoes e ciencias.
-- Os painéis de auditorias sao clicaveis: ao clicar em uma categoria, a lista e filtrada; ao clicar em uma auditoria, a identificacao completa e aberta.
+- Antes de usar a area, importe a migration `database/migrations/004_add_audits_module.sql`.
+- O importador de auditorias usa diretamente os arquivos tratados:
+  - `auditorias_tratadas.csv`
+  - `auditorias_itens_tratados.csv`
+- O CSV bruto exportado da planilha nao deve mais ser usado na tela de importacao.
+- Os paineis de auditorias sao clicaveis: ao clicar em uma categoria, a lista e filtrada; ao clicar em uma auditoria, a identificacao completa e aberta.
+
+## Como carregar auditorias tratadas
+
+1. Gere ou copie os arquivos tratados `auditorias_tratadas.csv` e `auditorias_itens_tratados.csv`.
+2. Abra `Usuarios` e habilite `audit_access` para quem vai usar o modulo.
+3. Acesse `http://localhost:8080/controle-de-processos/public/audit_import.php`.
+4. Envie os dois arquivos tratados.
+5. Abra `Auditorias` para consultar os paineis e clicar nas auditorias.
 
 ## Colunas preservadas
 
@@ -110,7 +123,7 @@ No primeiro login, o sistema aceita a senha inicial legada e regrava o hash usan
 - Tipo de prazo
 - Descricao Geral
 - Descricao Detalhada
-- Comentarios/anotacoes
+- Comentarios e anotacoes
 - Orgao Solicitante
 - Data de assinatura (Oficio GAB)
 - Prazo Interno (OFICIO GAB/SNBA)
