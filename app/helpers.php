@@ -169,3 +169,22 @@ function verify_csrf(): void
         throw new RuntimeException('Sessao expirada. Recarregue a pagina e tente novamente.');
     }
 }
+
+function table_exists(string $table): bool
+{
+    static $cache = [];
+    if (array_key_exists($table, $cache)) {
+        return $cache[$table];
+    }
+
+    $stmt = db()->prepare('SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?');
+    $stmt->execute([$table]);
+    $cache[$table] = (int) $stmt->fetchColumn() > 0;
+
+    return $cache[$table];
+}
+
+function audits_module_ready(): bool
+{
+    return table_exists('audits') && table_exists('audit_items');
+}

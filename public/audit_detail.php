@@ -5,6 +5,11 @@ use App\Repositories\AuditRepository;
 require __DIR__ . '/../app/bootstrap.php';
 
 $user = require_audit_access();
+$moduleReady = audits_module_ready();
+if (!$moduleReady) {
+    flash('O modulo de auditorias ainda nao foi instalado neste banco.', 'danger');
+    redirect('audits.php');
+}
 $repo = new AuditRepository();
 $audit = $repo->find((int) ($_GET['id'] ?? 0));
 if (!$audit) {
@@ -105,4 +110,3 @@ require __DIR__ . '/../views/nav.php';
 
 <?php require __DIR__ . '/../views/app_end.php'; ?>
 <?php require __DIR__ . '/../views/footer.php'; ?>
-

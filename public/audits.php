@@ -5,6 +5,7 @@ use App\Repositories\AuditRepository;
 require __DIR__ . '/../app/bootstrap.php';
 
 $user = require_audit_access();
+$moduleReady = audits_module_ready();
 $repo = new AuditRepository();
 
 $filters = [
@@ -16,12 +17,21 @@ $filters = [
     'item_kind' => trim((string) ($_GET['item_kind'] ?? '')),
 ];
 
-$audits = $repo->list($filters);
-$byBody = array_map(fn (array $row) => $row + ['url' => url('audits.php?requesting_body=' . urlencode($row['label']))], $repo->countsByBody());
-$diligence = $repo->diligenceSummary();
-$phases = array_map(fn (array $row) => $row + ['url' => url('audits.php?diligence=0&audit_phase=' . urlencode($row['label']))], $diligence['by_phase']);
-$byType = array_map(fn (array $row) => $row + ['url' => url('audits.php?audit_type=' . urlencode($row['label']))], $repo->countsByType());
-$itemTotals = $repo->itemTotalsPerAudit();
+$audits = [];
+$byBody = [];
+$diligence = ['in_diligence' => 0, 'by_phase' => []];
+$phases = [];
+$byType = [];
+$itemTotals = [];
+
+if ($moduleReady) {
+    $audits = $repo->list($filters);
+    $byBody = array_map(fn (array $row) => $row + ['url' => url('audits.php?requesting_body=' . urlencode($row['label']))], $repo->countsByBody());
+    $diligence = $repo->diligenceSummary();
+    $phases = array_map(fn (array $row) => $row + ['url' => url('audits.php?diligence=0&audit_phase=' . urlencode($row['label']))], $diligence['by_phase']);
+    $byType = array_map(fn (array $row) => $row + ['url' => url('audits.php?audit_type=' . urlencode($row['label']))], $repo->countsByType());
+    $itemTotals = $repo->itemTotalsPerAudit();
+}
 
 $pageTitle = 'Auditorias';
 $activeNav = 'audits';
@@ -33,6 +43,13 @@ require __DIR__ . '/../views/nav.php';
 <main class="content-shell">
     <?php require __DIR__ . '/../views/flash.php'; ?>
 
+    <?php if (!$moduleReady): ?>
+        <div class="alert alert-warning shadow-sm">
+            O modulo de auditorias ainda nao foi instalado neste banco. No phpMyAdmin, importe primeiro:
+            <strong>database/migrations/004_add_audits_module.sql</strong>
+        </div>
+    <?php endif; ?>
+
     <section class="hero-panel">
         <div>
             <p class="section-kicker">CGU e TCU</p>
@@ -40,7 +57,7 @@ require __DIR__ . '/../views/nav.php';
             <p class="text-secondary mb-0">Controle interativo das auditorias, fases e determinações com acesso restrito.</p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
-            <a class="btn btn-outline-primary" href="<?= url('audit_import.php') ?>"><i class="bi bi-cloud-upload"></i> Importar base</a>
+            <a class="btn btn-outline-primary <?= !$moduleReady ? 'disabled' : '' ?>" href="<?= $moduleReady ? url('audit_import.php') : '#' ?>"><i class="bi bi-cloud-upload"></i> Importar base</a>
             <a class="btn btn-outline-secondary" href="<?= url('audits.php') ?>"><i class="bi bi-arrow-clockwise"></i> Limpar filtros</a>
         </div>
     </section>
@@ -49,23 +66,23 @@ require __DIR__ . '/../views/nav.php';
         <div class="row g-3 align-items-end">
             <div class="col-lg-4">
                 <label class="form-label">Buscar auditoria</label>
-                <input class="form-control" name="q" value="<?= e($filters['q']) ?>" placeholder="Codigo, NUP, tema ou objetivo">
+                <input class="form-control" name="q" value="<?= e($filters['q']) ?>" placeholder="Codigo, NUP, tema ou objetivo" <?= !$moduleReady ? 'disabled' : '' ?>>
             </div>
             <div class="col-lg-2">
                 <label class="form-label">Órgão</label>
-                <input class="form-control" name="requesting_body" value="<?= e($filters['requesting_body']) ?>">
+                <input class="form-control" name="requesting_body" value="<?= e($filters['requesting_body']) ?>" <?= !$moduleReady ? 'disabled' : '' ?>>
             </div>
             <div class="col-lg-3">
                 <label class="form-label">Tipo</label>
-                <input class="form-control" name="audit_type" value="<?= e($filters['audit_type']) ?>">
+                <input class="form-control" name="audit_type" value="<?= e($filters['audit_type']) ?>" <?= !$moduleReady ? 'disabled' : '' ?>>
             </div>
             <div class="col-lg-3">
                 <label class="form-label">Fase</label>
-                <input class="form-control" name="audit_phase" value="<?= e($filters['audit_phase']) ?>">
+                <input class="form-control" name="audit_phase" value="<?= e($filters['audit_phase']) ?>" <?= !$moduleReady ? 'disabled' : '' ?>>
             </div>
             <div class="col-lg-2">
                 <label class="form-label">Diligência</label>
-                <select class="form-select" name="diligence">
+                <select class="form-select" name="diligence" <?= !$moduleReady ? 'disabled' : '' ?>>
                     <option value="">Todas</option>
                     <option value="1" <?= selected($filters['diligence'], '1') ?>>Em diligência</option>
                     <option value="0" <?= selected($filters['diligence'], '0') ?>>Sem diligência</option>
@@ -73,7 +90,7 @@ require __DIR__ . '/../views/nav.php';
             </div>
             <div class="col-lg-3">
                 <label class="form-label">Tipo de item</label>
-                <select class="form-select" name="item_kind">
+                <select class="form-select" name="item_kind" <?= !$moduleReady ? 'disabled' : '' ?>>
                     <option value="">Todos</option>
                     <option value="DETERMINAÇÃO" <?= selected($filters['item_kind'], 'DETERMINAÇÃO') ?>>Determinação</option>
                     <option value="RECOMENDAÇÃO" <?= selected($filters['item_kind'], 'RECOMENDAÇÃO') ?>>Recomendação</option>
@@ -81,7 +98,7 @@ require __DIR__ . '/../views/nav.php';
                 </select>
             </div>
             <div class="col-lg-3 d-flex gap-2">
-                <button class="btn btn-primary" type="submit"><i class="bi bi-funnel"></i> Filtrar</button>
+                <button class="btn btn-primary" type="submit" <?= !$moduleReady ? 'disabled' : '' ?>><i class="bi bi-funnel"></i> Filtrar</button>
                 <a class="btn btn-outline-secondary" href="<?= url('audits.php') ?>">Limpar</a>
             </div>
         </div>
@@ -165,4 +182,3 @@ require __DIR__ . '/../views/nav.php';
 
 <?php require __DIR__ . '/../views/app_end.php'; ?>
 <?php require __DIR__ . '/../views/footer.php'; ?>
-

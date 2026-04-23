@@ -6,6 +6,11 @@ require __DIR__ . '/../app/bootstrap.php';
 
 $user = require_audit_access();
 
+if (!audits_module_ready()) {
+    flash('Antes de importar a base de auditorias, execute a migration 004_add_audits_module.sql no banco.', 'danger');
+    redirect('audits.php');
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         verify_csrf();
@@ -59,4 +64,3 @@ require __DIR__ . '/../views/nav.php';
 
 <?php require __DIR__ . '/../views/app_end.php'; ?>
 <?php require __DIR__ . '/../views/footer.php'; ?>
-
