@@ -98,11 +98,27 @@ function can_manage(array $user): bool
     return in_array($user['role'], ['admin', 'coordenador'], true);
 }
 
+function can_access_audits(array $user): bool
+{
+    return can_manage($user) || !empty($user['audit_access']);
+}
+
 function require_role(array $roles): array
 {
     $user = require_login();
     if (!in_array($user['role'], $roles, true)) {
         flash('Voce nao tem permissao para acessar esta tela.', 'danger');
+        redirect('dashboard.php');
+    }
+
+    return $user;
+}
+
+function require_audit_access(): array
+{
+    $user = require_login();
+    if (!can_access_audits($user)) {
+        flash('Voce nao tem permissao para acessar a area de auditorias.', 'danger');
         redirect('dashboard.php');
     }
 
@@ -153,4 +169,3 @@ function verify_csrf(): void
         throw new RuntimeException('Sessao expirada. Recarregue a pagina e tente novamente.');
     }
 }
-

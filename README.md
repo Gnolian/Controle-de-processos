@@ -7,6 +7,7 @@ Aplicacao interna em PHP/MySQL para substituir o preenchimento manual de uma pla
 - Login por sessao com perfis `servidor`, `coordenador` e `admin`.
 - Dashboard pessoal do usuario logado.
 - Dashboard gerencial com indicadores, ranking e graficos.
+- Area restrita de auditorias CGU/TCU com painéis interativos e detalhe da auditoria.
 - Lista de processos com busca global, filtros, paginacao e acoes rapidas.
 - Formulario organizado nas mesmas colunas da planilha.
 - Tela de detalhes do processo com fluxo, prazos, status e historico.
@@ -24,6 +25,9 @@ Aplicacao interna em PHP/MySQL para substituir o preenchimento manual de uma pla
 - `process_detail.php`: detalhes do processo.
 - `import.php`: importacao CSV da planilha.
 - `audit.php`: trilha de auditoria.
+- `audits.php`: painel de auditorias.
+- `audit_detail.php`: identificacao e itens da auditoria.
+- `audit_import.php`: importacao da base CSV de auditorias.
 - `users.php`: administracao de usuarios.
 
 ## Estrutura
@@ -31,10 +35,12 @@ Aplicacao interna em PHP/MySQL para substituir o preenchimento manual de uma pla
 ```text
 app/
   Repositories/
+    AuditRepository.php
     AuditLogRepository.php
     ProcessRepository.php
     UserRepository.php
   Services/
+    AuditCsvImportService.php
     AuthService.php
     CsvImportService.php
     DashboardService.php
@@ -71,8 +77,9 @@ Nesse caso, importe as migrations em ordem:
 `database/migrations/001_add_audit_tables.sql`
 `database/migrations/002_add_deadline_type.sql`
 `database/migrations/003_remove_legacy_integration_tables.sql`
+`database/migrations/004_add_audits_module.sql`
 
-Esses arquivos atualizam auditoria, adicionam o tipo de prazo `Tempo Habil` e removem as antigas tabelas de sincronizacao.
+Esses arquivos atualizam auditoria, adicionam o tipo de prazo `Tempo Habil`, removem as antigas tabelas de sincronizacao e criam o modulo de auditorias.
 
 ## Acesso inicial
 
@@ -86,6 +93,13 @@ No primeiro login, o sistema aceita a senha inicial legada e regrava o hash usan
 - `Importar CSV`: importa a planilha exportada do SharePoint/Excel para alimentar o banco no servidor.
 - O numero do processo e usado como chave para atualizar registros existentes e inserir novos.
 - Processos sem prazo interno/externo sao marcados como `Tempo Habil`.
+
+## Modulo de auditorias
+
+- O acesso e permitido para `admin`, `coordenador` e usuarios com a chave `audit_access`.
+- A liberacao e feita na tela `Usuarios`.
+- O importador de auditorias le o CSV exportado da base, consolida a auditoria principal e vincula determinacoes, recomendacoes e ciencias.
+- Os painéis de auditorias sao clicaveis: ao clicar em uma categoria, a lista e filtrada; ao clicar em uma auditoria, a identificacao completa e aberta.
 
 ## Colunas preservadas
 

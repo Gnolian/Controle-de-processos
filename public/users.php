@@ -59,19 +59,27 @@ require __DIR__ . '/../views/nav.php';
                     </select>
                 </label>
             </div>
-            <div class="col-md-2"><button class="btn btn-primary w-100" type="submit"><i class="bi bi-person-plus"></i> Criar</button></div>
+            <div class="col-md-2">
+                <label class="form-label d-block">Acesso auditorias
+                    <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" type="checkbox" name="audit_access" value="1">
+                    </div>
+                </label>
+            </div>
+            <div class="col-md-12 d-flex justify-content-end"><button class="btn btn-primary" type="submit"><i class="bi bi-person-plus"></i> Criar</button></div>
         </form>
     </section>
 
     <section class="app-card p-0 overflow-hidden">
         <table class="table modern-table mb-0">
-            <thead><tr><th>Nome</th><th>Email</th><th>Perfil</th><th>Ativo</th><th>Criado em</th></tr></thead>
+            <thead><tr><th>Nome</th><th>Email</th><th>Perfil</th><th>Auditorias</th><th>Ativo</th><th>Criado em</th></tr></thead>
             <tbody>
                 <?php foreach ($users as $item): ?>
                     <tr>
                         <td><?= e($item['name']) ?></td>
                         <td><?= e($item['email']) ?></td>
                         <td><span class="badge text-bg-light"><?= e($item['role']) ?></span></td>
+                        <td><?= !empty($item['audit_access']) || in_array($item['role'], ['admin', 'coordenador'], true) ? '<span class="badge text-bg-info">Sim</span>' : '<span class="badge text-bg-secondary">Nao</span>' ?></td>
                         <td><?= $item['active'] ? '<span class="badge text-bg-success">Sim</span>' : '<span class="badge text-bg-secondary">Nao</span>' ?></td>
                         <td><?= e($item['created_at']) ?></td>
                     </tr>
@@ -83,4 +91,3 @@ require __DIR__ . '/../views/nav.php';
 
 <?php require __DIR__ . '/../views/app_end.php'; ?>
 <?php require __DIR__ . '/../views/footer.php'; ?>
-

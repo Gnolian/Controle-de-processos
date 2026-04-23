@@ -417,6 +417,24 @@ a {
     background: var(--primary);
 }
 
+.metric-inline {
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #f8fbff;
+    color: var(--ink);
+}
+
+.metric-inline span {
+    display: block;
+    color: var(--muted);
+    margin-bottom: 4px;
+}
+
+.metric-inline strong {
+    font-size: 32px;
+}
+
 .chart-canvas {
     max-height: 280px;
 }
@@ -457,6 +475,11 @@ a {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.audit-item-text {
+    max-width: 520px;
+    white-space: normal;
 }
 
 .badge.text-bg-light {
@@ -512,4 +535,3 @@ a {
         grid-template-columns: 1fr;
     }
 }
-
