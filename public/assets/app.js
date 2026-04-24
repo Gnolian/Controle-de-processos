@@ -82,7 +82,10 @@ document.querySelectorAll('canvas[data-chart]').forEach((canvas) => {
         tooltip: {
           callbacks: {
             label(context) {
-              return `${context.label}: ${context.parsed}`;
+              const parsed = typeof context.parsed === 'object'
+                ? (context.parsed?.y ?? context.raw ?? 0)
+                : context.parsed;
+              return `${context.label}: ${parsed}`;
             },
           },
         },
@@ -197,7 +200,10 @@ if (timelineModal) {
       setText('[data-timeline-theme]', payload.theme);
       setText('[data-timeline-phase]', payload.audit_phase);
       setText('[data-timeline-owner]', payload.current_owner);
-      setText('[data-timeline-deadline]', `${payload.deadline_label}${payload.flag_estimated ? ' (estimado)' : ''}`);
+      const deadlineLabel = payload.deadline_is_current
+        ? new Date().toLocaleDateString('pt-BR')
+        : payload.deadline_label;
+      setText('[data-timeline-deadline]', `${deadlineLabel}${payload.flag_estimated ? ' (estimado)' : ''}`);
       setText('[data-timeline-summary]', payload.control_summary);
 
       const link = timelineModal.querySelector('[data-timeline-link]');

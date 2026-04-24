@@ -237,11 +237,11 @@ class AuditRepository
     {
         return [
             'total' => (int) \db()->query('SELECT COUNT(*) FROM audits')->fetchColumn(),
-            'in_diligence' => (int) \db()->query('SELECT COUNT(*) FROM audits WHERE has_diligence = 1')->fetchColumn(),
-            'first_monitoring' => $this->countPhaseLike(['1%', 'PRIMEIRO%', '%1O MONITORAMENTO%']),
-            'second_monitoring' => $this->countPhaseLike(['2%', 'SEGUNDO%', '%2O MONITORAMENTO%']),
-            'third_monitoring' => $this->countPhaseLike(['3%', 'TERCEIRO%', '%3O MONITORAMENTO%']),
-            'fourth_monitoring' => $this->countPhaseLike(['4%', 'QUARTO%', '%4O MONITORAMENTO%']),
+            'in_diligence' => $this->countPhaseLike(['%DILIGENC%']),
+            'first_monitoring' => $this->countPhaseLike(['1%', 'PRIMEIRO%', '%1O%MONITORAMENTO%', '%1º%MONITORAMENTO%']),
+            'second_monitoring' => $this->countPhaseLike(['2%', 'SEGUNDO%', '%2O%MONITORAMENTO%', '%2º%MONITORAMENTO%']),
+            'third_monitoring' => $this->countPhaseLike(['3%', 'TERCEIRO%', '%3O%MONITORAMENTO%', '%3º%MONITORAMENTO%']),
+            'fourth_monitoring' => $this->countPhaseLike(['4%', 'QUARTO%', '%4O%MONITORAMENTO%', '%4º%MONITORAMENTO%']),
         ];
     }
 
@@ -255,30 +255,30 @@ class AuditRepository
 
     public function diligencePhaseOverview(): array
     {
-        $rows = [
-            ['label' => 'Em diligencia', 'total' => (int) \db()->query('SELECT COUNT(*) FROM audits WHERE has_diligence = 1')->fetchColumn()],
-        ];
-
-        $phaseRows = \db()->query('SELECT COALESCE(NULLIF(audit_phase, ""), "Nao informado") AS label, COUNT(*) AS total
+        $rows = \db()->query('SELECT COALESCE(NULLIF(audit_phase, ""), "Nao informado") AS raw_label, COUNT(*) AS total
             FROM audits
-            WHERE has_diligence = 0
-            GROUP BY label
-            ORDER BY total DESC, label ASC')->fetchAll();
+            GROUP BY raw_label
+            ORDER BY total DESC, raw_label ASC')->fetchAll();
 
-        return array_merge($rows, $phaseRows);
+        $grouped = [];
+        foreach ($rows as $row) {
+            $label = $this->phaseBucket((string) $row['raw_label']);
+            $grouped[$label] = ($grouped[$label] ?? 0) + (int) $row['total'];
+        }
+
+        $result = [];
+        foreach ($grouped as $label => $total) {
+            $result[] = ['label' => $label, 'total' => $total];
+        }
+
+        usort($result, static fn (array $a, array $b) => $b['total'] <=> $a['total'] ?: strcmp($a['label'], $b['label']));
+
+        return $result;
     }
 
     public function countsByType(): array
     {
         return \db()->query('SELECT COALESCE(NULLIF(audit_type, ""), "Nao informado") AS label, COUNT(*) AS total
-            FROM audits
-            GROUP BY label
-            ORDER BY total DESC, label ASC')->fetchAll();
-    }
-
-    public function countsByProcessStatus(): array
-    {
-        return \db()->query('SELECT COALESCE(NULLIF(process_status, ""), "Nao informado") AS label, COUNT(*) AS total
             FROM audits
             GROUP BY label
             ORDER BY total DESC, label ASC')->fetchAll();
@@ -309,7 +309,7 @@ class AuditRepository
 
         $groups = [];
         foreach ($rows as $row) {
-            $label = $this->classifyItemStatus((string) ($row['dgba_status'] ?: $row['control_body_status'] ?: $row['status_geral']));
+            $label = $this->classifyItemStatus((string) $row['control_body_status']);
             $groups[$label] = ($groups[$label] ?? 0) + 1;
         }
 
@@ -333,7 +333,7 @@ class AuditRepository
 
         $cards = [];
         foreach ($rows as $row) {
-            $label = $this->classifyItemStatus((string) ($row['dgba_status'] ?: $row['control_body_status'] ?: $row['status_geral']));
+            $label = $this->classifyItemStatus((string) $row['control_body_status']);
             if ($group !== null && $group !== '' && $label !== $group) {
                 continue;
             }
@@ -373,7 +373,7 @@ class AuditRepository
                 'deadline_is_current' => (int) $row['deadline_is_current'],
                 'flag_estimated' => (int) $row['flag_estimated'],
                 'control_summary' => $summary,
-                'month_index' => (int) ($row['deadline_is_current'] ? 0 : date('n', strtotime((string) $row['deadline_date']))),
+                'month_index' => (int) ($row['deadline_is_current'] ? date('n') : date('n', strtotime((string) $row['deadline_date']))),
             ];
         }, $rows);
     }
@@ -411,12 +411,21 @@ class AuditRepository
         foreach ([
             'requesting_body' => 'a.requesting_body',
             'audit_type' => 'a.audit_type',
-            'audit_phase' => 'a.audit_phase',
             'process_status' => 'a.process_status',
         ] as $filter => $column) {
             if (($filters[$filter] ?? '') !== '') {
                 $where[] = "{$column} = ?";
                 $params[] = $filters[$filter];
+            }
+        }
+
+        if (($filters['audit_phase'] ?? '') !== '') {
+            if ($filters['audit_phase'] === 'Em diligencia') {
+                $where[] = 'UPPER(a.audit_phase) LIKE ?';
+                $params[] = '%DILIG%';
+            } else {
+                $where[] = 'a.audit_phase = ?';
+                $params[] = $filters['audit_phase'];
             }
         }
 
@@ -461,9 +470,20 @@ class AuditRepository
         return match (true) {
             $token === '' || $token === 'NAO' || $token === 'NAINFORMADA' || $token === 'NAOAPLICA' || $token === 'N/A' => 'Nao informada',
             str_contains($token, 'PERDADEOBJETO') => 'Perda de objeto',
-            str_contains($token, 'EMIMPLEMENTACAO') || str_contains($token, 'IMPLEMENTACAO') => 'Em implementacao',
             str_contains($token, 'IMPLEMENTADA') || str_contains($token, 'CUMPRIDA') => 'Implementada',
+            str_contains($token, 'EMIMPLEMENTACAO') || str_contains($token, 'IMPLEMENTACAO') => 'Em implementacao',
             default => 'Outros',
+        };
+    }
+
+    private function phaseBucket(string $phase): string
+    {
+        $token = $this->normalizeToken($phase);
+
+        return match (true) {
+            $token === '' => 'Nao informado',
+            str_contains($token, 'DILIGENC') => 'Em diligencia',
+            default => $phase,
         };
     }
 

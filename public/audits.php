@@ -33,7 +33,6 @@ $metrics = [
 $byBody = [];
 $diligencePhase = [];
 $byType = [];
-$byStatus = [];
 $itemTotals = [];
 $itemImplementation = [];
 $itemCards = [];
@@ -48,17 +47,13 @@ if ($moduleReady) {
     );
     $diligencePhase = array_map(function (array $row): array {
         $query = $row['label'] === 'Em diligencia'
-            ? 'diligence=1'
-            : 'diligence=0&audit_phase=' . urlencode($row['label']);
+            ? 'audit_phase=' . urlencode($row['label'])
+            : 'audit_phase=' . urlencode($row['label']);
         return $row + ['url' => url('audits.php?' . $query)];
     }, $repo->diligencePhaseOverview());
     $byType = array_map(
         fn (array $row) => $row + ['url' => url('audits.php?audit_type=' . urlencode($row['label']))],
         $repo->countsByType()
-    );
-    $byStatus = array_map(
-        fn (array $row) => $row + ['url' => url('audits.php?process_status=' . urlencode($row['label']))],
-        $repo->countsByProcessStatus()
     );
     $itemTotals = $repo->itemTotalsPerAudit();
     $itemImplementation = array_map(
@@ -69,10 +64,10 @@ if ($moduleReady) {
     $timelineEntries = $repo->timelineEntries(2026);
 }
 
-$timelineColumns = ['Data atual', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-$timelineByMonth = array_fill(0, 13, []);
+$timelineColumns = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+$timelineByMonth = array_fill(1, 12, []);
 foreach ($timelineEntries as $entry) {
-    $index = max(0, min(12, (int) $entry['month_index']));
+    $index = max(1, min(12, (int) $entry['month_index']));
     $timelineByMonth[$index][] = $entry;
 }
 
@@ -119,22 +114,22 @@ require __DIR__ . '/../views/nav.php';
             <i class="bi bi-exclamation-circle"></i>
         </article>
         <article class="metric-card">
-            <span>1o monitoramento</span>
+            <span>1º monitoramento</span>
             <strong><?= (int) $metrics['first_monitoring'] ?></strong>
             <i class="bi bi-1-circle"></i>
         </article>
         <article class="metric-card">
-            <span>2o monitoramento</span>
+            <span>2º monitoramento</span>
             <strong><?= (int) $metrics['second_monitoring'] ?></strong>
             <i class="bi bi-2-circle"></i>
         </article>
         <article class="metric-card">
-            <span>3o monitoramento</span>
+            <span>3º monitoramento</span>
             <strong><?= (int) $metrics['third_monitoring'] ?></strong>
             <i class="bi bi-3-circle"></i>
         </article>
         <article class="metric-card">
-            <span>4o monitoramento</span>
+            <span>4º monitoramento</span>
             <strong><?= (int) $metrics['fourth_monitoring'] ?></strong>
             <i class="bi bi-4-circle"></i>
         </article>
@@ -157,10 +152,6 @@ require __DIR__ . '/../views/nav.php';
             <div class="col-lg-3">
                 <label class="form-label">Fase</label>
                 <input class="form-control" name="audit_phase" value="<?= e($filters['audit_phase']) ?>" <?= !$moduleReady ? 'disabled' : '' ?>>
-            </div>
-            <div class="col-lg-3">
-                <label class="form-label">Status da auditoria</label>
-                <input class="form-control" name="process_status" value="<?= e($filters['process_status']) ?>" <?= !$moduleReady ? 'disabled' : '' ?>>
             </div>
             <div class="col-lg-2">
                 <label class="form-label">Diligencia</label>
@@ -192,8 +183,8 @@ require __DIR__ . '/../views/nav.php';
             <span class="text-secondary">Passe o mouse para ver o ID e clique para abrir o resumo da auditoria.</span>
         </div>
         <div class="timeline-board">
-            <?php foreach ($timelineColumns as $index => $label): ?>
-                <div class="timeline-month">
+            <?php foreach ($timelineColumns as $offset => $label): $index = $offset + 1; ?>
+                <div class="timeline-month <?= (int) date('n') === $index ? 'timeline-month-current' : '' ?>">
                     <div class="timeline-month-head"><?= e($label) ?></div>
                     <div class="timeline-month-body">
                         <?php foreach ($timelineByMonth[$index] as $entry): ?>
@@ -204,7 +195,7 @@ require __DIR__ . '/../views/nav.php';
                                 data-timeline-entry='<?= e(json_encode($entry, JSON_UNESCAPED_UNICODE)) ?>'
                             >
                                 <span><?= e($entry['audit_code']) ?></span>
-                                <small><?= e($entry['deadline_label']) ?></small>
+                                <small><?= e($entry['deadline_is_current'] ? 'Hoje' : $entry['deadline_label']) ?></small>
                             </button>
                         <?php endforeach; ?>
                         <?php if (!$timelineByMonth[$index]): ?>
@@ -236,12 +227,6 @@ require __DIR__ . '/../views/nav.php';
             <div class="app-card h-100">
                 <div class="card-head"><h2>Por tipo de auditoria</h2></div>
                 <canvas class="chart-canvas" data-chart='<?= e(json_encode($byType, JSON_UNESCAPED_UNICODE)) ?>'></canvas>
-            </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="app-card h-100">
-                <div class="card-head"><h2>Status da auditoria</h2></div>
-                <canvas class="chart-canvas" data-chart='<?= e(json_encode($byStatus, JSON_UNESCAPED_UNICODE)) ?>'></canvas>
             </div>
         </div>
         <div class="col-lg-4">
