@@ -474,6 +474,21 @@ class AuditRepository
         return \db()->query("SELECT DISTINCT {$column} AS value FROM audits WHERE {$column} IS NOT NULL AND {$column} <> '' ORDER BY {$column} ASC")->fetchAll();
     }
 
+    public function itemStatusOptions(): array
+    {
+        $rows = \db()->query('SELECT control_body_status FROM audit_items ORDER BY item_order ASC')->fetchAll();
+        $labels = [];
+        foreach ($rows as $row) {
+            $label = $this->classifyItemStatus((string) ($row['control_body_status'] ?? ''));
+            $labels[$label] = true;
+        }
+
+        $result = array_map(static fn (string $label): array => ['value' => $label], array_keys($labels));
+        usort($result, static fn (array $a, array $b) => strcmp($a['value'], $b['value']));
+
+        return $result;
+    }
+
     private function buildFilters(array $filters): array
     {
         $where = [];
@@ -538,12 +553,25 @@ class AuditRepository
             array_push($params, ...$allKinds);
         }
 
+        $itemStatuses = $this->normalizeFilterValues($filters['item_status_group'] ?? '');
+        if ($itemStatuses !== []) {
+            $statusClauses = [];
+            foreach ($itemStatuses as $status) {
+                [$sql, $sqlParams] = $this->buildItemStatusClause($status);
+                $statusClauses[] = $sql;
+                array_push($params, ...$sqlParams);
+            }
+            $where[] = '(' . implode(' OR ', $statusClauses) . ')';
+        }
+
         return [$where, $params];
     }
 
     private function buildAuditScope(array $filters, bool $withItems = false): array
     {
-        $joins = $withItems || $this->normalizeFilterValues($filters['item_kind'] ?? '') !== []
+        $joins = $withItems
+            || $this->normalizeFilterValues($filters['item_kind'] ?? '') !== []
+            || $this->normalizeFilterValues($filters['item_status_group'] ?? '') !== []
             ? ' INNER JOIN audit_items ai ON ai.audit_id = a.id'
             : '';
         [$where, $params] = $this->buildFilters($filters);
@@ -628,5 +656,16 @@ class AuditRepository
 
         $scalar = trim((string) $value);
         return $scalar === '' ? [] : [$scalar];
+    }
+
+    private function buildItemStatusClause(string $status): array
+    {
+        return match ($status) {
+            'Implementada' => ['(UPPER(ai.control_body_status) LIKE ? OR UPPER(ai.control_body_status) LIKE ?)', ['%IMPLEMENTADA%', '%CUMPRIDA%']],
+            'Em implementacao' => ['(UPPER(ai.control_body_status) LIKE ? OR UPPER(ai.control_body_status) LIKE ? OR UPPER(ai.control_body_status) LIKE ?)', ['%EM IMPLEMENT%', '%IMPLEMENTACAO%', '%IMPLEMENTAÇÃO%']],
+            'Perda de objeto' => ['(UPPER(ai.control_body_status) LIKE ? OR UPPER(ai.control_body_status) LIKE ?)', ['%PERDA DE OBJETO%', '%PERDADEOBJETO%']],
+            'Nao informada' => ['(ai.control_body_status IS NULL OR TRIM(ai.control_body_status) = "" OR UPPER(ai.control_body_status) IN ("NAO", "NÃO", "N/A", "NAO INFORMADA", "NÃO INFORMADA", "NAO APLICA", "NÃO APLICA"))', []],
+            default => ['ai.control_body_status = ?', [$status]],
+        };
     }
 }

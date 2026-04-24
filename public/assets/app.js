@@ -25,6 +25,24 @@ if (auditFilters) {
   });
 }
 
+document.querySelectorAll('.filter-select').forEach((filterSelect) => {
+  filterSelect.addEventListener('toggle', () => {
+    if (!filterSelect.open) return;
+    document.querySelectorAll('.filter-select[open]').forEach((other) => {
+      if (other !== filterSelect) {
+        other.open = false;
+      }
+    });
+  });
+});
+
+document.addEventListener('click', (event) => {
+  if (event.target.closest('.filter-select')) return;
+  document.querySelectorAll('.filter-select[open]').forEach((filterSelect) => {
+    filterSelect.open = false;
+  });
+});
+
 const renderChartLegend = (canvas, rows, colors) => {
   if (!rows.length || !canvas.parentElement) return;
 
