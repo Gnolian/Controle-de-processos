@@ -242,22 +242,22 @@ require __DIR__ . '/../views/nav.php';
             <i class="bi bi-hourglass-split"></i>
         </article>
         <article class="metric-card universe-branch">
-            <span>1o monitoramento</span>
+            <span>1&ordm; monitoramento</span>
             <strong><?= (int) $metrics['first_monitoring'] ?></strong>
             <i class="bi bi-1-circle"></i>
         </article>
         <article class="metric-card universe-branch">
-            <span>2o monitoramento</span>
+            <span>2&ordm; monitoramento</span>
             <strong><?= (int) $metrics['second_monitoring'] ?></strong>
             <i class="bi bi-2-circle"></i>
         </article>
         <article class="metric-card universe-branch">
-            <span>3o monitoramento</span>
+            <span>3&ordm; monitoramento</span>
             <strong><?= (int) $metrics['third_monitoring'] ?></strong>
             <i class="bi bi-3-circle"></i>
         </article>
         <article class="metric-card universe-branch">
-            <span>4o monitoramento</span>
+            <span>4&ordm; monitoramento</span>
             <strong><?= (int) $metrics['fourth_monitoring'] ?></strong>
             <i class="bi bi-4-circle"></i>
         </article>
