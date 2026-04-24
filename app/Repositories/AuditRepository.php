@@ -235,13 +235,23 @@ class AuditRepository
 
     public function dashboardMetrics(): array
     {
+        $diligenceReport = $this->countPhaseLike(['%DILIGENC%', '%RELATOR%']);
+        $monitoringPending = $this->countPhaseLike(['%INICIAR%']);
+        $first = $this->countPhaseLike(['1%', 'PRIMEIRO%', '%1O%MONITORAMENTO%', '%1º%MONITORAMENTO%']);
+        $second = $this->countPhaseLike(['2%', 'SEGUNDO%', '%2O%MONITORAMENTO%', '%2º%MONITORAMENTO%']);
+        $third = $this->countPhaseLike(['3%', 'TERCEIRO%', '%3O%MONITORAMENTO%', '%3º%MONITORAMENTO%']);
+        $fourth = $this->countPhaseLike(['4%', 'QUARTO%', '%4O%MONITORAMENTO%', '%4º%MONITORAMENTO%']);
+        $total = (int) \db()->query('SELECT COUNT(*) FROM audits')->fetchColumn();
+
         return [
-            'total' => (int) \db()->query('SELECT COUNT(*) FROM audits')->fetchColumn(),
-            'in_diligence' => $this->countPhaseLike(['%DILIGENC%']),
-            'first_monitoring' => $this->countPhaseLike(['1%', 'PRIMEIRO%', '%1O%MONITORAMENTO%', '%1º%MONITORAMENTO%']),
-            'second_monitoring' => $this->countPhaseLike(['2%', 'SEGUNDO%', '%2O%MONITORAMENTO%', '%2º%MONITORAMENTO%']),
-            'third_monitoring' => $this->countPhaseLike(['3%', 'TERCEIRO%', '%3O%MONITORAMENTO%', '%3º%MONITORAMENTO%']),
-            'fourth_monitoring' => $this->countPhaseLike(['4%', 'QUARTO%', '%4O%MONITORAMENTO%', '%4º%MONITORAMENTO%']),
+            'total' => $total,
+            'diligence_report' => $diligenceReport,
+            'monitoring_pending' => $monitoringPending,
+            'first_monitoring' => $first,
+            'second_monitoring' => $second,
+            'third_monitoring' => $third,
+            'fourth_monitoring' => $fourth,
+            'other_phases' => max(0, $total - ($diligenceReport + $monitoringPending + $first + $second + $third + $fourth)),
         ];
     }
 
@@ -360,6 +370,8 @@ class AuditRepository
 
         return array_map(function (array $row): array {
             $summary = $row['control_summary'] ?: $row['related_processes'] ?: '-';
+            $ownerToken = $this->normalizeToken((string) ($row['current_owner'] ?? ''));
+
             return [
                 'id' => (int) $row['id'],
                 'audit_code' => $row['audit_code'],
@@ -373,6 +385,7 @@ class AuditRepository
                 'deadline_is_current' => (int) $row['deadline_is_current'],
                 'flag_estimated' => (int) $row['flag_estimated'],
                 'control_summary' => $summary,
+                'is_dgba' => str_contains($ownerToken, 'DGBA') ? 1 : 0,
                 'month_index' => (int) ($row['deadline_is_current'] ? date('n') : date('n', strtotime((string) $row['deadline_date']))),
             ];
         }, $rows);
@@ -389,7 +402,7 @@ class AuditRepository
 
     public function distinctValues(string $column): array
     {
-        $allowed = ['requesting_body', 'audit_type', 'audit_phase', 'process_status'];
+        $allowed = ['audit_year', 'process_status', 'requesting_body', 'theme', 'classification', 'audit_phase', 'current_owner', 'audit_type'];
         if (!in_array($column, $allowed, true)) {
             return [];
         }
@@ -409,9 +422,13 @@ class AuditRepository
         }
 
         foreach ([
-            'requesting_body' => 'a.requesting_body',
-            'audit_type' => 'a.audit_type',
+            'audit_year' => 'a.audit_year',
             'process_status' => 'a.process_status',
+            'requesting_body' => 'a.requesting_body',
+            'theme' => 'a.theme',
+            'classification' => 'a.classification',
+            'current_owner' => 'a.current_owner',
+            'audit_type' => 'a.audit_type',
         ] as $filter => $column) {
             if (($filters[$filter] ?? '') !== '') {
                 $where[] = "{$column} = ?";
@@ -441,12 +458,6 @@ class AuditRepository
             $params[] = $accented;
         }
 
-        if (($filters['diligence'] ?? '') === '1') {
-            $where[] = 'a.has_diligence = 1';
-        } elseif (($filters['diligence'] ?? '') === '0') {
-            $where[] = 'a.has_diligence = 0';
-        }
-
         return [$where, $params];
     }
 
@@ -467,12 +478,13 @@ class AuditRepository
     private function classifyItemStatus(string $value): string
     {
         $token = $this->normalizeToken($value);
+
         return match (true) {
             $token === '' || $token === 'NAO' || $token === 'NAINFORMADA' || $token === 'NAOAPLICA' || $token === 'N/A' => 'Nao informada',
             str_contains($token, 'PERDADEOBJETO') => 'Perda de objeto',
             str_contains($token, 'IMPLEMENTADA') || str_contains($token, 'CUMPRIDA') => 'Implementada',
             str_contains($token, 'EMIMPLEMENTACAO') || str_contains($token, 'IMPLEMENTACAO') => 'Em implementacao',
-            default => 'Outros',
+            default => trim($value) !== '' ? trim($value) : 'Nao informada',
         };
     }
 

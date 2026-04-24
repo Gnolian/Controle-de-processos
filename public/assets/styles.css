@@ -603,6 +603,16 @@ a {
     background: #fff7ed;
 }
 
+.timeline-chip-dgba {
+    border-color: rgba(220, 38, 38, 0.35);
+    background: #fef2f2;
+}
+
+#audit-results,
+#rdc-status-section {
+    scroll-margin-top: 94px;
+}
+
 .timeline-empty {
     display: grid;
     place-items: center;

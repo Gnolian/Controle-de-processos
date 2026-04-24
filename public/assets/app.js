@@ -16,6 +16,15 @@ document.querySelectorAll('.clickable-row[data-href]').forEach((row) => {
   });
 });
 
+const auditFilters = document.querySelector('#audit-filters');
+if (auditFilters) {
+  auditFilters.querySelectorAll('select').forEach((select) => {
+    select.addEventListener('change', () => {
+      auditFilters.requestSubmit();
+    });
+  });
+}
+
 const renderChartLegend = (canvas, rows, colors) => {
   if (!rows.length || !canvas.parentElement) return;
 

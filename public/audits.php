@@ -11,24 +11,39 @@ $repo = new AuditRepository();
 
 $filters = [
     'q' => trim((string) ($_GET['q'] ?? '')),
-    'requesting_body' => trim((string) ($_GET['requesting_body'] ?? '')),
-    'audit_type' => trim((string) ($_GET['audit_type'] ?? '')),
-    'audit_phase' => trim((string) ($_GET['audit_phase'] ?? '')),
+    'audit_year' => trim((string) ($_GET['audit_year'] ?? '')),
     'process_status' => trim((string) ($_GET['process_status'] ?? '')),
-    'diligence' => trim((string) ($_GET['diligence'] ?? '')),
-    'item_kind' => trim((string) ($_GET['item_kind'] ?? '')),
+    'requesting_body' => trim((string) ($_GET['requesting_body'] ?? '')),
+    'theme' => trim((string) ($_GET['theme'] ?? '')),
+    'classification' => trim((string) ($_GET['classification'] ?? '')),
+    'audit_phase' => trim((string) ($_GET['audit_phase'] ?? '')),
+    'current_owner' => trim((string) ($_GET['current_owner'] ?? '')),
 ];
 
 $selectedItemStatus = trim((string) ($_GET['item_status_group'] ?? ''));
+$selectedItemKind = trim((string) ($_GET['item_kind'] ?? ''));
+$resultAnchor = 'audit-results';
+$rdcAnchor = 'rdc-status-section';
 
 $audits = [];
 $metrics = [
     'total' => 0,
-    'in_diligence' => 0,
+    'diligence_report' => 0,
+    'monitoring_pending' => 0,
     'first_monitoring' => 0,
     'second_monitoring' => 0,
     'third_monitoring' => 0,
     'fourth_monitoring' => 0,
+    'other_phases' => 0,
+];
+$filterOptions = [
+    'audit_year' => [],
+    'process_status' => [],
+    'requesting_body' => [],
+    'theme' => [],
+    'classification' => [],
+    'audit_phase' => [],
+    'current_owner' => [],
 ];
 $byBody = [];
 $diligencePhase = [];
@@ -38,26 +53,36 @@ $itemImplementation = [];
 $itemCards = [];
 $timelineEntries = [];
 
+$buildUrl = function (array $overrides = [], string $anchor = 'audit-results') use ($filters): string {
+    $params = array_filter(array_merge($filters, $overrides), static fn ($value) => $value !== '');
+    $query = http_build_query($params);
+    $base = url('audits.php');
+    return $base . ($query !== '' ? '?' . $query : '') . '#' . $anchor;
+};
+
 if ($moduleReady) {
-    $audits = $repo->list($filters);
+    $audits = $repo->list($filters + ['item_kind' => $selectedItemKind]);
     $metrics = $repo->dashboardMetrics();
+
+    foreach (array_keys($filterOptions) as $field) {
+        $filterOptions[$field] = $repo->distinctValues($field);
+    }
+
     $byBody = array_map(
-        fn (array $row) => $row + ['url' => url('audits.php?requesting_body=' . urlencode($row['label']))],
+        fn (array $row) => $row + ['url' => $buildUrl(['requesting_body' => $row['label']], $resultAnchor)],
         $repo->countsByBody()
     );
-    $diligencePhase = array_map(function (array $row): array {
-        $query = $row['label'] === 'Em diligencia'
-            ? 'audit_phase=' . urlencode($row['label'])
-            : 'audit_phase=' . urlencode($row['label']);
-        return $row + ['url' => url('audits.php?' . $query)];
-    }, $repo->diligencePhaseOverview());
+    $diligencePhase = array_map(
+        fn (array $row) => $row + ['url' => $buildUrl(['audit_phase' => $row['label']], $resultAnchor)],
+        $repo->diligencePhaseOverview()
+    );
     $byType = array_map(
-        fn (array $row) => $row + ['url' => url('audits.php?audit_type=' . urlencode($row['label']))],
+        fn (array $row) => $row + ['url' => $buildUrl(['audit_type' => $row['label']], $resultAnchor)],
         $repo->countsByType()
     );
     $itemTotals = $repo->itemTotalsPerAudit();
     $itemImplementation = array_map(
-        fn (array $row) => $row + ['url' => url('audits.php?item_status_group=' . urlencode($row['label']))],
+        fn (array $row) => $row + ['url' => $buildUrl(['item_status_group' => $row['label']], $rdcAnchor)],
         $repo->itemImplementationSummary()
     );
     $itemCards = $repo->itemsByStatusGroup($selectedItemStatus !== '' ? $selectedItemStatus : null);
@@ -93,7 +118,7 @@ require __DIR__ . '/../views/nav.php';
         <div>
             <p class="section-kicker">CGU e TCU</p>
             <h1>Painel de auditorias</h1>
-            <p class="text-secondary mb-0">Visao executiva, cadastro manual, acompanhamento de itens e linha do tempo de prazos de 2026.</p>
+            <p class="text-secondary mb-0">Visao executiva, cadastro manual, acompanhamento de RDC e linha do tempo de prazos de 2026.</p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
             <a class="btn btn-primary <?= !$moduleReady ? 'disabled' : '' ?>" href="<?= $moduleReady ? url('audit_form.php') : '#' ?>"><i class="bi bi-plus-lg"></i> Nova auditoria</a>
@@ -102,6 +127,41 @@ require __DIR__ . '/../views/nav.php';
         </div>
     </section>
 
+    <form class="filter-card" id="audit-filters" method="get" action="<?= url('audits.php#' . $resultAnchor) ?>">
+        <div class="card-head">
+            <h2>Filtro de Auditorias</h2>
+        </div>
+        <div class="row g-3 align-items-end">
+            <div class="col-lg-4">
+                <label class="form-label">Buscar auditoria</label>
+                <input class="form-control" name="q" value="<?= e($filters['q']) ?>" placeholder="Codigo, NUP, tema ou objetivo" <?= !$moduleReady ? 'disabled' : '' ?>>
+            </div>
+            <?php foreach ([
+                'audit_year' => 'Ano',
+                'process_status' => 'Status do processo',
+                'requesting_body' => 'Orgao',
+                'theme' => 'Tema',
+                'classification' => 'Classificacao',
+                'audit_phase' => 'Fase da Auditoria',
+                'current_owner' => 'Responsavel Atual',
+            ] as $field => $label): ?>
+                <div class="col-lg-4 col-xl-3">
+                    <label class="form-label"><?= e($label) ?></label>
+                    <select class="form-select" name="<?= e($field) ?>" <?= !$moduleReady ? 'disabled' : '' ?>>
+                        <option value="">Todos</option>
+                        <?php foreach ($filterOptions[$field] as $option): ?>
+                            <option value="<?= e((string) $option['value']) ?>" <?= selected($filters[$field], (string) $option['value']) ?>><?= e((string) $option['value']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            <?php endforeach; ?>
+            <div class="col-lg-4 d-flex gap-2">
+                <button class="btn btn-primary" type="submit" <?= !$moduleReady ? 'disabled' : '' ?>><i class="bi bi-funnel"></i> Filtrar</button>
+                <a class="btn btn-outline-secondary" href="<?= url('audits.php') ?>">Limpar</a>
+            </div>
+        </div>
+    </form>
+
     <section class="metric-grid xl">
         <article class="metric-card">
             <span>Numero de auditorias</span>
@@ -109,9 +169,14 @@ require __DIR__ . '/../views/nav.php';
             <i class="bi bi-shield-check"></i>
         </article>
         <article class="metric-card warning">
-            <span>Em diligencia</span>
-            <strong><?= (int) $metrics['in_diligence'] ?></strong>
+            <span>Em diligencia/Relatorio</span>
+            <strong><?= (int) $metrics['diligence_report'] ?></strong>
             <i class="bi bi-exclamation-circle"></i>
+        </article>
+        <article class="metric-card muted">
+            <span>Monitoramento a iniciar</span>
+            <strong><?= (int) $metrics['monitoring_pending'] ?></strong>
+            <i class="bi bi-hourglass-split"></i>
         </article>
         <article class="metric-card">
             <span>1º monitoramento</span>
@@ -133,49 +198,12 @@ require __DIR__ . '/../views/nav.php';
             <strong><?= (int) $metrics['fourth_monitoring'] ?></strong>
             <i class="bi bi-4-circle"></i>
         </article>
+        <article class="metric-card success">
+            <span>Demais fases</span>
+            <strong><?= (int) $metrics['other_phases'] ?></strong>
+            <i class="bi bi-grid"></i>
+        </article>
     </section>
-
-    <form class="filter-card" method="get">
-        <div class="row g-3 align-items-end">
-            <div class="col-lg-4">
-                <label class="form-label">Buscar auditoria</label>
-                <input class="form-control" name="q" value="<?= e($filters['q']) ?>" placeholder="Codigo, NUP, tema ou objetivo" <?= !$moduleReady ? 'disabled' : '' ?>>
-            </div>
-            <div class="col-lg-2">
-                <label class="form-label">Orgao</label>
-                <input class="form-control" name="requesting_body" value="<?= e($filters['requesting_body']) ?>" <?= !$moduleReady ? 'disabled' : '' ?>>
-            </div>
-            <div class="col-lg-3">
-                <label class="form-label">Tipo</label>
-                <input class="form-control" name="audit_type" value="<?= e($filters['audit_type']) ?>" <?= !$moduleReady ? 'disabled' : '' ?>>
-            </div>
-            <div class="col-lg-3">
-                <label class="form-label">Fase</label>
-                <input class="form-control" name="audit_phase" value="<?= e($filters['audit_phase']) ?>" <?= !$moduleReady ? 'disabled' : '' ?>>
-            </div>
-            <div class="col-lg-2">
-                <label class="form-label">Diligencia</label>
-                <select class="form-select" name="diligence" <?= !$moduleReady ? 'disabled' : '' ?>>
-                    <option value="">Todas</option>
-                    <option value="1" <?= selected($filters['diligence'], '1') ?>>Em diligencia</option>
-                    <option value="0" <?= selected($filters['diligence'], '0') ?>>Sem diligencia</option>
-                </select>
-            </div>
-            <div class="col-lg-3">
-                <label class="form-label">Tipo de item</label>
-                <select class="form-select" name="item_kind" <?= !$moduleReady ? 'disabled' : '' ?>>
-                    <option value="">Todos</option>
-                    <option value="DETERMINACAO" <?= selected($filters['item_kind'], 'DETERMINACAO') ?>>Determinacao</option>
-                    <option value="RECOMENDACAO" <?= selected($filters['item_kind'], 'RECOMENDACAO') ?>>Recomendacao</option>
-                    <option value="CIENCIA" <?= selected($filters['item_kind'], 'CIENCIA') ?>>Ciencia</option>
-                </select>
-            </div>
-            <div class="col-lg-4 d-flex gap-2">
-                <button class="btn btn-primary" type="submit" <?= !$moduleReady ? 'disabled' : '' ?>><i class="bi bi-funnel"></i> Filtrar</button>
-                <a class="btn btn-outline-secondary" href="<?= url('audits.php') ?>">Limpar</a>
-            </div>
-        </div>
-    </form>
 
     <section class="app-card mb-4">
         <div class="card-head">
@@ -190,7 +218,7 @@ require __DIR__ . '/../views/nav.php';
                         <?php foreach ($timelineByMonth[$index] as $entry): ?>
                             <button
                                 type="button"
-                                class="timeline-chip <?= $entry['deadline_is_current'] ? 'timeline-chip-current' : '' ?>"
+                                class="timeline-chip <?= $entry['deadline_is_current'] ? 'timeline-chip-current' : '' ?> <?= !empty($entry['is_dgba']) ? 'timeline-chip-dgba' : '' ?>"
                                 title="<?= e($entry['audit_code']) ?>"
                                 data-timeline-entry='<?= e(json_encode($entry, JSON_UNESCAPED_UNICODE)) ?>'
                             >
@@ -216,7 +244,7 @@ require __DIR__ . '/../views/nav.php';
         </div>
         <div class="col-lg-6">
             <div class="app-card h-100">
-                <div class="card-head"><h2>Diligencias ou fase atual</h2></div>
+                <div class="card-head"><h2>Diligencia ou fase atual</h2></div>
                 <canvas class="chart-canvas bar" data-chart='<?= e(json_encode($diligencePhase, JSON_UNESCAPED_UNICODE)) ?>'></canvas>
             </div>
         </div>
@@ -230,8 +258,8 @@ require __DIR__ . '/../views/nav.php';
             </div>
         </div>
         <div class="col-lg-4">
-            <div class="app-card h-100">
-                <div class="card-head"><h2>Itens por situacao</h2></div>
+            <div class="app-card h-100" id="<?= e($rdcAnchor) ?>">
+                <div class="card-head"><h2>Situacao dos RDC</h2></div>
                 <canvas class="chart-canvas" data-chart='<?= e(json_encode($itemImplementation, JSON_UNESCAPED_UNICODE)) ?>'></canvas>
             </div>
         </div>
@@ -266,7 +294,7 @@ require __DIR__ . '/../views/nav.php';
         <div class="col-lg-5">
             <div class="app-card h-100">
                 <div class="card-head">
-                    <h2>Pontos de controle por situacao</h2>
+                    <h2>Pontos de controle dos RDC</h2>
                     <span class="text-secondary"><?= $selectedItemStatus !== '' ? e($selectedItemStatus) : 'Todos os status' ?></span>
                 </div>
                 <div class="audit-point-cards">
@@ -292,20 +320,20 @@ require __DIR__ . '/../views/nav.php';
         </div>
     </section>
 
-    <section class="app-card mt-4 p-0 overflow-hidden">
+    <section class="app-card mt-4 p-0 overflow-hidden" id="<?= e($resultAnchor) ?>">
         <div class="card-head p-4 pb-0">
             <h2>Auditorias</h2>
             <span class="text-secondary"><?= count($audits) ?> resultado(s)</span>
         </div>
         <div class="table-responsive">
             <table class="table modern-table mb-0">
-                <thead><tr><th>Codigo</th><th>Orgao</th><th>Tipo</th><th>Fase</th><th>Prazo</th><th>Itens</th><th></th></tr></thead>
+                <thead><tr><th>Codigo</th><th>Orgao</th><th>Tema</th><th>Fase</th><th>Prazo</th><th>Itens</th><th></th></tr></thead>
                 <tbody>
                     <?php foreach ($audits as $audit): ?>
                         <tr class="clickable-row" data-href="<?= url('audit_detail.php?id=' . (int) $audit['id']) ?>">
                             <td><strong><?= e($audit['audit_code']) ?></strong><small><?= e($audit['audit_nup']) ?></small></td>
                             <td><?= e($audit['requesting_body']) ?></td>
-                            <td><?= e($audit['audit_type']) ?></td>
+                            <td class="text-truncate-cell"><?= e($audit['theme'] ?: '-') ?></td>
                             <td><?= e($audit['audit_phase'] ?: '-') ?></td>
                             <td>
                                 <span class="badge rounded-pill <?= !empty($audit['deadline_is_current']) ? 'text-bg-warning' : 'text-bg-light' ?>">
