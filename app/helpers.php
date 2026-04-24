@@ -184,7 +184,30 @@ function table_exists(string $table): bool
     return $cache[$table];
 }
 
+function column_exists(string $table, string $column): bool
+{
+    static $cache = [];
+    $key = $table . '.' . $column;
+    if (array_key_exists($key, $cache)) {
+        return $cache[$key];
+    }
+
+    $stmt = db()->prepare('SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?');
+    $stmt->execute([$table, $column]);
+    $cache[$key] = (int) $stmt->fetchColumn() > 0;
+
+    return $cache[$key];
+}
+
 function audits_module_ready(): bool
 {
     return table_exists('audits') && table_exists('audit_items');
+}
+
+function audits_schema_ready(): bool
+{
+    return audits_module_ready()
+        && column_exists('audits', 'deadline_label')
+        && column_exists('audits', 'monitoring1_start_date')
+        && column_exists('audit_items', 'status_geral');
 }

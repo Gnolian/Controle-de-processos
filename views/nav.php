@@ -27,7 +27,11 @@
             <strong><?= e($pageTitle ?? 'Controle de Processos') ?></strong>
         </div>
         <div class="topbar-actions">
-            <a class="btn btn-primary btn-sm" href="<?= url('process_form.php') ?>"><i class="bi bi-plus-lg"></i> Novo processo</a>
+            <?php if (($activeNav ?? '') === 'audits' && $navUser && can_access_audits($navUser)): ?>
+                <a class="btn btn-primary btn-sm" href="<?= url('audit_form.php') ?>"><i class="bi bi-plus-lg"></i> Nova auditoria</a>
+            <?php else: ?>
+                <a class="btn btn-primary btn-sm" href="<?= url('process_form.php') ?>"><i class="bi bi-plus-lg"></i> Novo processo</a>
+            <?php endif; ?>
             <div class="user-chip">
                 <span><?= e($navUser['name'] ?? '') ?></span>
                 <small><?= e($navUser['role'] ?? '') ?></small>

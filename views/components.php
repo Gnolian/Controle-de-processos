@@ -123,3 +123,30 @@ function field_select(string $name, string $label, array $options, array $values
     </div>
     <?php
 }
+
+function field_checkbox(string $name, string $label, array $values, string $help = ''): void
+{
+    $checked = !empty($values[$name]);
+    ?>
+    <div class="col">
+        <label class="form-label d-block"><?= e($label) ?></label>
+        <div class="form-check form-switch border rounded-3 px-3 py-2 bg-light-subtle">
+            <input class="form-check-input" type="checkbox" role="switch" id="<?= e($name) ?>" name="<?= e($name) ?>" value="1" <?= $checked ? 'checked' : '' ?>>
+            <label class="form-check-label ms-2" for="<?= e($name) ?>"><?= $checked ? 'Sim' : 'Nao' ?></label>
+            <?php if ($help !== ''): ?>
+                <small class="d-block text-secondary mt-1"><?= e($help) ?></small>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php
+}
+
+function audit_item_kind_label(?string $kind): string
+{
+    return match ($kind) {
+        'DETERMINACAO', 'DETERMINAÇÃO' => 'Determinacao',
+        'RECOMENDACAO', 'RECOMENDAÇÃO' => 'Recomendacao',
+        'CIENCIA', 'CIÊNCIA' => 'Ciencia',
+        default => (string) ($kind ?: '-'),
+    };
+}

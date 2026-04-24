@@ -6,8 +6,8 @@ require __DIR__ . '/../app/bootstrap.php';
 
 $user = require_audit_access();
 
-if (!audits_module_ready()) {
-    flash('Antes de importar a base de auditorias, execute a migration 004_add_audits_module.sql no banco.', 'danger');
+if (!audits_schema_ready()) {
+    flash('Antes de importar a base de auditorias, execute as migrations 004_add_audits_module.sql e 005_expand_audits_for_timeline.sql no banco.', 'danger');
     redirect('audits.php');
 }
 
@@ -69,6 +69,7 @@ require __DIR__ . '/../views/nav.php';
             <div class="alert alert-info mb-0">
                 Esta tela importa diretamente os arquivos tratados, com campos repetidos e prontos para carga.
                 Use o arquivo principal das auditorias e o arquivo complementar com determinacoes, recomendacoes e ciencias.
+                Se a planilha tratada ganhar novas colunas, mantenha os cabecalhos para reaproveitar a rotina de carga.
             </div>
             <div class="form-actions">
                 <button class="btn btn-primary" type="submit"><i class="bi bi-cloud-upload"></i> Importar base tratada</button>

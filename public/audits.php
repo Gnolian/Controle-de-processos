@@ -3,9 +3,10 @@
 use App\Repositories\AuditRepository;
 
 require __DIR__ . '/../app/bootstrap.php';
+require __DIR__ . '/../views/components.php';
 
 $user = require_audit_access();
-$moduleReady = audits_module_ready();
+$moduleReady = audits_schema_ready();
 $repo = new AuditRepository();
 
 $filters = [
@@ -13,24 +14,66 @@ $filters = [
     'requesting_body' => trim((string) ($_GET['requesting_body'] ?? '')),
     'audit_type' => trim((string) ($_GET['audit_type'] ?? '')),
     'audit_phase' => trim((string) ($_GET['audit_phase'] ?? '')),
+    'process_status' => trim((string) ($_GET['process_status'] ?? '')),
     'diligence' => trim((string) ($_GET['diligence'] ?? '')),
     'item_kind' => trim((string) ($_GET['item_kind'] ?? '')),
 ];
 
+$selectedItemStatus = trim((string) ($_GET['item_status_group'] ?? ''));
+
 $audits = [];
+$metrics = [
+    'total' => 0,
+    'in_diligence' => 0,
+    'first_monitoring' => 0,
+    'second_monitoring' => 0,
+    'third_monitoring' => 0,
+    'fourth_monitoring' => 0,
+];
 $byBody = [];
-$diligence = ['in_diligence' => 0, 'by_phase' => []];
-$phases = [];
+$diligencePhase = [];
 $byType = [];
+$byStatus = [];
 $itemTotals = [];
+$itemImplementation = [];
+$itemCards = [];
+$timelineEntries = [];
 
 if ($moduleReady) {
     $audits = $repo->list($filters);
-    $byBody = array_map(fn (array $row) => $row + ['url' => url('audits.php?requesting_body=' . urlencode($row['label']))], $repo->countsByBody());
-    $diligence = $repo->diligenceSummary();
-    $phases = array_map(fn (array $row) => $row + ['url' => url('audits.php?diligence=0&audit_phase=' . urlencode($row['label']))], $diligence['by_phase']);
-    $byType = array_map(fn (array $row) => $row + ['url' => url('audits.php?audit_type=' . urlencode($row['label']))], $repo->countsByType());
+    $metrics = $repo->dashboardMetrics();
+    $byBody = array_map(
+        fn (array $row) => $row + ['url' => url('audits.php?requesting_body=' . urlencode($row['label']))],
+        $repo->countsByBody()
+    );
+    $diligencePhase = array_map(function (array $row): array {
+        $query = $row['label'] === 'Em diligencia'
+            ? 'diligence=1'
+            : 'diligence=0&audit_phase=' . urlencode($row['label']);
+        return $row + ['url' => url('audits.php?' . $query)];
+    }, $repo->diligencePhaseOverview());
+    $byType = array_map(
+        fn (array $row) => $row + ['url' => url('audits.php?audit_type=' . urlencode($row['label']))],
+        $repo->countsByType()
+    );
+    $byStatus = array_map(
+        fn (array $row) => $row + ['url' => url('audits.php?process_status=' . urlencode($row['label']))],
+        $repo->countsByProcessStatus()
+    );
     $itemTotals = $repo->itemTotalsPerAudit();
+    $itemImplementation = array_map(
+        fn (array $row) => $row + ['url' => url('audits.php?item_status_group=' . urlencode($row['label']))],
+        $repo->itemImplementationSummary()
+    );
+    $itemCards = $repo->itemsByStatusGroup($selectedItemStatus !== '' ? $selectedItemStatus : null);
+    $timelineEntries = $repo->timelineEntries(2026);
+}
+
+$timelineColumns = ['Data atual', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+$timelineByMonth = array_fill(0, 13, []);
+foreach ($timelineEntries as $entry) {
+    $index = max(0, min(12, (int) $entry['month_index']));
+    $timelineByMonth[$index][] = $entry;
 }
 
 $pageTitle = 'Auditorias';
@@ -46,7 +89,8 @@ require __DIR__ . '/../views/nav.php';
     <?php if (!$moduleReady): ?>
         <div class="alert alert-warning shadow-sm">
             O modulo de auditorias ainda nao foi instalado neste banco. No phpMyAdmin, importe primeiro:
-            <strong>database/migrations/004_add_audits_module.sql</strong>
+            <strong>database/migrations/004_add_audits_module.sql</strong> e depois
+            <strong>database/migrations/005_expand_audits_for_timeline.sql</strong>.
         </div>
     <?php endif; ?>
 
@@ -54,12 +98,46 @@ require __DIR__ . '/../views/nav.php';
         <div>
             <p class="section-kicker">CGU e TCU</p>
             <h1>Painel de auditorias</h1>
-            <p class="text-secondary mb-0">Controle interativo das auditorias, fases e itens com acesso restrito.</p>
+            <p class="text-secondary mb-0">Visao executiva, cadastro manual, acompanhamento de itens e linha do tempo de prazos de 2026.</p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
+            <a class="btn btn-primary <?= !$moduleReady ? 'disabled' : '' ?>" href="<?= $moduleReady ? url('audit_form.php') : '#' ?>"><i class="bi bi-plus-lg"></i> Nova auditoria</a>
             <a class="btn btn-outline-primary <?= !$moduleReady ? 'disabled' : '' ?>" href="<?= $moduleReady ? url('audit_import.php') : '#' ?>"><i class="bi bi-cloud-upload"></i> Importar base tratada</a>
             <a class="btn btn-outline-secondary" href="<?= url('audits.php') ?>"><i class="bi bi-arrow-clockwise"></i> Limpar filtros</a>
         </div>
+    </section>
+
+    <section class="metric-grid xl">
+        <article class="metric-card">
+            <span>Numero de auditorias</span>
+            <strong><?= (int) $metrics['total'] ?></strong>
+            <i class="bi bi-shield-check"></i>
+        </article>
+        <article class="metric-card warning">
+            <span>Em diligencia</span>
+            <strong><?= (int) $metrics['in_diligence'] ?></strong>
+            <i class="bi bi-exclamation-circle"></i>
+        </article>
+        <article class="metric-card">
+            <span>1o monitoramento</span>
+            <strong><?= (int) $metrics['first_monitoring'] ?></strong>
+            <i class="bi bi-1-circle"></i>
+        </article>
+        <article class="metric-card">
+            <span>2o monitoramento</span>
+            <strong><?= (int) $metrics['second_monitoring'] ?></strong>
+            <i class="bi bi-2-circle"></i>
+        </article>
+        <article class="metric-card">
+            <span>3o monitoramento</span>
+            <strong><?= (int) $metrics['third_monitoring'] ?></strong>
+            <i class="bi bi-3-circle"></i>
+        </article>
+        <article class="metric-card">
+            <span>4o monitoramento</span>
+            <strong><?= (int) $metrics['fourth_monitoring'] ?></strong>
+            <i class="bi bi-4-circle"></i>
+        </article>
     </section>
 
     <form class="filter-card" method="get">
@@ -80,6 +158,10 @@ require __DIR__ . '/../views/nav.php';
                 <label class="form-label">Fase</label>
                 <input class="form-control" name="audit_phase" value="<?= e($filters['audit_phase']) ?>" <?= !$moduleReady ? 'disabled' : '' ?>>
             </div>
+            <div class="col-lg-3">
+                <label class="form-label">Status da auditoria</label>
+                <input class="form-control" name="process_status" value="<?= e($filters['process_status']) ?>" <?= !$moduleReady ? 'disabled' : '' ?>>
+            </div>
             <div class="col-lg-2">
                 <label class="form-label">Diligencia</label>
                 <select class="form-select" name="diligence" <?= !$moduleReady ? 'disabled' : '' ?>>
@@ -97,12 +179,42 @@ require __DIR__ . '/../views/nav.php';
                     <option value="CIENCIA" <?= selected($filters['item_kind'], 'CIENCIA') ?>>Ciencia</option>
                 </select>
             </div>
-            <div class="col-lg-3 d-flex gap-2">
+            <div class="col-lg-4 d-flex gap-2">
                 <button class="btn btn-primary" type="submit" <?= !$moduleReady ? 'disabled' : '' ?>><i class="bi bi-funnel"></i> Filtrar</button>
                 <a class="btn btn-outline-secondary" href="<?= url('audits.php') ?>">Limpar</a>
             </div>
         </div>
     </form>
+
+    <section class="app-card mb-4">
+        <div class="card-head">
+            <h2>Linha do tempo 2026</h2>
+            <span class="text-secondary">Passe o mouse para ver o ID e clique para abrir o resumo da auditoria.</span>
+        </div>
+        <div class="timeline-board">
+            <?php foreach ($timelineColumns as $index => $label): ?>
+                <div class="timeline-month">
+                    <div class="timeline-month-head"><?= e($label) ?></div>
+                    <div class="timeline-month-body">
+                        <?php foreach ($timelineByMonth[$index] as $entry): ?>
+                            <button
+                                type="button"
+                                class="timeline-chip <?= $entry['deadline_is_current'] ? 'timeline-chip-current' : '' ?>"
+                                title="<?= e($entry['audit_code']) ?>"
+                                data-timeline-entry='<?= e(json_encode($entry, JSON_UNESCAPED_UNICODE)) ?>'
+                            >
+                                <span><?= e($entry['audit_code']) ?></span>
+                                <small><?= e($entry['deadline_label']) ?></small>
+                            </button>
+                        <?php endforeach; ?>
+                        <?php if (!$timelineByMonth[$index]): ?>
+                            <div class="timeline-empty">-</div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </section>
 
     <section class="row g-4">
         <div class="col-lg-6">
@@ -113,23 +225,34 @@ require __DIR__ . '/../views/nav.php';
         </div>
         <div class="col-lg-6">
             <div class="app-card h-100">
-                <div class="card-head"><h2>Diligencias e fases</h2></div>
-                <a class="metric-inline d-block mb-3" href="<?= url('audits.php?diligence=1') ?>">
-                    <span>Auditorias em diligencia</span>
-                    <strong><?= $diligence['in_diligence'] ?></strong>
-                </a>
-                <canvas class="chart-canvas" data-chart='<?= e(json_encode($phases, JSON_UNESCAPED_UNICODE)) ?>'></canvas>
+                <div class="card-head"><h2>Diligencias ou fase atual</h2></div>
+                <canvas class="chart-canvas bar" data-chart='<?= e(json_encode($diligencePhase, JSON_UNESCAPED_UNICODE)) ?>'></canvas>
             </div>
         </div>
     </section>
 
     <section class="row g-4 mt-1">
-        <div class="col-lg-5">
+        <div class="col-lg-4">
             <div class="app-card h-100">
                 <div class="card-head"><h2>Por tipo de auditoria</h2></div>
                 <canvas class="chart-canvas" data-chart='<?= e(json_encode($byType, JSON_UNESCAPED_UNICODE)) ?>'></canvas>
             </div>
         </div>
+        <div class="col-lg-4">
+            <div class="app-card h-100">
+                <div class="card-head"><h2>Status da auditoria</h2></div>
+                <canvas class="chart-canvas" data-chart='<?= e(json_encode($byStatus, JSON_UNESCAPED_UNICODE)) ?>'></canvas>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="app-card h-100">
+                <div class="card-head"><h2>Itens por situacao</h2></div>
+                <canvas class="chart-canvas" data-chart='<?= e(json_encode($itemImplementation, JSON_UNESCAPED_UNICODE)) ?>'></canvas>
+            </div>
+        </div>
+    </section>
+
+    <section class="row g-4 mt-1">
         <div class="col-lg-7">
             <div class="app-card h-100">
                 <div class="card-head"><h2>Determinacoes, recomendacoes e ciencia por auditoria</h2></div>
@@ -147,18 +270,51 @@ require __DIR__ . '/../views/nav.php';
                                     <td><strong><?= (int) $row['total'] ?></strong></td>
                                 </tr>
                             <?php endforeach; ?>
+                            <?php if (!$itemTotals): ?>
+                                <tr><td colspan="6"><div class="empty-state">Nenhum item consolidado encontrado.</div></td></tr>
+                            <?php endif; ?>
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="app-card h-100">
+                <div class="card-head">
+                    <h2>Pontos de controle por situacao</h2>
+                    <span class="text-secondary"><?= $selectedItemStatus !== '' ? e($selectedItemStatus) : 'Todos os status' ?></span>
+                </div>
+                <div class="audit-point-cards">
+                    <?php foreach ($itemCards as $item): ?>
+                        <article class="audit-point-card">
+                            <div class="d-flex justify-content-between gap-3 align-items-start">
+                                <div>
+                                    <strong><?= e($item['audit_code']) ?></strong>
+                                    <small><?= e(audit_item_kind_label($item['item_kind'])) ?></small>
+                                </div>
+                                <span class="badge text-bg-light"><?= e($item['status_group']) ?></span>
+                            </div>
+                            <p class="mb-2 text-secondary small"><?= e($item['audit_nup']) ?></p>
+                            <p class="mb-2"><?= e($item['item_control_point'] ?: '-') ?></p>
+                            <a class="btn btn-sm btn-outline-secondary" href="<?= url('audit_detail.php?id=' . (int) $item['audit_id']) ?>">Abrir auditoria</a>
+                        </article>
+                    <?php endforeach; ?>
+                    <?php if (!$itemCards): ?>
+                        <div class="empty-state">Nenhum item encontrado para a situacao selecionada.</div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
     </section>
 
     <section class="app-card mt-4 p-0 overflow-hidden">
-        <div class="card-head p-4 pb-0"><h2>Auditorias</h2><span class="text-secondary"><?= count($audits) ?> resultado(s)</span></div>
+        <div class="card-head p-4 pb-0">
+            <h2>Auditorias</h2>
+            <span class="text-secondary"><?= count($audits) ?> resultado(s)</span>
+        </div>
         <div class="table-responsive">
             <table class="table modern-table mb-0">
-                <thead><tr><th>Codigo</th><th>Orgao</th><th>Tipo</th><th>Fase</th><th>Diligencia</th><th>Itens</th><th></th></tr></thead>
+                <thead><tr><th>Codigo</th><th>Orgao</th><th>Tipo</th><th>Fase</th><th>Prazo</th><th>Itens</th><th></th></tr></thead>
                 <tbody>
                     <?php foreach ($audits as $audit): ?>
                         <tr class="clickable-row" data-href="<?= url('audit_detail.php?id=' . (int) $audit['id']) ?>">
@@ -166,9 +322,16 @@ require __DIR__ . '/../views/nav.php';
                             <td><?= e($audit['requesting_body']) ?></td>
                             <td><?= e($audit['audit_type']) ?></td>
                             <td><?= e($audit['audit_phase'] ?: '-') ?></td>
-                            <td><?= $audit['has_diligence'] ? '<span class="badge text-bg-warning">Em diligencia</span>' : '<span class="badge text-bg-secondary">Nao</span>' ?></td>
+                            <td>
+                                <span class="badge rounded-pill <?= !empty($audit['deadline_is_current']) ? 'text-bg-warning' : 'text-bg-light' ?>">
+                                    <?= e($audit['deadline_label'] ?: ($audit['deadline_date'] ? format_date($audit['deadline_date']) : 'Sem prazo')) ?>
+                                </span>
+                            </td>
                             <td><?= (int) $audit['total_items'] ?></td>
-                            <td class="text-end"><a class="btn btn-sm btn-light" href="<?= url('audit_detail.php?id=' . (int) $audit['id']) ?>"><i class="bi bi-eye"></i></a></td>
+                            <td class="text-end d-flex gap-2 justify-content-end">
+                                <a class="btn btn-sm btn-light" href="<?= url('audit_detail.php?id=' . (int) $audit['id']) ?>"><i class="bi bi-eye"></i></a>
+                                <a class="btn btn-sm btn-light" href="<?= url('audit_form.php?id=' . (int) $audit['id']) ?>"><i class="bi bi-pencil"></i></a>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                     <?php if (!$audits): ?>
@@ -179,6 +342,35 @@ require __DIR__ . '/../views/nav.php';
         </div>
     </section>
 </main>
+
+<div class="modal fade" id="timelineAuditModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <p class="section-kicker mb-1">Linha do tempo 2026</p>
+                    <h2 class="modal-title fs-4 mb-0" data-timeline-title>Auditoria</h2>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-grid timeline-detail-grid">
+                    <dt>ID da auditoria</dt><dd data-timeline-id>-</dd>
+                    <dt>NUP</dt><dd data-timeline-nup>-</dd>
+                    <dt>Orgao de controle</dt><dd data-timeline-body>-</dd>
+                    <dt>Tema</dt><dd data-timeline-theme>-</dd>
+                    <dt>Fase da auditoria</dt><dd data-timeline-phase>-</dd>
+                    <dt>Responsavel atual</dt><dd data-timeline-owner>-</dd>
+                    <dt>Proximo prazo</dt><dd data-timeline-deadline>-</dd>
+                    <dt>Ponto de controle</dt><dd data-timeline-summary>-</dd>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="#" class="btn btn-primary" data-timeline-link>Abrir auditoria</a>
+            </div>
+        </div>
+    </div>
+</div>
 
 <?php require __DIR__ . '/../views/app_end.php'; ?>
 <?php require __DIR__ . '/../views/footer.php'; ?>
