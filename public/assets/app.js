@@ -94,7 +94,9 @@ document.querySelectorAll('canvas[data-chart]').forEach((canvas) => {
           callbacks: {
             label(context) {
               const parsed = typeof context.parsed === 'object'
-                ? (context.parsed?.y ?? context.raw ?? 0)
+                ? (chartMode === 'horizontal-bar'
+                  ? (context.parsed?.x ?? context.raw ?? 0)
+                  : (context.parsed?.y ?? context.raw ?? 0))
                 : context.parsed;
               return `${context.label}: ${parsed}`;
             },

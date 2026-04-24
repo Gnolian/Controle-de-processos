@@ -412,10 +412,15 @@ class AuditRepository
     public function timelineEntries(int $year = 2026, array $filters = []): array
     {
         [$joins, $where, $params] = $this->buildAuditScope($filters);
+        $currentYear = (int) date('Y');
         $sql = 'SELECT DISTINCT a.id, a.audit_code, a.audit_nup, a.requesting_body, a.theme, a.audit_phase, a.current_owner,
                 a.deadline_label, a.deadline_date, a.deadline_is_current, a.flag_estimated, a.control_summary, a.related_processes
             FROM audits a' . $joins . '
-            WHERE (a.deadline_is_current = 1 OR (a.deadline_date BETWEEN ? AND ?))';
+            WHERE (';
+        if ($year === $currentYear) {
+            $sql .= 'a.deadline_is_current = 1 OR ';
+        }
+        $sql .= '(a.deadline_date BETWEEN ? AND ?))';
         $timelineParams = ["{$year}-01-01", "{$year}-12-31"];
         if ($where) {
             $sql .= ' AND ' . implode(' AND ', $where);
