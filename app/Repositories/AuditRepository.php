@@ -254,6 +254,7 @@ class AuditRepository
 
         return [
             'total' => $total,
+            'rdc_total' => $this->countRdcItems($filters),
             'diligence_report' => $diligenceReport,
             'monitoring_pending' => $monitoringPending,
             'first_monitoring' => $first,
@@ -546,6 +547,20 @@ class AuditRepository
 
         $stmt = \db()->prepare($sql);
         $stmt->execute(array_merge($phaseParams, $params));
+        return (int) $stmt->fetchColumn();
+    }
+
+    private function countRdcItems(array $filters = []): int
+    {
+        [$joins, $where, $params] = $this->buildAuditScope($filters, true);
+        $sql = 'SELECT COUNT(ai.id) FROM audits a' . $joins . '
+            WHERE ai.item_kind IN ("DETERMINACAO", "DETERMINAÇÃO", "RECOMENDACAO", "RECOMENDAÇÃO", "CIENCIA", "CIÊNCIA")';
+        if ($where) {
+            $sql .= ' AND ' . implode(' AND ', $where);
+        }
+
+        $stmt = \db()->prepare($sql);
+        $stmt->execute($params);
         return (int) $stmt->fetchColumn();
     }
 

@@ -14,20 +14,25 @@ $filters = [
     'audit_year' => trim((string) ($_GET['audit_year'] ?? '')),
     'process_status' => trim((string) ($_GET['process_status'] ?? '')),
     'requesting_body' => trim((string) ($_GET['requesting_body'] ?? '')),
+    'audit_type' => trim((string) ($_GET['audit_type'] ?? '')),
     'theme' => trim((string) ($_GET['theme'] ?? '')),
     'classification' => trim((string) ($_GET['classification'] ?? '')),
     'audit_phase' => trim((string) ($_GET['audit_phase'] ?? '')),
     'current_owner' => trim((string) ($_GET['current_owner'] ?? '')),
+    'item_kind' => trim((string) ($_GET['item_kind'] ?? '')),
 ];
 
 $selectedItemStatus = trim((string) ($_GET['item_status_group'] ?? ''));
-$selectedItemKind = trim((string) ($_GET['item_kind'] ?? ''));
+$selectedItemKind = $filters['item_kind'];
+$timelineYear = max(2026, (int) ($_GET['timeline_year'] ?? 2026));
 $resultAnchor = 'audit-results';
 $rdcAnchor = 'rdc-status-section';
+$timelineAnchor = 'audit-timeline';
 
 $audits = [];
 $metrics = [
     'total' => 0,
+    'rdc_total' => 0,
     'diligence_report' => 0,
     'monitoring_pending' => 0,
     'first_monitoring' => 0,
@@ -52,16 +57,27 @@ $itemTotals = [];
 $itemImplementation = [];
 $itemCards = [];
 $timelineEntries = [];
+$itemKindOptions = [
+    'DETERMINACAO' => 'Determinacoes',
+    'RECOMENDACAO' => 'Recomendacoes',
+    'CIENCIA' => 'Ciencia',
+];
 
-$buildUrl = function (array $overrides = [], string $anchor = 'audit-results') use ($filters): string {
-    $params = array_filter(array_merge($filters, $overrides), static fn ($value) => $value !== '');
+$buildUrl = function (array $overrides = [], string $anchor = 'audit-results') use ($filters, $selectedItemStatus, $timelineYear): string {
+    $params = $filters;
+    if ($selectedItemStatus !== '') {
+        $params['item_status_group'] = $selectedItemStatus;
+    }
+    $params['timeline_year'] = $timelineYear;
+    $params = array_filter(array_merge($params, $overrides), static fn ($value) => $value !== '');
+
     $query = http_build_query($params);
     $base = url('audits.php');
     return $base . ($query !== '' ? '?' . $query : '') . '#' . $anchor;
 };
 
 if ($moduleReady) {
-    $audits = $repo->list($filters + ['item_kind' => $selectedItemKind]);
+    $audits = $repo->list($filters);
     $metrics = $repo->dashboardMetrics($filters);
 
     foreach (array_keys($filterOptions) as $field) {
@@ -86,7 +102,7 @@ if ($moduleReady) {
         $repo->itemImplementationSummary($filters)
     );
     $itemCards = $repo->itemsByStatusGroup($selectedItemStatus !== '' ? $selectedItemStatus : null, 18, $filters);
-    $timelineEntries = $repo->timelineEntries(2026, $filters);
+    $timelineEntries = $repo->timelineEntries($timelineYear, $filters);
 }
 
 $timelineColumns = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
@@ -118,7 +134,7 @@ require __DIR__ . '/../views/nav.php';
         <div>
             <p class="section-kicker">CGU e TCU</p>
             <h1>Painel de auditorias</h1>
-            <p class="text-secondary mb-0">Visao executiva, cadastro manual, acompanhamento de RDC e linha do tempo de prazos de 2026.</p>
+            <p class="text-secondary mb-0">Visao executiva, cadastro manual, acompanhamento de RDC e linha do tempo anual de prazos.</p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
             <a class="btn btn-primary <?= !$moduleReady ? 'disabled' : '' ?>" href="<?= $moduleReady ? url('audit_form.php') : '#' ?>"><i class="bi bi-plus-lg"></i> Nova auditoria</a>
@@ -128,6 +144,10 @@ require __DIR__ . '/../views/nav.php';
     </section>
 
     <form class="filter-card" id="audit-filters" method="get" action="<?= url('audits.php#' . $resultAnchor) ?>">
+        <input type="hidden" name="timeline_year" value="<?= (int) $timelineYear ?>">
+        <?php if ($selectedItemStatus !== ''): ?>
+            <input type="hidden" name="item_status_group" value="<?= e($selectedItemStatus) ?>">
+        <?php endif; ?>
         <div class="card-head">
             <h2>Filtro de Auditorias</h2>
         </div>
@@ -155,6 +175,15 @@ require __DIR__ . '/../views/nav.php';
                     </select>
                 </div>
             <?php endforeach; ?>
+            <div class="col-lg-4 col-xl-3">
+                <label class="form-label">RDC</label>
+                <select class="form-select" name="item_kind" <?= !$moduleReady ? 'disabled' : '' ?>>
+                    <option value="">Todos</option>
+                    <?php foreach ($itemKindOptions as $value => $label): ?>
+                        <option value="<?= e($value) ?>" <?= selected($selectedItemKind, $value) ?>><?= e($label) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
             <div class="col-lg-4 d-flex gap-2">
                 <button class="btn btn-primary" type="submit" <?= !$moduleReady ? 'disabled' : '' ?>><i class="bi bi-funnel"></i> Filtrar</button>
                 <a class="btn btn-outline-secondary" href="<?= url('audits.php') ?>">Limpar</a>
@@ -162,57 +191,74 @@ require __DIR__ . '/../views/nav.php';
         </div>
     </form>
 
-    <section class="metric-grid xl">
-        <article class="metric-card">
-            <span>Numero de auditorias</span>
-            <strong><?= (int) $metrics['total'] ?></strong>
-            <i class="bi bi-shield-check"></i>
-        </article>
-        <article class="metric-card warning">
+    <section class="audit-universe-grid">
+        <article class="metric-card universe-branch warning">
             <span>Em diligencia/Relatorio</span>
             <strong><?= (int) $metrics['diligence_report'] ?></strong>
             <i class="bi bi-exclamation-circle"></i>
         </article>
-        <article class="metric-card muted">
+        <article class="metric-card universe-branch muted">
             <span>Monitoramento a iniciar</span>
             <strong><?= (int) $metrics['monitoring_pending'] ?></strong>
             <i class="bi bi-hourglass-split"></i>
         </article>
-        <article class="metric-card">
-            <span>1º monitoramento</span>
-            <strong><?= (int) $metrics['first_monitoring'] ?></strong>
-            <i class="bi bi-1-circle"></i>
+        <article class="metric-card universe-core">
+            <small class="section-kicker">Universo filtrado</small>
+            <span>Numero de auditorias</span>
+            <strong><?= (int) $metrics['total'] ?></strong>
+            <p class="text-secondary mb-0">Esse card representa o universo atual do filtro aplicado em toda a pagina.</p>
+            <i class="bi bi-bullseye"></i>
         </article>
-        <article class="metric-card">
-            <span>2º monitoramento</span>
-            <strong><?= (int) $metrics['second_monitoring'] ?></strong>
-            <i class="bi bi-2-circle"></i>
+        <article class="metric-card universe-branch success">
+            <span>Quantidade de RDC</span>
+            <strong><?= (int) $metrics['rdc_total'] ?></strong>
+            <i class="bi bi-diagram-3"></i>
         </article>
-        <article class="metric-card">
-            <span>3º monitoramento</span>
-            <strong><?= (int) $metrics['third_monitoring'] ?></strong>
-            <i class="bi bi-3-circle"></i>
-        </article>
-        <article class="metric-card">
-            <span>4º monitoramento</span>
-            <strong><?= (int) $metrics['fourth_monitoring'] ?></strong>
-            <i class="bi bi-4-circle"></i>
-        </article>
-        <article class="metric-card success">
+        <article class="metric-card universe-branch success">
             <span>Demais fases</span>
             <strong><?= (int) $metrics['other_phases'] ?></strong>
             <i class="bi bi-grid"></i>
         </article>
+        <article class="metric-card universe-branch">
+            <span>1º monitoramento</span>
+            <strong><?= (int) $metrics['first_monitoring'] ?></strong>
+            <i class="bi bi-1-circle"></i>
+        </article>
+        <article class="metric-card universe-branch">
+            <span>2º monitoramento</span>
+            <strong><?= (int) $metrics['second_monitoring'] ?></strong>
+            <i class="bi bi-2-circle"></i>
+        </article>
+        <article class="metric-card universe-branch">
+            <span>3º monitoramento</span>
+            <strong><?= (int) $metrics['third_monitoring'] ?></strong>
+            <i class="bi bi-3-circle"></i>
+        </article>
+        <article class="metric-card universe-branch">
+            <span>4º monitoramento</span>
+            <strong><?= (int) $metrics['fourth_monitoring'] ?></strong>
+            <i class="bi bi-4-circle"></i>
+        </article>
     </section>
 
-    <section class="app-card mb-4">
+    <section class="app-card mb-4" id="<?= e($timelineAnchor) ?>">
         <div class="card-head">
-            <h2>Linha do tempo 2026</h2>
-            <span class="text-secondary">Passe o mouse para ver o ID e clique para abrir o resumo da auditoria.</span>
+            <div class="timeline-nav-shell">
+                <a class="timeline-nav-arrow" href="<?= e($buildUrl(['timeline_year' => $timelineYear - 1], $timelineAnchor)) ?>" aria-label="Ano anterior">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+                <div class="timeline-year-title">
+                    <h2>Linha do tempo <?= (int) $timelineYear ?></h2>
+                    <span class="text-secondary">Passe o mouse para ver o ID e clique para abrir o resumo da auditoria.</span>
+                </div>
+                <a class="timeline-nav-arrow" href="<?= e($buildUrl(['timeline_year' => $timelineYear + 1], $timelineAnchor)) ?>" aria-label="Proximo ano">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </div>
         </div>
         <div class="timeline-board">
             <?php foreach ($timelineColumns as $offset => $label): $index = $offset + 1; ?>
-                <div class="timeline-month <?= (int) date('n') === $index ? 'timeline-month-current' : '' ?>">
+                <div class="timeline-month <?= ((int) date('n') === $index && $timelineYear === (int) date('Y')) ? 'timeline-month-current' : '' ?>">
                     <div class="timeline-month-head"><?= e($label) ?></div>
                     <div class="timeline-month-body">
                         <?php foreach ($timelineByMonth[$index] as $entry): ?>
@@ -251,16 +297,16 @@ require __DIR__ . '/../views/nav.php';
     </section>
 
     <section class="row g-4 mt-1">
-        <div class="col-lg-4">
+        <div class="col-lg-5">
             <div class="app-card h-100">
                 <div class="card-head"><h2>Por tipo de auditoria</h2></div>
-                <canvas class="chart-canvas" data-chart='<?= e(json_encode($byType, JSON_UNESCAPED_UNICODE)) ?>'></canvas>
+                <canvas class="chart-canvas bar" data-chart-mode="horizontal-bar" data-chart-legend="none" data-chart='<?= e(json_encode($byType, JSON_UNESCAPED_UNICODE)) ?>'></canvas>
             </div>
         </div>
-        <div class="col-lg-4">
+        <div class="col-lg-7">
             <div class="app-card h-100" id="<?= e($rdcAnchor) ?>">
                 <div class="card-head"><h2>Situacao dos RDC</h2></div>
-                <canvas class="chart-canvas" data-chart='<?= e(json_encode($itemImplementation, JSON_UNESCAPED_UNICODE)) ?>'></canvas>
+                <canvas class="chart-canvas bar" data-chart='<?= e(json_encode($itemImplementation, JSON_UNESCAPED_UNICODE)) ?>'></canvas>
             </div>
         </div>
     </section>
@@ -361,7 +407,7 @@ require __DIR__ . '/../views/nav.php';
         <div class="modal-content">
             <div class="modal-header">
                 <div>
-                    <p class="section-kicker mb-1">Linha do tempo 2026</p>
+                    <p class="section-kicker mb-1">Linha do tempo anual</p>
                     <h2 class="modal-title fs-4 mb-0" data-timeline-title>Auditoria</h2>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>

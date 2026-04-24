@@ -66,8 +66,10 @@ document.querySelectorAll('canvas[data-chart]').forEach((canvas) => {
   const labels = rows.map((row) => row.label);
   const values = rows.map((row) => Number(row.total));
   const colors = ['#0f766e', '#2563eb', '#b45309', '#be123c', '#475569', '#16a34a', '#7c3aed', '#d97706'];
-  const type = canvas.classList.contains('bar') ? 'bar' : 'doughnut';
+  const chartMode = canvas.dataset.chartMode || (canvas.classList.contains('bar') ? 'bar' : 'doughnut');
+  const type = chartMode === 'horizontal-bar' ? 'bar' : chartMode;
   const links = rows.map((row) => row.url || row.link || null);
+  const hideLegend = canvas.dataset.chartLegend === 'none';
 
   new Chart(canvas, {
     type,
@@ -101,20 +103,29 @@ document.querySelectorAll('canvas[data-chart]').forEach((canvas) => {
       },
       scales: type === 'bar' ? {
         x: {
+          beginAtZero: true,
           ticks: {
-            display: false,
+            display: chartMode === 'horizontal-bar',
+            precision: 0,
           },
           grid: {
             display: false,
           },
         },
         y: {
-          beginAtZero: true,
           ticks: {
             precision: 0,
+            callback(value, index) {
+              if (chartMode === 'horizontal-bar') {
+                const label = labels[index] || '';
+                return label.length > 28 ? `${label.slice(0, 28)}...` : label;
+              }
+              return value;
+            },
           },
         },
       } : {},
+      indexAxis: chartMode === 'horizontal-bar' ? 'y' : 'x',
       onClick: (_, elements, chart) => {
         if (!elements.length) return;
         const url = links[elements[0].index];
@@ -125,7 +136,9 @@ document.querySelectorAll('canvas[data-chart]').forEach((canvas) => {
     },
   });
 
-  renderChartLegend(canvas, rows, colors);
+  if (!hideLegend) {
+    renderChartLegend(canvas, rows, colors);
+  }
 });
 
 const itemsBody = document.querySelector('#audit-items-body');
