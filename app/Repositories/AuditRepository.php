@@ -233,15 +233,24 @@ class AuditRepository
         return $stmt->fetchAll();
     }
 
-    public function dashboardMetrics(): array
+    public function dashboardMetrics(array $filters = []): array
     {
-        $diligenceReport = $this->countPhaseLike(['%DILIGENC%', '%RELATOR%']);
-        $monitoringPending = $this->countPhaseLike(['%INICIAR%']);
-        $first = $this->countPhaseLike(['1%', 'PRIMEIRO%', '%1O%MONITORAMENTO%', '%1º%MONITORAMENTO%']);
-        $second = $this->countPhaseLike(['2%', 'SEGUNDO%', '%2O%MONITORAMENTO%', '%2º%MONITORAMENTO%']);
-        $third = $this->countPhaseLike(['3%', 'TERCEIRO%', '%3O%MONITORAMENTO%', '%3º%MONITORAMENTO%']);
-        $fourth = $this->countPhaseLike(['4%', 'QUARTO%', '%4O%MONITORAMENTO%', '%4º%MONITORAMENTO%']);
-        $total = (int) \db()->query('SELECT COUNT(*) FROM audits')->fetchColumn();
+        $diligenceReport = $this->countPhaseLike(['%DILIGENC%', '%RELATOR%'], $filters);
+        $monitoringPending = $this->countPhaseLike(['%INICIAR%'], $filters);
+        $first = $this->countPhaseLike(['1%', 'PRIMEIRO%', '%1O%MONITORAMENTO%', '%1º%MONITORAMENTO%'], $filters);
+        $second = $this->countPhaseLike(['2%', 'SEGUNDO%', '%2O%MONITORAMENTO%', '%2º%MONITORAMENTO%'], $filters);
+        $third = $this->countPhaseLike(['3%', 'TERCEIRO%', '%3O%MONITORAMENTO%', '%3º%MONITORAMENTO%'], $filters);
+        $fourth = $this->countPhaseLike(['4%', 'QUARTO%', '%4O%MONITORAMENTO%', '%4º%MONITORAMENTO%'], $filters);
+
+        [$joins, $where, $params] = $this->buildAuditScope($filters);
+        $sql = 'SELECT COUNT(DISTINCT a.id) FROM audits a' . $joins;
+        if ($where) {
+            $sql .= ' WHERE ' . implode(' AND ', $where);
+        }
+
+        $stmt = \db()->prepare($sql);
+        $stmt->execute($params);
+        $total = (int) $stmt->fetchColumn();
 
         return [
             'total' => $total,
@@ -255,20 +264,34 @@ class AuditRepository
         ];
     }
 
-    public function countsByBody(): array
+    public function countsByBody(array $filters = []): array
     {
-        return \db()->query('SELECT COALESCE(NULLIF(requesting_body, ""), "Nao informado") AS label, COUNT(*) AS total
-            FROM audits
-            GROUP BY label
-            ORDER BY total DESC, label ASC')->fetchAll();
+        [$joins, $where, $params] = $this->buildAuditScope($filters);
+        $sql = 'SELECT COALESCE(NULLIF(a.requesting_body, ""), "Nao informado") AS label, COUNT(DISTINCT a.id) AS total
+            FROM audits a' . $joins;
+        if ($where) {
+            $sql .= ' WHERE ' . implode(' AND ', $where);
+        }
+        $sql .= ' GROUP BY label ORDER BY total DESC, label ASC';
+
+        $stmt = \db()->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
     }
 
-    public function diligencePhaseOverview(): array
+    public function diligencePhaseOverview(array $filters = []): array
     {
-        $rows = \db()->query('SELECT COALESCE(NULLIF(audit_phase, ""), "Nao informado") AS raw_label, COUNT(*) AS total
-            FROM audits
-            GROUP BY raw_label
-            ORDER BY total DESC, raw_label ASC')->fetchAll();
+        [$joins, $where, $params] = $this->buildAuditScope($filters);
+        $sql = 'SELECT COALESCE(NULLIF(a.audit_phase, ""), "Nao informado") AS raw_label, COUNT(DISTINCT a.id) AS total
+            FROM audits a' . $joins;
+        if ($where) {
+            $sql .= ' WHERE ' . implode(' AND ', $where);
+        }
+        $sql .= ' GROUP BY raw_label ORDER BY total DESC, raw_label ASC';
+
+        $stmt = \db()->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll();
 
         $grouped = [];
         foreach ($rows as $row) {
@@ -286,36 +309,57 @@ class AuditRepository
         return $result;
     }
 
-    public function countsByType(): array
+    public function countsByType(array $filters = []): array
     {
-        return \db()->query('SELECT COALESCE(NULLIF(audit_type, ""), "Nao informado") AS label, COUNT(*) AS total
-            FROM audits
-            GROUP BY label
-            ORDER BY total DESC, label ASC')->fetchAll();
+        [$joins, $where, $params] = $this->buildAuditScope($filters);
+        $sql = 'SELECT COALESCE(NULLIF(a.audit_type, ""), "Nao informado") AS label, COUNT(DISTINCT a.id) AS total
+            FROM audits a' . $joins;
+        if ($where) {
+            $sql .= ' WHERE ' . implode(' AND ', $where);
+        }
+        $sql .= ' GROUP BY label ORDER BY total DESC, label ASC';
+
+        $stmt = \db()->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
     }
 
-    public function itemTotalsPerAudit(): array
+    public function itemTotalsPerAudit(array $filters = []): array
     {
-        return \db()->query('SELECT a.id, a.audit_code, a.audit_nup, a.requesting_body,
+        [$joins, $where, $params] = $this->buildAuditScope($filters, true);
+        $sql = 'SELECT a.id, a.audit_code, a.audit_nup, a.requesting_body,
                 SUM(ai.item_kind IN ("DETERMINACAO", "DETERMINAÇÃO")) AS determinacoes,
                 SUM(ai.item_kind IN ("RECOMENDACAO", "RECOMENDAÇÃO")) AS recomendacoes,
                 SUM(ai.item_kind IN ("CIENCIA", "CIÊNCIA")) AS ciencias,
                 COUNT(ai.id) AS total
-            FROM audits a
-            INNER JOIN audit_items ai ON ai.audit_id = a.id
-            WHERE ai.item_kind IN ("DETERMINACAO", "DETERMINAÇÃO", "RECOMENDACAO", "RECOMENDAÇÃO", "CIENCIA", "CIÊNCIA")
-            GROUP BY a.id, a.audit_code, a.audit_nup, a.requesting_body
+            FROM audits a' . $joins . '
+            WHERE ai.item_kind IN ("DETERMINACAO", "DETERMINAÇÃO", "RECOMENDACAO", "RECOMENDAÇÃO", "CIENCIA", "CIÊNCIA")';
+        if ($where) {
+            $sql .= ' AND ' . implode(' AND ', $where);
+        }
+        $sql .= ' GROUP BY a.id, a.audit_code, a.audit_nup, a.requesting_body
             HAVING total > 0
-            ORDER BY total DESC, a.audit_code ASC')->fetchAll();
+            ORDER BY total DESC, a.audit_code ASC';
+
+        $stmt = \db()->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
     }
 
-    public function itemImplementationSummary(): array
+    public function itemImplementationSummary(array $filters = []): array
     {
-        $rows = \db()->query('SELECT ai.*, a.id AS audit_id, a.audit_code, a.audit_nup, a.requesting_body
-            FROM audit_items ai
-            INNER JOIN audits a ON a.id = ai.audit_id
-            WHERE ai.item_kind IN ("DETERMINACAO", "DETERMINAÇÃO", "RECOMENDACAO", "RECOMENDAÇÃO", "CIENCIA", "CIÊNCIA")
-            ORDER BY a.audit_code ASC, ai.item_order ASC')->fetchAll();
+        [$joins, $where, $params] = $this->buildAuditScope($filters, true);
+        $sql = 'SELECT ai.control_body_status
+            FROM audits a' . $joins . '
+            WHERE ai.item_kind IN ("DETERMINACAO", "DETERMINAÇÃO", "RECOMENDACAO", "RECOMENDAÇÃO", "CIENCIA", "CIÊNCIA")';
+        if ($where) {
+            $sql .= ' AND ' . implode(' AND ', $where);
+        }
+        $sql .= ' ORDER BY a.audit_code ASC, ai.item_order ASC';
+
+        $stmt = \db()->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll();
 
         $groups = [];
         foreach ($rows as $row) {
@@ -333,13 +377,20 @@ class AuditRepository
         return $result;
     }
 
-    public function itemsByStatusGroup(?string $group = null, int $limit = 18): array
+    public function itemsByStatusGroup(?string $group = null, int $limit = 18, array $filters = []): array
     {
-        $rows = \db()->query('SELECT ai.*, a.id AS audit_id, a.audit_code, a.audit_nup, a.requesting_body
-            FROM audit_items ai
-            INNER JOIN audits a ON a.id = ai.audit_id
-            WHERE ai.item_kind IN ("DETERMINACAO", "DETERMINAÇÃO", "RECOMENDACAO", "RECOMENDAÇÃO", "CIENCIA", "CIÊNCIA")
-            ORDER BY a.audit_code ASC, ai.item_order ASC')->fetchAll();
+        [$joins, $where, $params] = $this->buildAuditScope($filters, true);
+        $sql = 'SELECT ai.*, a.id AS audit_id, a.audit_code, a.audit_nup, a.requesting_body
+            FROM audits a' . $joins . '
+            WHERE ai.item_kind IN ("DETERMINACAO", "DETERMINAÇÃO", "RECOMENDACAO", "RECOMENDAÇÃO", "CIENCIA", "CIÊNCIA")';
+        if ($where) {
+            $sql .= ' AND ' . implode(' AND ', $where);
+        }
+        $sql .= ' ORDER BY a.audit_code ASC, ai.item_order ASC';
+
+        $stmt = \db()->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll();
 
         $cards = [];
         foreach ($rows as $row) {
@@ -357,15 +408,22 @@ class AuditRepository
         return $cards;
     }
 
-    public function timelineEntries(int $year = 2026): array
+    public function timelineEntries(int $year = 2026, array $filters = []): array
     {
-        $stmt = \db()->prepare('SELECT id, audit_code, audit_nup, requesting_body, theme, audit_phase, current_owner,
-                deadline_label, deadline_date, deadline_is_current, flag_estimated, control_summary, related_processes
-            FROM audits
-            WHERE deadline_is_current = 1
-               OR (deadline_date BETWEEN ? AND ?)
-            ORDER BY deadline_is_current DESC, deadline_date ASC, audit_code ASC');
-        $stmt->execute(["{$year}-01-01", "{$year}-12-31"]);
+        [$joins, $where, $params] = $this->buildAuditScope($filters);
+        $sql = 'SELECT DISTINCT a.id, a.audit_code, a.audit_nup, a.requesting_body, a.theme, a.audit_phase, a.current_owner,
+                a.deadline_label, a.deadline_date, a.deadline_is_current, a.flag_estimated, a.control_summary, a.related_processes
+            FROM audits a' . $joins . '
+            WHERE (a.deadline_is_current = 1 OR (a.deadline_date BETWEEN ? AND ?))';
+        $timelineParams = ["{$year}-01-01", "{$year}-12-31"];
+        if ($where) {
+            $sql .= ' AND ' . implode(' AND ', $where);
+            $timelineParams = array_merge($timelineParams, $params);
+        }
+        $sql .= ' ORDER BY a.deadline_is_current DESC, a.deadline_date ASC, a.audit_code ASC';
+
+        $stmt = \db()->prepare($sql);
+        $stmt->execute($timelineParams);
         $rows = $stmt->fetchAll();
 
         return array_map(function (array $row): array {
@@ -461,17 +519,33 @@ class AuditRepository
         return [$where, $params];
     }
 
-    private function countPhaseLike(array $patterns): int
+    private function buildAuditScope(array $filters, bool $withItems = false): array
     {
+        $joins = $withItems || ($filters['item_kind'] ?? '') !== ''
+            ? ' INNER JOIN audit_items ai ON ai.audit_id = a.id'
+            : '';
+        [$where, $params] = $this->buildFilters($filters);
+
+        return [$joins, $where, $params];
+    }
+
+    private function countPhaseLike(array $patterns, array $filters = []): int
+    {
+        [$joins, $where, $params] = $this->buildAuditScope($filters);
         $clauses = [];
-        $params = [];
+        $phaseParams = [];
         foreach ($patterns as $pattern) {
-            $clauses[] = 'UPPER(audit_phase) LIKE ?';
-            $params[] = strtoupper($pattern);
+            $clauses[] = 'UPPER(a.audit_phase) LIKE ?';
+            $phaseParams[] = strtoupper($pattern);
         }
 
-        $stmt = \db()->prepare('SELECT COUNT(*) FROM audits WHERE ' . implode(' OR ', $clauses));
-        $stmt->execute($params);
+        $sql = 'SELECT COUNT(DISTINCT a.id) FROM audits a' . $joins . ' WHERE (' . implode(' OR ', $clauses) . ')';
+        if ($where) {
+            $sql .= ' AND ' . implode(' AND ', $where);
+        }
+
+        $stmt = \db()->prepare($sql);
+        $stmt->execute(array_merge($phaseParams, $params));
         return (int) $stmt->fetchColumn();
     }
 

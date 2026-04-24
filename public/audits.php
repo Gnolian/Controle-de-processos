@@ -62,7 +62,7 @@ $buildUrl = function (array $overrides = [], string $anchor = 'audit-results') u
 
 if ($moduleReady) {
     $audits = $repo->list($filters + ['item_kind' => $selectedItemKind]);
-    $metrics = $repo->dashboardMetrics();
+    $metrics = $repo->dashboardMetrics($filters);
 
     foreach (array_keys($filterOptions) as $field) {
         $filterOptions[$field] = $repo->distinctValues($field);
@@ -70,23 +70,23 @@ if ($moduleReady) {
 
     $byBody = array_map(
         fn (array $row) => $row + ['url' => $buildUrl(['requesting_body' => $row['label']], $resultAnchor)],
-        $repo->countsByBody()
+        $repo->countsByBody($filters)
     );
     $diligencePhase = array_map(
         fn (array $row) => $row + ['url' => $buildUrl(['audit_phase' => $row['label']], $resultAnchor)],
-        $repo->diligencePhaseOverview()
+        $repo->diligencePhaseOverview($filters)
     );
     $byType = array_map(
         fn (array $row) => $row + ['url' => $buildUrl(['audit_type' => $row['label']], $resultAnchor)],
-        $repo->countsByType()
+        $repo->countsByType($filters)
     );
-    $itemTotals = $repo->itemTotalsPerAudit();
+    $itemTotals = $repo->itemTotalsPerAudit($filters);
     $itemImplementation = array_map(
         fn (array $row) => $row + ['url' => $buildUrl(['item_status_group' => $row['label']], $rdcAnchor)],
-        $repo->itemImplementationSummary()
+        $repo->itemImplementationSummary($filters)
     );
-    $itemCards = $repo->itemsByStatusGroup($selectedItemStatus !== '' ? $selectedItemStatus : null);
-    $timelineEntries = $repo->timelineEntries(2026);
+    $itemCards = $repo->itemsByStatusGroup($selectedItemStatus !== '' ? $selectedItemStatus : null, 18, $filters);
+    $timelineEntries = $repo->timelineEntries(2026, $filters);
 }
 
 $timelineColumns = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
