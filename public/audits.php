@@ -9,21 +9,34 @@ $user = require_audit_access();
 $moduleReady = audits_schema_ready();
 $repo = new AuditRepository();
 
+$getMulti = static function (string $key): array {
+    $raw = $_GET[$key] ?? [];
+    $values = is_array($raw) ? $raw : [$raw];
+    return array_values(array_filter(array_map(
+        static fn (mixed $value): string => trim((string) $value),
+        $values
+    ), static fn (string $value): bool => $value !== ''));
+};
+
+$isSelected = static function (array $selectedValues, string $value): string {
+    return in_array($value, $selectedValues, true) ? 'selected' : '';
+};
+
 $filters = [
     'q' => trim((string) ($_GET['q'] ?? '')),
-    'audit_year' => trim((string) ($_GET['audit_year'] ?? '')),
-    'process_status' => trim((string) ($_GET['process_status'] ?? '')),
-    'requesting_body' => trim((string) ($_GET['requesting_body'] ?? '')),
-    'audit_type' => trim((string) ($_GET['audit_type'] ?? '')),
-    'theme' => trim((string) ($_GET['theme'] ?? '')),
-    'classification' => trim((string) ($_GET['classification'] ?? '')),
-    'audit_phase' => trim((string) ($_GET['audit_phase'] ?? '')),
-    'current_owner' => trim((string) ($_GET['current_owner'] ?? '')),
-    'item_kind' => trim((string) ($_GET['item_kind'] ?? '')),
+    'audit_year' => $getMulti('audit_year'),
+    'process_status' => $getMulti('process_status'),
+    'requesting_body' => $getMulti('requesting_body'),
+    'audit_type' => $getMulti('audit_type'),
+    'theme' => $getMulti('theme'),
+    'classification' => $getMulti('classification'),
+    'audit_phase' => $getMulti('audit_phase'),
+    'current_owner' => $getMulti('current_owner'),
+    'item_kind' => $getMulti('item_kind'),
 ];
 
 $selectedItemStatus = trim((string) ($_GET['item_status_group'] ?? ''));
-$selectedItemKind = $filters['item_kind'];
+$selectedItemKinds = $filters['item_kind'];
 $timelineYear = max(2026, (int) ($_GET['timeline_year'] ?? 2026));
 $resultAnchor = 'audit-results';
 $rdcAnchor = 'rdc-status-section';
@@ -62,6 +75,7 @@ $itemKindOptions = [
     'RECOMENDACAO' => 'Recomendacoes',
     'CIENCIA' => 'Ciencia',
 ];
+$rdcStatusHighlight = ['label' => 'Sem informacao', 'total' => 0];
 
 $buildUrl = function (array $overrides = [], string $anchor = 'audit-results') use ($filters, $selectedItemStatus, $timelineYear): string {
     $params = $filters;
@@ -69,7 +83,8 @@ $buildUrl = function (array $overrides = [], string $anchor = 'audit-results') u
         $params['item_status_group'] = $selectedItemStatus;
     }
     $params['timeline_year'] = $timelineYear;
-    $params = array_filter(array_merge($params, $overrides), static fn ($value) => $value !== '');
+    $params = array_merge($params, $overrides);
+    $params = array_filter($params, static fn ($value) => $value !== '' && $value !== []);
 
     $query = http_build_query($params);
     $base = url('audits.php');
@@ -85,15 +100,15 @@ if ($moduleReady) {
     }
 
     $byBody = array_map(
-        fn (array $row) => $row + ['url' => $buildUrl(['requesting_body' => $row['label']], $resultAnchor)],
+        fn (array $row) => $row + ['url' => $buildUrl(['requesting_body' => [$row['label']]], $resultAnchor)],
         $repo->countsByBody($filters)
     );
     $diligencePhase = array_map(
-        fn (array $row) => $row + ['url' => $buildUrl(['audit_phase' => $row['label']], $resultAnchor)],
+        fn (array $row) => $row + ['url' => $buildUrl(['audit_phase' => [$row['label']]], $resultAnchor)],
         $repo->diligencePhaseOverview($filters)
     );
     $byType = array_map(
-        fn (array $row) => $row + ['url' => $buildUrl(['audit_type' => $row['label']], $resultAnchor)],
+        fn (array $row) => $row + ['url' => $buildUrl(['audit_type' => [$row['label']]], $resultAnchor)],
         $repo->countsByType($filters)
     );
     $itemTotals = $repo->itemTotalsPerAudit($filters);
@@ -103,6 +118,17 @@ if ($moduleReady) {
     );
     $itemCards = $repo->itemsByStatusGroup($selectedItemStatus !== '' ? $selectedItemStatus : null, 18, $filters);
     $timelineEntries = $repo->timelineEntries($timelineYear, $filters);
+    if ($itemImplementation !== []) {
+        $rdcStatusHighlight = $itemImplementation[0];
+        if ($selectedItemStatus !== '') {
+            foreach ($itemImplementation as $row) {
+                if (($row['label'] ?? '') === $selectedItemStatus) {
+                    $rdcStatusHighlight = $row;
+                    break;
+                }
+            }
+        }
+    }
 }
 
 $timelineColumns = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
@@ -143,13 +169,14 @@ require __DIR__ . '/../views/nav.php';
         </div>
     </section>
 
-    <form class="filter-card" id="audit-filters" method="get" action="<?= url('audits.php#' . $resultAnchor) ?>">
+    <form class="filter-card" id="audit-filters" method="get" action="<?= url('audits.php') ?>">
         <input type="hidden" name="timeline_year" value="<?= (int) $timelineYear ?>">
         <?php if ($selectedItemStatus !== ''): ?>
             <input type="hidden" name="item_status_group" value="<?= e($selectedItemStatus) ?>">
         <?php endif; ?>
         <div class="card-head">
             <h2>Filtro de Auditorias</h2>
+            <span class="text-secondary">Nos campos de lista, voce pode selecionar mais de uma opcao.</span>
         </div>
         <div class="row g-3 align-items-end">
             <div class="col-lg-4">
@@ -167,20 +194,19 @@ require __DIR__ . '/../views/nav.php';
             ] as $field => $label): ?>
                 <div class="col-lg-4 col-xl-3">
                     <label class="form-label"><?= e($label) ?></label>
-                    <select class="form-select" name="<?= e($field) ?>" <?= !$moduleReady ? 'disabled' : '' ?>>
-                        <option value="">Todos</option>
+                    <select class="form-select filter-multiselect" name="<?= e($field) ?>[]" multiple size="4" <?= !$moduleReady ? 'disabled' : '' ?>>
                         <?php foreach ($filterOptions[$field] as $option): ?>
-                            <option value="<?= e((string) $option['value']) ?>" <?= selected($filters[$field], (string) $option['value']) ?>><?= e((string) $option['value']) ?></option>
+                            <?php $value = (string) $option['value']; ?>
+                            <option value="<?= e($value) ?>" <?= $isSelected($filters[$field], $value) ?>><?= e($value) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
             <?php endforeach; ?>
             <div class="col-lg-4 col-xl-3">
                 <label class="form-label">RDC</label>
-                <select class="form-select" name="item_kind" <?= !$moduleReady ? 'disabled' : '' ?>>
-                    <option value="">Todos</option>
+                <select class="form-select filter-multiselect" name="item_kind[]" multiple size="3" <?= !$moduleReady ? 'disabled' : '' ?>>
                     <?php foreach ($itemKindOptions as $value => $label): ?>
-                        <option value="<?= e($value) ?>" <?= selected($selectedItemKind, $value) ?>><?= e($label) ?></option>
+                        <option value="<?= e($value) ?>" <?= $isSelected($selectedItemKinds, $value) ?>><?= e($label) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -192,6 +218,26 @@ require __DIR__ . '/../views/nav.php';
     </form>
 
     <section class="audit-universe-grid">
+        <article class="metric-card universe-core">
+            <small class="section-kicker">Universo filtrado</small>
+            <span>Numero de auditorias</span>
+            <strong><?= (int) $metrics['total'] ?></strong>
+            <p class="text-secondary mb-0">Esse card representa o universo atual do filtro aplicado em toda a pagina.</p>
+            <i class="bi bi-bullseye"></i>
+        </article>
+        <article class="metric-card rdc-core">
+            <small class="section-kicker">RDC gerados</small>
+            <span>Quantidade de RDC</span>
+            <strong><?= (int) $metrics['rdc_total'] ?></strong>
+            <p class="text-secondary mb-0">As auditorias geraram <?= (int) $metrics['rdc_total'] ?> quantidades de RDC.</p>
+            <i class="bi bi-diagram-3"></i>
+        </article>
+        <article class="metric-card rdc-status-card success">
+            <span>Situacao do RDC</span>
+            <strong><?= (int) $rdcStatusHighlight['total'] ?></strong>
+            <p class="metric-card-caption"><?= e($rdcStatusHighlight['label']) ?></p>
+            <i class="bi bi-check2-square"></i>
+        </article>
         <article class="metric-card universe-branch warning">
             <span>Em diligencia/Relatorio</span>
             <strong><?= (int) $metrics['diligence_report'] ?></strong>
@@ -202,40 +248,28 @@ require __DIR__ . '/../views/nav.php';
             <strong><?= (int) $metrics['monitoring_pending'] ?></strong>
             <i class="bi bi-hourglass-split"></i>
         </article>
-        <article class="metric-card universe-core">
-            <small class="section-kicker">Universo filtrado</small>
-            <span>Numero de auditorias</span>
-            <strong><?= (int) $metrics['total'] ?></strong>
-            <p class="text-secondary mb-0">Esse card representa o universo atual do filtro aplicado em toda a pagina.</p>
-            <i class="bi bi-bullseye"></i>
-        </article>
-        <article class="metric-card universe-branch success">
-            <span>Quantidade de RDC</span>
-            <strong><?= (int) $metrics['rdc_total'] ?></strong>
-            <i class="bi bi-diagram-3"></i>
-        </article>
         <article class="metric-card universe-branch success">
             <span>Demais fases</span>
             <strong><?= (int) $metrics['other_phases'] ?></strong>
             <i class="bi bi-grid"></i>
         </article>
         <article class="metric-card universe-branch">
-            <span>1º monitoramento</span>
+            <span>1o monitoramento</span>
             <strong><?= (int) $metrics['first_monitoring'] ?></strong>
             <i class="bi bi-1-circle"></i>
         </article>
         <article class="metric-card universe-branch">
-            <span>2º monitoramento</span>
+            <span>2o monitoramento</span>
             <strong><?= (int) $metrics['second_monitoring'] ?></strong>
             <i class="bi bi-2-circle"></i>
         </article>
         <article class="metric-card universe-branch">
-            <span>3º monitoramento</span>
+            <span>3o monitoramento</span>
             <strong><?= (int) $metrics['third_monitoring'] ?></strong>
             <i class="bi bi-3-circle"></i>
         </article>
         <article class="metric-card universe-branch">
-            <span>4º monitoramento</span>
+            <span>4o monitoramento</span>
             <strong><?= (int) $metrics['fourth_monitoring'] ?></strong>
             <i class="bi bi-4-circle"></i>
         </article>

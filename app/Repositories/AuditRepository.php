@@ -199,9 +199,9 @@ class AuditRepository
         [$where, $params] = $this->buildFilters($filters);
         $sql = 'SELECT a.*,
                 COUNT(ai.id) AS total_items,
-                SUM(ai.item_kind IN ("DETERMINACAO", "DETERMINAÇÃO")) AS total_determinacoes,
-                SUM(ai.item_kind IN ("RECOMENDACAO", "RECOMENDAÇÃO")) AS total_recomendacoes,
-                SUM(ai.item_kind IN ("CIENCIA", "CIÊNCIA")) AS total_ciencias
+                SUM(ai.item_kind IN ("DETERMINACAO", "DETERMINAÃ‡ÃƒO")) AS total_determinacoes,
+                SUM(ai.item_kind IN ("RECOMENDACAO", "RECOMENDAÃ‡ÃƒO")) AS total_recomendacoes,
+                SUM(ai.item_kind IN ("CIENCIA", "CIÃŠNCIA")) AS total_ciencias
             FROM audits a
             LEFT JOIN audit_items ai ON ai.audit_id = a.id';
 
@@ -237,10 +237,10 @@ class AuditRepository
     {
         $diligenceReport = $this->countPhaseLike(['%DILIGENC%', '%RELATOR%'], $filters);
         $monitoringPending = $this->countPhaseLike(['%INICIAR%'], $filters);
-        $first = $this->countPhaseLike(['1%', 'PRIMEIRO%', '%1O%MONITORAMENTO%', '%1º%MONITORAMENTO%'], $filters);
-        $second = $this->countPhaseLike(['2%', 'SEGUNDO%', '%2O%MONITORAMENTO%', '%2º%MONITORAMENTO%'], $filters);
-        $third = $this->countPhaseLike(['3%', 'TERCEIRO%', '%3O%MONITORAMENTO%', '%3º%MONITORAMENTO%'], $filters);
-        $fourth = $this->countPhaseLike(['4%', 'QUARTO%', '%4O%MONITORAMENTO%', '%4º%MONITORAMENTO%'], $filters);
+        $first = $this->countPhaseLike(['1%', 'PRIMEIRO%', '%1O%MONITORAMENTO%', '%1Âº%MONITORAMENTO%'], $filters);
+        $second = $this->countPhaseLike(['2%', 'SEGUNDO%', '%2O%MONITORAMENTO%', '%2Âº%MONITORAMENTO%'], $filters);
+        $third = $this->countPhaseLike(['3%', 'TERCEIRO%', '%3O%MONITORAMENTO%', '%3Âº%MONITORAMENTO%'], $filters);
+        $fourth = $this->countPhaseLike(['4%', 'QUARTO%', '%4O%MONITORAMENTO%', '%4Âº%MONITORAMENTO%'], $filters);
 
         [$joins, $where, $params] = $this->buildAuditScope($filters);
         $sql = 'SELECT COUNT(DISTINCT a.id) FROM audits a' . $joins;
@@ -329,12 +329,12 @@ class AuditRepository
     {
         [$joins, $where, $params] = $this->buildAuditScope($filters, true);
         $sql = 'SELECT a.id, a.audit_code, a.audit_nup, a.requesting_body,
-                SUM(ai.item_kind IN ("DETERMINACAO", "DETERMINAÇÃO")) AS determinacoes,
-                SUM(ai.item_kind IN ("RECOMENDACAO", "RECOMENDAÇÃO")) AS recomendacoes,
-                SUM(ai.item_kind IN ("CIENCIA", "CIÊNCIA")) AS ciencias,
+                SUM(ai.item_kind IN ("DETERMINACAO", "DETERMINAÃ‡ÃƒO")) AS determinacoes,
+                SUM(ai.item_kind IN ("RECOMENDACAO", "RECOMENDAÃ‡ÃƒO")) AS recomendacoes,
+                SUM(ai.item_kind IN ("CIENCIA", "CIÃŠNCIA")) AS ciencias,
                 COUNT(ai.id) AS total
             FROM audits a' . $joins . '
-            WHERE ai.item_kind IN ("DETERMINACAO", "DETERMINAÇÃO", "RECOMENDACAO", "RECOMENDAÇÃO", "CIENCIA", "CIÊNCIA")';
+            WHERE ai.item_kind IN ("DETERMINACAO", "DETERMINAÃ‡ÃƒO", "RECOMENDACAO", "RECOMENDAÃ‡ÃƒO", "CIENCIA", "CIÃŠNCIA")';
         if ($where) {
             $sql .= ' AND ' . implode(' AND ', $where);
         }
@@ -352,7 +352,7 @@ class AuditRepository
         [$joins, $where, $params] = $this->buildAuditScope($filters, true);
         $sql = 'SELECT ai.control_body_status
             FROM audits a' . $joins . '
-            WHERE ai.item_kind IN ("DETERMINACAO", "DETERMINAÇÃO", "RECOMENDACAO", "RECOMENDAÇÃO", "CIENCIA", "CIÊNCIA")';
+            WHERE ai.item_kind IN ("DETERMINACAO", "DETERMINAÃ‡ÃƒO", "RECOMENDACAO", "RECOMENDAÃ‡ÃƒO", "CIENCIA", "CIÃŠNCIA")';
         if ($where) {
             $sql .= ' AND ' . implode(' AND ', $where);
         }
@@ -383,7 +383,7 @@ class AuditRepository
         [$joins, $where, $params] = $this->buildAuditScope($filters, true);
         $sql = 'SELECT ai.*, a.id AS audit_id, a.audit_code, a.audit_nup, a.requesting_body
             FROM audits a' . $joins . '
-            WHERE ai.item_kind IN ("DETERMINACAO", "DETERMINAÇÃO", "RECOMENDACAO", "RECOMENDAÇÃO", "CIENCIA", "CIÊNCIA")';
+            WHERE ai.item_kind IN ("DETERMINACAO", "DETERMINAÃ‡ÃƒO", "RECOMENDACAO", "RECOMENDAÃ‡ÃƒO", "CIENCIA", "CIÃŠNCIA")';
         if ($where) {
             $sql .= ' AND ' . implode(' AND ', $where);
         }
@@ -494,32 +494,48 @@ class AuditRepository
             'current_owner' => 'a.current_owner',
             'audit_type' => 'a.audit_type',
         ] as $filter => $column) {
-            if (($filters[$filter] ?? '') !== '') {
-                $where[] = "{$column} = ?";
-                $params[] = $filters[$filter];
+            $values = $this->normalizeFilterValues($filters[$filter] ?? '');
+            if ($values === []) {
+                continue;
             }
+
+            $placeholders = implode(', ', array_fill(0, count($values), '?'));
+            $where[] = "{$column} IN ({$placeholders})";
+            array_push($params, ...$values);
         }
 
-        if (($filters['audit_phase'] ?? '') !== '') {
-            if ($filters['audit_phase'] === 'Em diligencia') {
-                $where[] = 'UPPER(a.audit_phase) LIKE ?';
-                $params[] = '%DILIG%';
-            } else {
-                $where[] = 'a.audit_phase = ?';
-                $params[] = $filters['audit_phase'];
+        $phases = $this->normalizeFilterValues($filters['audit_phase'] ?? '');
+        if ($phases !== []) {
+            $phaseClauses = [];
+            foreach ($phases as $phase) {
+                if ($phase === 'Em diligencia') {
+                    $phaseClauses[] = 'UPPER(a.audit_phase) LIKE ?';
+                    $params[] = '%DILIG%';
+                } else {
+                    $phaseClauses[] = 'a.audit_phase = ?';
+                    $params[] = $phase;
+                }
             }
+            $where[] = '(' . implode(' OR ', $phaseClauses) . ')';
         }
 
-        if (($filters['item_kind'] ?? '') !== '') {
-            $accented = match ($filters['item_kind']) {
-                'DETERMINACAO' => 'DETERMINAÇÃO',
-                'RECOMENDACAO' => 'RECOMENDAÇÃO',
-                'CIENCIA' => 'CIÊNCIA',
-                default => $filters['item_kind'],
-            };
-            $where[] = 'ai.item_kind IN (?, ?)';
-            $params[] = $filters['item_kind'];
-            $params[] = $accented;
+        $itemKinds = $this->normalizeFilterValues($filters['item_kind'] ?? '');
+        if ($itemKinds !== []) {
+            $allKinds = [];
+            foreach ($itemKinds as $itemKind) {
+                $accented = match ($itemKind) {
+                    'DETERMINACAO' => 'DETERMINAÃ‡ÃƒO',
+                    'RECOMENDACAO' => 'RECOMENDAÃ‡ÃƒO',
+                    'CIENCIA' => 'CIÃŠNCIA',
+                    default => $itemKind,
+                };
+                $allKinds[] = $itemKind;
+                $allKinds[] = $accented;
+            }
+            $allKinds = array_values(array_unique($allKinds));
+            $placeholders = implode(', ', array_fill(0, count($allKinds), '?'));
+            $where[] = "ai.item_kind IN ({$placeholders})";
+            array_push($params, ...$allKinds);
         }
 
         return [$where, $params];
@@ -527,7 +543,7 @@ class AuditRepository
 
     private function buildAuditScope(array $filters, bool $withItems = false): array
     {
-        $joins = $withItems || ($filters['item_kind'] ?? '') !== ''
+        $joins = $withItems || $this->normalizeFilterValues($filters['item_kind'] ?? '') !== []
             ? ' INNER JOIN audit_items ai ON ai.audit_id = a.id'
             : '';
         [$where, $params] = $this->buildFilters($filters);
@@ -559,7 +575,7 @@ class AuditRepository
     {
         [$joins, $where, $params] = $this->buildAuditScope($filters, true);
         $sql = 'SELECT COUNT(ai.id) FROM audits a' . $joins . '
-            WHERE ai.item_kind IN ("DETERMINACAO", "DETERMINAÇÃO", "RECOMENDACAO", "RECOMENDAÇÃO", "CIENCIA", "CIÊNCIA")';
+            WHERE ai.item_kind IN ("DETERMINACAO", "DETERMINAÃ‡ÃƒO", "RECOMENDACAO", "RECOMENDAÃ‡ÃƒO", "CIENCIA", "CIÃŠNCIA")';
         if ($where) {
             $sql .= ' AND ' . implode(' AND ', $where);
         }
@@ -599,5 +615,18 @@ class AuditRepository
         $normalized = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
         $value = $normalized !== false ? $normalized : $value;
         return preg_replace('/[^A-Z0-9]+/', '', $value) ?? '';
+    }
+
+    private function normalizeFilterValues(mixed $value): array
+    {
+        if (is_array($value)) {
+            return array_values(array_filter(array_map(
+                static fn (mixed $item): string => trim((string) $item),
+                $value
+            ), static fn (string $item): bool => $item !== ''));
+        }
+
+        $scalar = trim((string) $value);
+        return $scalar === '' ? [] : [$scalar];
     }
 }

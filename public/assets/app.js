@@ -18,7 +18,7 @@ document.querySelectorAll('.clickable-row[data-href]').forEach((row) => {
 
 const auditFilters = document.querySelector('#audit-filters');
 if (auditFilters) {
-  auditFilters.querySelectorAll('select').forEach((select) => {
+  auditFilters.querySelectorAll('select:not([multiple])').forEach((select) => {
     select.addEventListener('change', () => {
       auditFilters.requestSubmit();
     });
