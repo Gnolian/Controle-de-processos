@@ -237,8 +237,8 @@ require __DIR__ . '/../views/nav.php';
         </div>
     </form>
 
-    <section class="audit-dashboard-cards">
-        <div class="audit-dashboard-top">
+    <section class="audit-dashboard-overview">
+        <div class="audit-overview-top">
             <article class="metric-card universe-core">
                 <small class="section-kicker">Universo filtrado</small>
                 <span>Número de Auditorias</span>
@@ -256,8 +256,8 @@ require __DIR__ . '/../views/nav.php';
             </article>
         </div>
 
-        <div class="audit-dashboard-bottom">
-            <div class="audit-dashboard-group">
+        <div class="audit-overview-bottom">
+            <div class="audit-overview-branch audit-overview-branch--universe">
                 <article class="metric-card universe-branch warning">
                     <span>Em Diligência/Relatório</span>
                     <strong><?= (int) $metrics['diligence_report'] ?></strong>
@@ -290,7 +290,7 @@ require __DIR__ . '/../views/nav.php';
                 </article>
             </div>
 
-            <div class="audit-dashboard-group audit-dashboard-group--rdc">
+            <div class="audit-overview-branch audit-overview-branch--rdc">
                 <article class="metric-card rdc-branch">
                     <span>Determinações</span>
                     <strong><?= $totalDeterminacoes ?></strong>

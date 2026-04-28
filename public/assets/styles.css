@@ -236,33 +236,29 @@ a {
     grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.audit-dashboard-cards {
+.audit-dashboard-overview {
     display: grid;
     gap: 16px;
     margin-bottom: 24px;
 }
 
-.audit-dashboard-top {
+.audit-overview-top {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px;
 }
 
-.audit-dashboard-bottom {
+.audit-overview-bottom {
     display: grid;
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px;
     align-items: start;
 }
 
-.audit-dashboard-group {
+.audit-overview-branch {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px;
-}
-
-.audit-dashboard-group--rdc {
-    grid-template-columns: 1fr;
 }
 
 .filter-select {
@@ -368,11 +364,11 @@ a {
 }
 
 .universe-core {
-    min-height: 248px;
+    min-height: 210px;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 28px 32px;
+    padding: 24px 28px;
     background:
         radial-gradient(circle at top right, rgba(15, 118, 110, 0.10), transparent 34%),
         linear-gradient(135deg, rgba(15, 118, 110, 0.08), rgba(255, 255, 255, 0.98) 55%),
@@ -380,22 +376,22 @@ a {
 }
 
 .universe-core strong {
-    font-size: 68px;
+    font-size: 58px;
     line-height: 1;
-    margin: 10px 0 14px;
+    margin: 10px 0 12px;
 }
 
 .universe-core i {
-    font-size: 72px;
+    font-size: 64px;
     color: rgba(15, 118, 110, 0.12);
 }
 
 .rdc-core {
-    min-height: 248px;
+    min-height: 210px;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 28px 32px;
+    padding: 24px 28px;
     background:
         radial-gradient(circle at top left, rgba(37, 99, 235, 0.10), transparent 34%),
         linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(255, 255, 255, 0.98) 55%),
@@ -403,13 +399,13 @@ a {
 }
 
 .rdc-core strong {
-    font-size: 62px;
+    font-size: 56px;
     line-height: 1;
-    margin: 10px 0 14px;
+    margin: 10px 0 12px;
 }
 
 .rdc-core i {
-    font-size: 68px;
+    font-size: 62px;
     color: rgba(37, 99, 235, 0.14);
 }
 
@@ -421,10 +417,14 @@ a {
 
 .universe-branch {
     min-height: 126px;
+    border-color: rgba(15, 118, 110, 0.14);
+    background: linear-gradient(180deg, rgba(15, 118, 110, 0.04), #fff 55%);
 }
 
 .rdc-branch {
     min-height: 126px;
+    border-color: rgba(37, 99, 235, 0.14);
+    background: linear-gradient(180deg, rgba(37, 99, 235, 0.04), #fff 55%);
 }
 
 .app-card,
@@ -852,15 +852,12 @@ a {
 
     .metric-grid,
     .metric-grid.xl,
-    .audit-dashboard-top {
+    .audit-overview-top,
+    .audit-overview-bottom {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .audit-dashboard-bottom {
-        grid-template-columns: 1fr;
-    }
-
-    .audit-dashboard-group {
+    .audit-overview-branch {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
@@ -890,12 +887,13 @@ a {
 
     .metric-grid,
     .metric-grid.xl,
-    .audit-dashboard-top,
+    .audit-overview-top,
+    .audit-overview-bottom,
     .sidebar-nav {
         grid-template-columns: 1fr;
     }
 
-    .audit-dashboard-group {
+    .audit-overview-branch {
         grid-template-columns: 1fr;
     }
 
