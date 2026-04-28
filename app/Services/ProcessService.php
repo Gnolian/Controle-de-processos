@@ -34,7 +34,7 @@ class ProcessService
         } else {
             $before = $this->processes->find($id, $user);
             if (!$before) {
-                throw new RuntimeException('Processo nao encontrado.');
+                throw new RuntimeException('Processo não encontrado.');
             }
 
             $existing = $this->processes->findByNumber((string) $payload['process_number']);
@@ -53,7 +53,7 @@ class ProcessService
     {
         $process = $this->processes->find($id, $user);
         if (!$process) {
-            throw new RuntimeException('Processo nao encontrado.');
+            throw new RuntimeException('Processo não encontrado.');
         }
 
         $this->audit->record($id, (int) $user['id'], 'processo', $process['process_number'], 'excluido', 'sistema interno');
@@ -79,7 +79,7 @@ class ProcessService
         if ($payload['deadline_type'] === 'data') {
             foreach (['gab_signature_date', 'internal_deadline_gab', 'adjusted_internal_deadline', 'external_deadline_mds', 'gab_sent_date'] as $field) {
                 if (($payload[$field] ?? null) === null) {
-                    throw new RuntimeException('Preencha todos os campos de prazos e revisao ou selecione Tempo Habil.');
+                    throw new RuntimeException('Preencha todos os campos de prazos e revisão ou selecione Tempo Hábil.');
                 }
             }
         }

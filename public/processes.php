@@ -49,7 +49,7 @@ require __DIR__ . '/../views/nav.php';
         <div class="row g-3 align-items-end">
             <div class="col-lg-4">
                 <label class="form-label">Busca global</label>
-                <input class="form-control" name="q" value="<?= e($filters['q']) ?>" placeholder="Numero, descricao, orgao, bloco ou anotacao">
+                <input class="form-control" name="q" value="<?= e($filters['q']) ?>" placeholder="Número, descrição, órgão, bloco ou anotação">
             </div>
             <div class="col-lg-2">
                 <label class="form-label">Status</label>
@@ -70,7 +70,7 @@ require __DIR__ . '/../views/nav.php';
                 </select>
             </div>
             <div class="col-lg-2">
-                <label class="form-label">Revisao</label>
+                <label class="form-label">Revisão</label>
                 <select class="form-select" name="andrea_review_status">
                     <option value="">Todas</option>
                     <?php foreach (config('dropdowns.workflow') as $status): ?>
@@ -83,17 +83,17 @@ require __DIR__ . '/../views/nav.php';
                 <select class="form-select" name="deadline">
                     <option value="">Todos</option>
                     <option value="late" <?= selected($filters['deadline'], 'late') ?>>Atrasados</option>
-                    <option value="tomorrow" <?= selected($filters['deadline'], 'tomorrow') ?>>Amanha</option>
+                    <option value="tomorrow" <?= selected($filters['deadline'], 'tomorrow') ?>>Amanhã</option>
                     <option value="three_days" <?= selected($filters['deadline'], 'three_days') ?>>3 dias</option>
-                    <option value="tempo_habil" <?= selected($filters['deadline'], 'tempo_habil') ?>>Tempo Habil</option>
+                    <option value="tempo_habil" <?= selected($filters['deadline'], 'tempo_habil') ?>>Tempo Hábil</option>
                 </select>
             </div>
             <div class="col-lg-3">
-                <label class="form-label">Responsavel</label>
+                <label class="form-label">Responsável</label>
                 <input class="form-control" name="owner" value="<?= e($filters['owner']) ?>">
             </div>
             <div class="col-lg-3">
-                <label class="form-label">Orgao solicitante</label>
+                <label class="form-label">Órgão solicitante</label>
                 <input class="form-control" name="requesting_agency" value="<?= e($filters['requesting_agency']) ?>">
             </div>
             <div class="col-lg-6 d-flex gap-2">
@@ -109,12 +109,12 @@ require __DIR__ . '/../views/nav.php';
                 <thead>
                     <tr>
                         <th>Processo</th>
-                        <th>Responsavel</th>
+                        <th>Responsável</th>
                         <th>Resumo</th>
                         <th>Prazo</th>
                         <th>Fluxo</th>
                         <th>Status</th>
-                        <th class="text-end">Acoes</th>
+                        <th class="text-end">Ações</th>
                     </tr>
                 </thead>
                 <tbody>

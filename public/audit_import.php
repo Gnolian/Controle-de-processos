@@ -68,8 +68,8 @@ require __DIR__ . '/../views/nav.php';
             </label>
             <div class="alert alert-info mb-0">
                 Esta tela importa diretamente os arquivos tratados, com campos repetidos e prontos para carga.
-                Use o arquivo principal das auditorias e o arquivo complementar com determinacoes, recomendacoes e ciencias.
-                Se a planilha tratada ganhar novas colunas, mantenha os cabecalhos para reaproveitar a rotina de carga.
+                Use o arquivo principal das auditorias e o arquivo complementar com determinações, recomendações e ciências.
+                Se a planilha tratada ganhar novas colunas, mantenha os cabeçalhos para reaproveitar a rotina de carga.
             </div>
             <div class="form-actions">
                 <button class="btn btn-primary" type="submit"><i class="bi bi-cloud-upload"></i> Importar base tratada</button>

@@ -268,7 +268,7 @@ class AuditRepository
     public function countsByBody(array $filters = []): array
     {
         [$joins, $where, $params] = $this->buildAuditScope($filters);
-        $sql = 'SELECT COALESCE(NULLIF(a.requesting_body, ""), "Nao informado") AS label, COUNT(DISTINCT a.id) AS total
+        $sql = 'SELECT COALESCE(NULLIF(a.requesting_body, ""), "Não informado") AS label, COUNT(DISTINCT a.id) AS total
             FROM audits a' . $joins;
         if ($where) {
             $sql .= ' WHERE ' . implode(' AND ', $where);
@@ -283,7 +283,7 @@ class AuditRepository
     public function diligencePhaseOverview(array $filters = []): array
     {
         [$joins, $where, $params] = $this->buildAuditScope($filters);
-        $sql = 'SELECT COALESCE(NULLIF(a.audit_phase, ""), "Nao informado") AS raw_label, COUNT(DISTINCT a.id) AS total
+        $sql = 'SELECT COALESCE(NULLIF(a.audit_phase, ""), "Não informado") AS raw_label, COUNT(DISTINCT a.id) AS total
             FROM audits a' . $joins;
         if ($where) {
             $sql .= ' WHERE ' . implode(' AND ', $where);
@@ -313,7 +313,7 @@ class AuditRepository
     public function countsByType(array $filters = []): array
     {
         [$joins, $where, $params] = $this->buildAuditScope($filters);
-        $sql = 'SELECT COALESCE(NULLIF(a.audit_type, ""), "Nao informado") AS label, COUNT(DISTINCT a.id) AS total
+        $sql = 'SELECT COALESCE(NULLIF(a.audit_type, ""), "Não informado") AS label, COUNT(DISTINCT a.id) AS total
             FROM audits a' . $joins;
         if ($where) {
             $sql .= ' WHERE ' . implode(' AND ', $where);
@@ -523,7 +523,7 @@ class AuditRepository
         if ($phases !== []) {
             $phaseClauses = [];
             foreach ($phases as $phase) {
-                if ($phase === 'Em diligencia') {
+                if ($phase === 'Em diligência') {
                     $phaseClauses[] = 'UPPER(a.audit_phase) LIKE ?';
                     $params[] = '%DILIG%';
                 } else {
@@ -618,11 +618,11 @@ class AuditRepository
         $token = $this->normalizeToken($value);
 
         return match (true) {
-            $token === '' || $token === 'NAO' || $token === 'NAINFORMADA' || $token === 'NAOAPLICA' || $token === 'N/A' => 'Nao informada',
+            $token === '' || $token === 'NAO' || $token === 'NAINFORMADA' || $token === 'NAOAPLICA' || $token === 'N/A' => 'Não informada',
             str_contains($token, 'PERDADEOBJETO') => 'Perda de objeto',
             str_contains($token, 'IMPLEMENTADA') || str_contains($token, 'CUMPRIDA') => 'Implementada',
-            str_contains($token, 'EMIMPLEMENTACAO') || str_contains($token, 'IMPLEMENTACAO') => 'Em implementacao',
-            default => trim($value) !== '' ? trim($value) : 'Nao informada',
+            str_contains($token, 'EMIMPLEMENTACAO') || str_contains($token, 'IMPLEMENTACAO') => 'Em implementação',
+            default => trim($value) !== '' ? trim($value) : 'Não informada',
         };
     }
 
@@ -631,8 +631,8 @@ class AuditRepository
         $token = $this->normalizeToken($phase);
 
         return match (true) {
-            $token === '' => 'Nao informado',
-            str_contains($token, 'DILIGENC') => 'Em diligencia',
+            $token === '' => 'Não informado',
+            str_contains($token, 'DILIGENC') => 'Em diligência',
             default => $phase,
         };
     }
@@ -662,9 +662,9 @@ class AuditRepository
     {
         return match ($status) {
             'Implementada' => ['(UPPER(ai.control_body_status) LIKE ? OR UPPER(ai.control_body_status) LIKE ?)', ['%IMPLEMENTADA%', '%CUMPRIDA%']],
-            'Em implementacao' => ['(UPPER(ai.control_body_status) LIKE ? OR UPPER(ai.control_body_status) LIKE ? OR UPPER(ai.control_body_status) LIKE ?)', ['%EM IMPLEMENT%', '%IMPLEMENTACAO%', '%IMPLEMENTAÇÃO%']],
+            'Em implementação' => ['(UPPER(ai.control_body_status) LIKE ? OR UPPER(ai.control_body_status) LIKE ? OR UPPER(ai.control_body_status) LIKE ?)', ['%EM IMPLEMENT%', '%IMPLEMENTACAO%', '%IMPLEMENTAÇÃO%']],
             'Perda de objeto' => ['(UPPER(ai.control_body_status) LIKE ? OR UPPER(ai.control_body_status) LIKE ?)', ['%PERDA DE OBJETO%', '%PERDADEOBJETO%']],
-            'Nao informada' => ['(ai.control_body_status IS NULL OR TRIM(ai.control_body_status) = "" OR UPPER(ai.control_body_status) IN ("NAO", "NÃO", "N/A", "NAO INFORMADA", "NÃO INFORMADA", "NAO APLICA", "NÃO APLICA"))', []],
+            'Não informada' => ['(ai.control_body_status IS NULL OR TRIM(ai.control_body_status) = "" OR UPPER(ai.control_body_status) IN ("NAO", "NÃO", "N/A", "NAO INFORMADA", "NÃO INFORMADA", "NAO APLICA", "NÃO APLICA"))', []],
             default => ['ai.control_body_status = ?', [$status]],
         };
     }

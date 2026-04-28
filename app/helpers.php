@@ -107,7 +107,7 @@ function require_role(array $roles): array
 {
     $user = require_login();
     if (!in_array($user['role'], $roles, true)) {
-        flash('Voce nao tem permissao para acessar esta tela.', 'danger');
+        flash('Você não tem permissão para acessar esta tela.', 'danger');
         redirect('dashboard.php');
     }
 
@@ -118,7 +118,7 @@ function require_audit_access(): array
 {
     $user = require_login();
     if (!can_access_audits($user)) {
-        flash('Voce nao tem permissao para acessar a area de auditorias.', 'danger');
+        flash('Você não tem permissão para acessar a área de auditorias.', 'danger');
         redirect('dashboard.php');
     }
 
@@ -166,7 +166,7 @@ function verify_csrf(): void
 {
     $token = (string) ($_POST['csrf_token'] ?? '');
     if (!$token || !hash_equals((string) ($_SESSION['csrf_token'] ?? ''), $token)) {
-        throw new RuntimeException('Sessao expirada. Recarregue a pagina e tente novamente.');
+        throw new RuntimeException('Sessão expirada. Recarregue a página e tente novamente.');
     }
 }
 

@@ -30,12 +30,12 @@ function workflow_badge(?string $status): string
 function deadline_badge(array $process): string
 {
     if (($process['deadline_type'] ?? 'data') === 'tempo_habil') {
-        return '<span class="badge rounded-pill text-bg-secondary"><i class="bi bi-briefcase"></i> Tempo Habil</span>';
+        return '<span class="badge rounded-pill text-bg-secondary"><i class="bi bi-briefcase"></i> Tempo Hábil</span>';
     }
 
     $deadline = $process['external_deadline_mds'] ?: ($process['adjusted_internal_deadline'] ?: $process['internal_deadline_gab']);
     if (!$deadline) {
-        return '<span class="badge rounded-pill text-bg-secondary"><i class="bi bi-briefcase"></i> Tempo Habil</span>';
+        return '<span class="badge rounded-pill text-bg-secondary"><i class="bi bi-briefcase"></i> Tempo Hábil</span>';
     }
 
     $today = strtotime(date('Y-m-d'));
@@ -132,7 +132,7 @@ function field_checkbox(string $name, string $label, array $values, string $help
         <label class="form-label d-block"><?= e($label) ?></label>
         <div class="form-check form-switch border rounded-3 px-3 py-2 bg-light-subtle">
             <input class="form-check-input" type="checkbox" role="switch" id="<?= e($name) ?>" name="<?= e($name) ?>" value="1" <?= $checked ? 'checked' : '' ?>>
-            <label class="form-check-label ms-2" for="<?= e($name) ?>"><?= $checked ? 'Sim' : 'Nao' ?></label>
+            <label class="form-check-label ms-2" for="<?= e($name) ?>"><?= $checked ? 'Sim' : 'Não' ?></label>
             <?php if ($help !== ''): ?>
                 <small class="d-block text-secondary mt-1"><?= e($help) ?></small>
             <?php endif; ?>
@@ -144,9 +144,9 @@ function field_checkbox(string $name, string $label, array $values, string $help
 function audit_item_kind_label(?string $kind): string
 {
     return match ($kind) {
-        'DETERMINACAO', 'DETERMINAÇÃO' => 'Determinacao',
-        'RECOMENDACAO', 'RECOMENDAÇÃO' => 'Recomendacao',
-        'CIENCIA', 'CIÊNCIA' => 'Ciencia',
+        'DETERMINACAO', 'DETERMINAÃ‡ÃƒO' => 'Determinação',
+        'RECOMENDACAO', 'RECOMENDAÃ‡ÃƒO' => 'Recomendação',
+        'CIENCIA', 'CIÃŠNCIA' => 'Ciência',
         default => (string) ($kind ?: '-'),
     };
 }

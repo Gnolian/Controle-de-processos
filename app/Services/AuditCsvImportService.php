@@ -100,7 +100,7 @@ class AuditCsvImportService
         $itemRows = $this->readRows($itemsPath, self::ITEM_HEADERS);
 
         if ($auditRows === []) {
-            throw new RuntimeException('O CSV tratado de auditorias nao possui linhas validas.');
+            throw new RuntimeException('O CSV tratado de auditorias não possui linhas válidas.');
         }
 
         $itemsByAudit = [];
@@ -208,12 +208,12 @@ class AuditCsvImportService
     private function readRows(string $path, array $defaultHeaders): array
     {
         if (!is_file($path)) {
-            throw new RuntimeException('Arquivo CSV nao encontrado.');
+            throw new RuntimeException('Arquivo CSV não encontrado.');
         }
 
         $handle = fopen($path, 'r');
         if ($handle === false) {
-            throw new RuntimeException('Nao foi possivel abrir o CSV.');
+            throw new RuntimeException('Não foi possível abrir o CSV.');
         }
 
         $headerRow = fgetcsv($handle, 0, ';');

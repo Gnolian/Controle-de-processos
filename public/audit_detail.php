@@ -8,14 +8,14 @@ require __DIR__ . '/../views/components.php';
 $user = require_audit_access();
 $moduleReady = audits_schema_ready();
 if (!$moduleReady) {
-    flash('O modulo de auditorias precisa das migrations 004_add_audits_module.sql e 005_expand_audits_for_timeline.sql.', 'danger');
+    flash('O módulo de auditorias precisa das migrations 004_add_audits_module.sql e 005_expand_audits_for_timeline.sql.', 'danger');
     redirect('audits.php');
 }
 
 $repo = new AuditRepository();
 $audit = $repo->find((int) ($_GET['id'] ?? 0));
 if (!$audit) {
-    flash('Auditoria nao encontrada.', 'danger');
+    flash('Auditoria não encontrada.', 'danger');
     redirect('audits.php');
 }
 
@@ -23,7 +23,11 @@ $items = $repo->items((int) $audit['id']);
 $counts = ['DETERMINACAO' => 0, 'RECOMENDACAO' => 0, 'CIENCIA' => 0];
 foreach ($items as $item) {
     $kind = strtoupper(trim((string) $item['item_kind']));
-    $kind = str_replace(['DETERMINAÇÃO', 'RECOMENDAÇÃO', 'CIÊNCIA'], ['DETERMINACAO', 'RECOMENDACAO', 'CIENCIA'], $kind);
+    $kind = str_replace(
+        ['DETERMINAÇÃO', 'RECOMENDAÇÃO', 'CIÊNCIA', 'DETERMINAÃ‡ÃƒO', 'RECOMENDAÃ‡ÃƒO', 'CIÃŠNCIA'],
+        ['DETERMINACAO', 'RECOMENDACAO', 'CIENCIA', 'DETERMINACAO', 'RECOMENDACAO', 'CIENCIA'],
+        $kind
+    );
     if (isset($counts[$kind])) {
         $counts[$kind]++;
     }
@@ -42,7 +46,7 @@ require __DIR__ . '/../views/nav.php';
 <main class="content-shell">
     <section class="detail-hero">
         <div>
-            <p class="section-kicker">Identificacao da auditoria</p>
+            <p class="section-kicker">Identificação da auditoria</p>
             <h1><?= e($audit['audit_code']) ?></h1>
             <p><?= e($audit['theme'] ?: $audit['audit_type']) ?></p>
             <div class="d-flex gap-2 flex-wrap">
@@ -58,9 +62,9 @@ require __DIR__ . '/../views/nav.php';
     </section>
 
     <section class="metric-grid">
-        <article class="metric-card"><span>Determinacoes</span><strong><?= $counts['DETERMINACAO'] ?></strong><i class="bi bi-list-check"></i></article>
-        <article class="metric-card"><span>Recomendacoes</span><strong><?= $counts['RECOMENDACAO'] ?></strong><i class="bi bi-journal-check"></i></article>
-        <article class="metric-card"><span>Ciencias</span><strong><?= $counts['CIENCIA'] ?></strong><i class="bi bi-info-circle"></i></article>
+        <article class="metric-card"><span>Determinações</span><strong><?= $counts['DETERMINACAO'] ?></strong><i class="bi bi-list-check"></i></article>
+        <article class="metric-card"><span>Recomendações</span><strong><?= $counts['RECOMENDACAO'] ?></strong><i class="bi bi-journal-check"></i></article>
+        <article class="metric-card"><span>Ciências</span><strong><?= $counts['CIENCIA'] ?></strong><i class="bi bi-info-circle"></i></article>
         <article class="metric-card"><span>Total de itens</span><strong><?= count($items) ?></strong><i class="bi bi-diagram-3"></i></article>
     </section>
 
@@ -73,16 +77,16 @@ require __DIR__ . '/../views/nav.php';
                     <dt>NUP</dt><dd><?= e($audit['audit_nup']) ?></dd>
                     <dt>Ano</dt><dd><?= e((string) $audit['audit_year']) ?></dd>
                     <dt>Status da auditoria</dt><dd><?= e($audit['process_status'] ?: '-') ?></dd>
-                    <dt>Orgao de controle</dt><dd><?= e($audit['requesting_body']) ?></dd>
+                    <dt>Órgão de controle</dt><dd><?= e($audit['requesting_body']) ?></dd>
                     <dt>Tipo</dt><dd><?= e($audit['audit_type']) ?></dd>
-                    <dt>Classificacao</dt><dd><?= e($audit['classification'] ?: '-') ?></dd>
+                    <dt>Classificação</dt><dd><?= e($audit['classification'] ?: '-') ?></dd>
                     <dt>Fase</dt><dd><?= e($audit['audit_phase'] ?: '-') ?></dd>
-                    <dt>Responsavel atual</dt><dd><?= e($audit['current_owner'] ?: '-') ?></dd>
-                    <dt>Data de inicio</dt><dd><?= e(format_date($audit['start_date'])) ?></dd>
-                    <dt>Ultima resposta</dt><dd><?= e(format_date($audit['last_date_response'])) ?></dd>
-                    <dt>Deadline</dt><dd><?= e($nextDeadline) ?><?= !empty($audit['flag_estimated']) ? ' (estimado)' : '' ?></dd>
-                    <dt>Em diligencia</dt><dd><?= !empty($audit['has_diligence']) ? 'Sim' : 'Nao' ?></dd>
-                    <dt>Status etapa 3</dt><dd><?= e($audit['stage3_status'] ?: '-') ?></dd>
+                    <dt>Responsável atual</dt><dd><?= e($audit['current_owner'] ?: '-') ?></dd>
+                    <dt>Data de início</dt><dd><?= e(format_date($audit['start_date'])) ?></dd>
+                    <dt>Última resposta</dt><dd><?= e(format_date($audit['last_date_response'])) ?></dd>
+                    <dt>Próximo prazo</dt><dd><?= e($nextDeadline) ?><?= !empty($audit['flag_estimated']) ? ' (estimado)' : '' ?></dd>
+                    <dt>Em diligência</dt><dd><?= !empty($audit['has_diligence']) ? 'Sim' : 'Não' ?></dd>
+                    <dt>Status da etapa 3</dt><dd><?= e($audit['stage3_status'] ?: '-') ?></dd>
                 </dl>
             </div>
         </div>
@@ -95,7 +99,7 @@ require __DIR__ . '/../views/nav.php';
                 <p class="text-secondary"><?= nl2br(e($audit['theme'] ?: '-')) ?></p>
                 <h3 class="h6">Resumo do ponto de controle</h3>
                 <p class="text-secondary"><?= nl2br(e($summary)) ?></p>
-                <h3 class="h6">Observacoes</h3>
+                <h3 class="h6">Observações</h3>
                 <p class="text-secondary mb-0"><?= nl2br(e($audit['notes'] ?: '-')) ?></p>
             </div>
         </div>
@@ -106,9 +110,9 @@ require __DIR__ . '/../views/nav.php';
             <div class="app-card">
                 <div class="card-head"><h2>Etapa 2</h2></div>
                 <dl class="detail-grid">
-                    <dt>Inicio</dt><dd><?= e(format_date($audit['stage2_start_date'])) ?></dd>
-                    <dt>Em diligencia</dt><dd><?= !empty($audit['flag_stage2_diligence']) ? 'Sim' : 'Nao' ?></dd>
-                    <dt>Ultima resposta</dt><dd><?= e(format_date($audit['stage2_date_last_response_diligence'])) ?></dd>
+                    <dt>Início</dt><dd><?= e(format_date($audit['stage2_start_date'])) ?></dd>
+                    <dt>Em diligência</dt><dd><?= !empty($audit['flag_stage2_diligence']) ? 'Sim' : 'Não' ?></dd>
+                    <dt>Última resposta</dt><dd><?= e(format_date($audit['stage2_date_last_response_diligence'])) ?></dd>
                     <dt>Documento preliminar</dt><dd><?= e($audit['stage2_preliminary_document'] ?: '-') ?></dd>
                     <dt>Prazo em dias</dt><dd><?= e((string) ($audit['stage2_deadline_days'] ?? '-')) ?></dd>
                     <dt>Prazo final</dt><dd><?= e(format_date($audit['stage2_final_deadline'])) ?></dd>
@@ -123,8 +127,8 @@ require __DIR__ . '/../views/nav.php';
                     <?php for ($i = 1; $i <= 4; $i++): ?>
                         <li>
                             <div>
-                                <strong><?= e($i . 'º monitoramento') ?></strong>
-                                <small class="d-block text-secondary"><?= e(format_date($audit["monitoring{$i}_start_date"] ?? null)) ?> ate <?= e(format_date($audit["monitoring{$i}_final_deadline"] ?? null)) ?></small>
+                                <strong><?= $i ?>&ordm; monitoramento</strong>
+                                <small class="d-block text-secondary"><?= e(format_date($audit["monitoring{$i}_start_date"] ?? null)) ?> até <?= e(format_date($audit["monitoring{$i}_final_deadline"] ?? null)) ?></small>
                             </div>
                             <span class="audit-value"><?= e($audit["monitoring{$i}_status"] ?: '-') ?></span>
                         </li>
@@ -138,7 +142,7 @@ require __DIR__ . '/../views/nav.php';
         <div class="card-head p-4 pb-0"><h2>Itens vinculados</h2></div>
         <div class="table-responsive">
             <table class="table modern-table mb-0">
-                <thead><tr><th>Tipo</th><th>Descricao</th><th>Status orgao</th><th>Status DGBA</th><th>Status geral</th><th>Ponto de controle</th></tr></thead>
+                <thead><tr><th>Tipo</th><th>Descrição</th><th>Status órgão</th><th>Status DGBA</th><th>Status geral</th><th>Ponto de controle</th></tr></thead>
                 <tbody>
                     <?php foreach ($items as $item): ?>
                         <tr>
@@ -151,7 +155,7 @@ require __DIR__ . '/../views/nav.php';
                         </tr>
                     <?php endforeach; ?>
                     <?php if (!$items): ?>
-                        <tr><td colspan="6"><div class="empty-state">Essa auditoria nao possui itens detalhados.</div></td></tr>
+                        <tr><td colspan="6"><div class="empty-state">Esta auditoria não possui itens detalhados.</div></td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>

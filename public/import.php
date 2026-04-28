@@ -54,7 +54,7 @@ require __DIR__ . '/../views/nav.php';
                 <input class="form-control form-control-lg mt-1" type="file" name="csv" accept=".csv,text/csv" required>
             </label>
             <div class="alert alert-info mb-0">
-                Antes da importacao, execute as migrations se ainda nao executou. Processos sem prazos internos ou externos serao marcados como Tempo Habil.
+                Antes da importação, execute as migrations se ainda não executou. Processos sem prazos internos ou externos serão marcados como Tempo Hábil.
             </div>
             <div class="form-actions">
                 <button class="btn btn-primary" type="submit"><i class="bi bi-cloud-upload"></i> Importar CSV</button>

@@ -17,7 +17,11 @@ if (!function_exists('audit_defaults')) {
         $defaults['flag_stage2_diligence'] = 0;
         $defaults['items'] = array_map(static function (array $item): array {
             if (isset($item['item_kind'])) {
-                $item['item_kind'] = str_replace(['DETERMINAÇÃO', 'RECOMENDAÇÃO', 'CIÊNCIA'], ['DETERMINACAO', 'RECOMENDACAO', 'CIENCIA'], (string) $item['item_kind']);
+                $item['item_kind'] = str_replace(
+                    ['DETERMINAÇÃO', 'RECOMENDAÇÃO', 'CIÊNCIA', 'DETERMINAÃ‡ÃƒO', 'RECOMENDAÃ‡ÃƒO', 'CIÃŠNCIA'],
+                    ['DETERMINACAO', 'RECOMENDACAO', 'CIENCIA', 'DETERMINACAO', 'RECOMENDACAO', 'CIENCIA'],
+                    (string) $item['item_kind']
+                );
             }
             return $item;
         }, $items);
@@ -44,7 +48,7 @@ $audit = $id ? $repo->find($id) : null;
 $items = $id ? $repo->items($id) : [];
 
 if ($id && !$audit) {
-    flash('Auditoria nao encontrada.', 'danger');
+    flash('Auditoria não encontrada.', 'danger');
     redirect('audits.php');
 }
 
@@ -74,7 +78,7 @@ require __DIR__ . '/../views/nav.php';
 
     <section class="page-title-row">
         <div>
-            <p class="section-kicker"><?= $id ? 'Atualizacao' : 'Cadastro manual' ?></p>
+            <p class="section-kicker"><?= $id ? 'Atualização' : 'Cadastro manual' ?></p>
             <h1><?= e($pageTitle) ?></h1>
         </div>
         <a class="btn btn-outline-secondary" href="<?= $id ? url('audit_detail.php?id=' . $id) : url('audits.php') ?>"><i class="bi bi-arrow-left"></i> Voltar</a>
@@ -84,25 +88,25 @@ require __DIR__ . '/../views/nav.php';
         <?= csrf_field() ?>
 
         <div class="form-section">
-            <h2>Identificacao</h2>
+            <h2>Identificação</h2>
             <div class="row row-cols-1 row-cols-md-2 g-3">
-                <?php field_input('audit_code', 'Codigo da auditoria', $values, 'text', true, 'bi-hash'); ?>
+                <?php field_input('audit_code', 'Código da auditoria', $values, 'text', true, 'bi-hash'); ?>
                 <?php field_input('audit_nup', 'NUP', $values, 'text', true, 'bi-file-earmark-text'); ?>
                 <?php field_input('audit_year', 'Ano', $values, 'number', false, 'bi-calendar3'); ?>
-                <?php field_input('requesting_body', 'Orgao de controle', $values, 'text', true, 'bi-building'); ?>
+                <?php field_input('requesting_body', 'Órgão de controle', $values, 'text', true, 'bi-building'); ?>
                 <?php field_input('audit_type', 'Tipo de auditoria', $values, 'text', true, 'bi-diagram-3'); ?>
                 <?php field_input('process_status', 'Status da auditoria', $values, 'text', false, 'bi-flag'); ?>
                 <?php field_input('audit_phase', 'Fase da auditoria', $values, 'text', true, 'bi-signpost-split'); ?>
-                <?php field_input('classification', 'Classificacao', $values, 'text', false, 'bi-bookmark'); ?>
-                <?php field_input('current_owner', 'Responsavel atual', $values, 'text', false, 'bi-person-badge'); ?>
-                <?php field_input('start_date', 'Data de inicio', $values, 'date', false, 'bi-calendar-event'); ?>
-                <?php field_input('last_date_response', 'Ultima data de resposta', $values, 'date', false, 'bi-reply'); ?>
-                <?php field_input('deadline_label', 'Proximo prazo / deadline', $values, 'text', false, 'bi-hourglass-split'); ?>
+                <?php field_input('classification', 'Classificação', $values, 'text', false, 'bi-bookmark'); ?>
+                <?php field_input('current_owner', 'Responsável atual', $values, 'text', false, 'bi-person-badge'); ?>
+                <?php field_input('start_date', 'Data de início', $values, 'date', false, 'bi-calendar-event'); ?>
+                <?php field_input('last_date_response', 'Última data de resposta', $values, 'date', false, 'bi-reply'); ?>
+                <?php field_input('deadline_label', 'Próximo prazo / deadline', $values, 'text', false, 'bi-hourglass-split'); ?>
             </div>
             <div class="row row-cols-1 row-cols-md-3 g-3 mt-1">
                 <?php field_checkbox('deadline_is_current', 'Data atual', $values, 'Marque quando o prazo puder chegar a qualquer momento.'); ?>
                 <?php field_checkbox('flag_estimated', 'Prazo estimado', $values); ?>
-                <?php field_checkbox('has_diligence', 'Em diligencia', $values); ?>
+                <?php field_checkbox('has_diligence', 'Em diligência', $values); ?>
             </div>
         </div>
 
@@ -113,50 +117,50 @@ require __DIR__ . '/../views/nav.php';
                 <?php field_textarea('theme', 'Tema', $values, 3); ?>
                 <?php field_textarea('control_summary', 'Resumo do ponto de controle', $values, 4); ?>
                 <?php field_textarea('related_processes', 'Processos relacionados', $values, 2); ?>
-                <?php field_textarea('notes', 'Observacoes internas', $values, 3); ?>
+                <?php field_textarea('notes', 'Observações internas', $values, 3); ?>
             </div>
         </div>
 
         <div class="form-section">
-            <h2>Diligencia e etapa 2</h2>
+            <h2>Diligência e etapa 2</h2>
             <div class="row row-cols-1 row-cols-md-2 g-3">
-                <?php field_input('last_response_sent_date_diligence', 'Ultima resposta enviada em diligencia', $values, 'date', false, 'bi-send-check'); ?>
-                <?php field_input('stage2_start_date', 'Inicio da etapa 2', $values, 'date', false, 'bi-play-circle'); ?>
-                <?php field_checkbox('flag_stage2_diligence', 'Etapa 2 em diligencia', $values); ?>
-                <?php field_input('stage2_date_last_response_diligence', 'Ultima resposta da etapa 2', $values, 'date', false, 'bi-chat-left-text'); ?>
-                <?php field_input('stage2_preliminary_document', 'Documento preliminar etapa 2', $values, 'text', false, 'bi-file-earmark-medical'); ?>
-                <?php field_input('stage2_deadline_days', 'Prazo etapa 2 (dias)', $values, 'number', false, 'bi-clock'); ?>
-                <?php field_input('comments_due_date', 'Prazo para comentarios', $values, 'date', false, 'bi-chat-right-dots'); ?>
-                <?php field_input('stage2_final_response', 'Resposta final etapa 2', $values, 'date', false, 'bi-reply-all'); ?>
-                <?php field_input('stage2_final_report', 'Relatorio final etapa 2', $values, 'text', false, 'bi-journal-text'); ?>
-                <?php field_input('stage2_service_deadline_days', 'Prazo de servico etapa 2', $values, 'number', false, 'bi-hourglass'); ?>
-                <?php field_input('stage2_final_deadline', 'Prazo final etapa 2', $values, 'date', false, 'bi-calendar2-check'); ?>
-                <?php field_input('stage2_status', 'Status etapa 2', $values, 'text', false, 'bi-activity'); ?>
+                <?php field_input('last_response_sent_date_diligence', 'Última resposta enviada em diligência', $values, 'date', false, 'bi-send-check'); ?>
+                <?php field_input('stage2_start_date', 'Início da etapa 2', $values, 'date', false, 'bi-play-circle'); ?>
+                <?php field_checkbox('flag_stage2_diligence', 'Etapa 2 em diligência', $values); ?>
+                <?php field_input('stage2_date_last_response_diligence', 'Última resposta da etapa 2', $values, 'date', false, 'bi-chat-left-text'); ?>
+                <?php field_input('stage2_preliminary_document', 'Documento preliminar da etapa 2', $values, 'text', false, 'bi-file-earmark-medical'); ?>
+                <?php field_input('stage2_deadline_days', 'Prazo da etapa 2 (dias)', $values, 'number', false, 'bi-clock'); ?>
+                <?php field_input('comments_due_date', 'Prazo para comentários', $values, 'date', false, 'bi-chat-right-dots'); ?>
+                <?php field_input('stage2_final_response', 'Data da resposta final da etapa 2', $values, 'date', false, 'bi-reply-all'); ?>
+                <?php field_input('stage2_final_report', 'Relatório final da etapa 2', $values, 'text', false, 'bi-journal-text'); ?>
+                <?php field_input('stage2_service_deadline_days', 'Prazo de serviço da etapa 2', $values, 'number', false, 'bi-hourglass'); ?>
+                <?php field_input('stage2_final_deadline', 'Prazo final da etapa 2', $values, 'date', false, 'bi-calendar2-check'); ?>
+                <?php field_input('stage2_status', 'Status da etapa 2', $values, 'text', false, 'bi-activity'); ?>
             </div>
             <div class="row g-3 mt-1">
-                <?php field_textarea('stage2_final_answer', 'Resposta final etapa 2', $values, 3); ?>
+                <?php field_textarea('stage2_final_answer', 'Resposta final da etapa 2', $values, 3); ?>
             </div>
         </div>
 
         <div class="form-section">
-            <h2>Etapa 3 e acordao</h2>
+            <h2>Etapa 3 e acórdão</h2>
             <div class="row row-cols-1 row-cols-md-2 g-3">
-                <?php field_input('stage3_accord_report', 'Acordao / relatorio', $values, 'text', false, 'bi-file-earmark-richtext'); ?>
-                <?php field_input('stage3_accord_report_date', 'Data do acordao / relatorio', $values, 'date', false, 'bi-calendar-date'); ?>
+                <?php field_input('stage3_accord_report', 'Acórdão / relatório', $values, 'text', false, 'bi-file-earmark-richtext'); ?>
+                <?php field_input('stage3_accord_report_date', 'Data do acórdão / relatório', $values, 'date', false, 'bi-calendar-date'); ?>
                 <?php field_input('stage3_status', 'Status da etapa 3', $values, 'text', false, 'bi-kanban'); ?>
             </div>
         </div>
 
         <?php for ($i = 1; $i <= 4; $i++): ?>
             <div class="form-section">
-                <h2><?= e($i . 'o monitoramento') ?></h2>
+                <h2><?= $i ?>&ordm; monitoramento</h2>
                 <div class="row row-cols-1 row-cols-md-2 g-3">
-                    <?php field_input("monitoring{$i}_start_date", 'Data de inicio', $values, 'date', false, 'bi-play'); ?>
-                    <?php field_input("monitoring{$i}_service_deadline_days", 'Prazo de servico (dias)', $values, 'number', false, 'bi-clock-history'); ?>
+                    <?php field_input("monitoring{$i}_start_date", 'Data de início', $values, 'date', false, 'bi-play'); ?>
+                    <?php field_input("monitoring{$i}_service_deadline_days", 'Prazo de serviço (dias)', $values, 'number', false, 'bi-clock-history'); ?>
                     <?php field_input("monitoring{$i}_final_deadline", 'Prazo final', $values, 'date', false, 'bi-calendar-check'); ?>
                     <?php field_input("monitoring{$i}_final_response", 'Resposta final', $values, 'date', false, 'bi-send'); ?>
                     <?php field_input($i === 1 ? "monitoring{$i}_gap_days_from_report" : "monitoring{$i}_gap_days_from_previous", 'Intervalo em dias', $values, 'number', false, 'bi-arrows-collapse'); ?>
-                    <?php field_input("monitoring{$i}_next_monitoring_forecast", 'Previsao do proximo monitoramento', $values, 'date', false, 'bi-calendar-plus'); ?>
+                    <?php field_input("monitoring{$i}_next_monitoring_forecast", 'Previsão do próximo monitoramento', $values, 'date', false, 'bi-calendar-plus'); ?>
                     <?php field_input("monitoring{$i}_status", 'Status do monitoramento', $values, 'text', false, 'bi-clipboard2-check'); ?>
                 </div>
             </div>
@@ -172,12 +176,12 @@ require __DIR__ . '/../views/nav.php';
                     <thead>
                         <tr>
                             <th>Tipo</th>
-                            <th>Codigo</th>
-                            <th>Status orgao</th>
+                            <th>Código</th>
+                            <th>Status órgão</th>
                             <th>Status DGBA</th>
                             <th>Status geral</th>
                             <th>Prazo</th>
-                            <th>Inicio</th>
+                            <th>Início</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -187,9 +191,9 @@ require __DIR__ . '/../views/nav.php';
                                 <td>
                                     <select class="form-select form-select-sm" name="items[<?= (int) $index ?>][item_kind]">
                                         <option value="">Tipo</option>
-                                        <option value="DETERMINACAO" <?= selected((string) ($item['item_kind'] ?? ''), 'DETERMINACAO') ?>>Determinacao</option>
-                                        <option value="RECOMENDACAO" <?= selected((string) ($item['item_kind'] ?? ''), 'RECOMENDACAO') ?>>Recomendacao</option>
-                                        <option value="CIENCIA" <?= selected((string) ($item['item_kind'] ?? ''), 'CIENCIA') ?>>Ciencia</option>
+                                        <option value="DETERMINACAO" <?= selected((string) ($item['item_kind'] ?? ''), 'DETERMINACAO') ?>>Determinação</option>
+                                        <option value="RECOMENDACAO" <?= selected((string) ($item['item_kind'] ?? ''), 'RECOMENDACAO') ?>>Recomendação</option>
+                                        <option value="CIENCIA" <?= selected((string) ($item['item_kind'] ?? ''), 'CIENCIA') ?>>Ciência</option>
                                     </select>
                                 </td>
                                 <td><input class="form-control form-control-sm" name="items[<?= (int) $index ?>][item_code]" value="<?= e((string) ($item['item_code'] ?? '')) ?>"></td>
@@ -204,7 +208,7 @@ require __DIR__ . '/../views/nav.php';
                                 <td colspan="8">
                                     <div class="row g-3">
                                         <div class="col-lg-6">
-                                            <label class="form-label">Descricao do item</label>
+                                            <label class="form-label">Descrição do item</label>
                                             <textarea class="form-control" rows="3" name="items[<?= (int) $index ?>][item_description]"><?= e((string) ($item['item_description'] ?? '')) ?></textarea>
                                         </div>
                                         <div class="col-lg-6">
@@ -223,9 +227,9 @@ require __DIR__ . '/../views/nav.php';
                     <td>
                         <select class="form-select form-select-sm" data-name="item_kind">
                             <option value="">Tipo</option>
-                            <option value="DETERMINACAO">Determinacao</option>
-                            <option value="RECOMENDACAO">Recomendacao</option>
-                            <option value="CIENCIA">Ciencia</option>
+                            <option value="DETERMINACAO">Determinação</option>
+                            <option value="RECOMENDACAO">Recomendação</option>
+                            <option value="CIENCIA">Ciência</option>
                         </select>
                     </td>
                     <td><input class="form-control form-control-sm" data-name="item_code"></td>
@@ -240,7 +244,7 @@ require __DIR__ . '/../views/nav.php';
                     <td colspan="8">
                         <div class="row g-3">
                             <div class="col-lg-6">
-                                <label class="form-label">Descricao do item</label>
+                                <label class="form-label">Descrição do item</label>
                                 <textarea class="form-control" rows="3" data-name="item_description"></textarea>
                             </div>
                             <div class="col-lg-6">

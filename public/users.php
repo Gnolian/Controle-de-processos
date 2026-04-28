@@ -12,13 +12,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         verify_csrf();
         $role = (string) ($_POST['role'] ?? 'servidor');
         if (!in_array($role, config('dropdowns.roles'), true)) {
-            throw new RuntimeException('Perfil invalido.');
+            throw new RuntimeException('Perfil inválido.');
         }
         if (trim((string) ($_POST['name'] ?? '')) === '' || trim((string) ($_POST['email'] ?? '')) === '' || (string) ($_POST['password'] ?? '') === '') {
             throw new RuntimeException('Preencha nome, email e senha.');
         }
         $repo->create($_POST);
-        flash('Usuario criado com sucesso.');
+        flash('Usuário criado com sucesso.');
         redirect('users.php');
     } catch (Throwable $exception) {
         flash($exception->getMessage(), 'danger');
@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $users = $repo->all();
-$pageTitle = 'Usuarios';
+$pageTitle = 'Usuários';
 $activeNav = 'users';
 
 require __DIR__ . '/../views/header.php';
@@ -39,12 +39,12 @@ require __DIR__ . '/../views/nav.php';
     <section class="page-title-row">
         <div>
             <p class="section-kicker">Acessos</p>
-            <h1>Administracao de usuarios</h1>
+            <h1>Administração de usuários</h1>
         </div>
     </section>
 
     <section class="app-card mb-4">
-        <div class="card-head"><h2>Novo usuario</h2></div>
+        <div class="card-head"><h2>Novo usuário</h2></div>
         <form method="post" class="row g-3 align-items-end">
             <?= csrf_field() ?>
             <div class="col-md-3"><label class="form-label">Nome<input class="form-control mt-1" name="name" required></label></div>
@@ -60,7 +60,7 @@ require __DIR__ . '/../views/nav.php';
                 </label>
             </div>
             <div class="col-md-2">
-                <label class="form-label d-block">Acesso auditorias
+                <label class="form-label d-block">Acesso a auditorias
                     <div class="form-check form-switch mt-2">
                         <input class="form-check-input" type="checkbox" name="audit_access" value="1">
                     </div>
@@ -79,8 +79,8 @@ require __DIR__ . '/../views/nav.php';
                         <td><?= e($item['name']) ?></td>
                         <td><?= e($item['email']) ?></td>
                         <td><span class="badge text-bg-light"><?= e($item['role']) ?></span></td>
-                        <td><?= !empty($item['audit_access']) || in_array($item['role'], ['admin', 'coordenador'], true) ? '<span class="badge text-bg-info">Sim</span>' : '<span class="badge text-bg-secondary">Nao</span>' ?></td>
-                        <td><?= $item['active'] ? '<span class="badge text-bg-success">Sim</span>' : '<span class="badge text-bg-secondary">Nao</span>' ?></td>
+                        <td><?= !empty($item['audit_access']) || in_array($item['role'], ['admin', 'coordenador'], true) ? '<span class="badge text-bg-info">Sim</span>' : '<span class="badge text-bg-secondary">Não</span>' ?></td>
+                        <td><?= $item['active'] ? '<span class="badge text-bg-success">Sim</span>' : '<span class="badge text-bg-secondary">Não</span>' ?></td>
                         <td><?= e($item['created_at']) ?></td>
                     </tr>
                 <?php endforeach; ?>

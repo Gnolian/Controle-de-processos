@@ -33,7 +33,7 @@ require __DIR__ . '/../views/nav.php';
         <div class="row g-3 align-items-end">
             <div class="col-md-3"><label class="form-label">ID do processo<input class="form-control" name="process_id" value="<?= e($filters['process_id']) ?>"></label></div>
             <div class="col-md-3">
-                <label class="form-label">Usuario
+                <label class="form-label">Usuário
                     <select class="form-select" name="user_id">
                         <option value="">Todos</option>
                         <?php foreach ($users as $item): ?>
@@ -51,7 +51,7 @@ require __DIR__ . '/../views/nav.php';
     <section class="app-card p-0 overflow-hidden">
         <div class="table-responsive">
             <table class="table modern-table mb-0">
-                <thead><tr><th>Data</th><th>Processo</th><th>Usuario</th><th>Campo</th><th>Antes</th><th>Depois</th><th>Origem</th></tr></thead>
+                <thead><tr><th>Data</th><th>Processo</th><th>Usuário</th><th>Campo</th><th>Antes</th><th>Depois</th><th>Origem</th></tr></thead>
                 <tbody>
                     <?php foreach ($logs as $log): ?>
                         <tr>
@@ -75,4 +75,3 @@ require __DIR__ . '/../views/nav.php';
 
 <?php require __DIR__ . '/../views/app_end.php'; ?>
 <?php require __DIR__ . '/../views/footer.php'; ?>
-

@@ -102,7 +102,7 @@ $timelineEntries = [];
 $itemKindOptions = [
     'DETERMINACAO' => 'Determinacoes',
     'RECOMENDACAO' => 'Recomendacoes',
-    'CIENCIA' => 'Ciencia',
+    'CIENCIA' => 'Ciência',
 ];
 $itemKindOptionRows = array_map(
     static fn (string $value, string $label): array => ['value' => $value, 'label' => $label],
@@ -170,7 +170,7 @@ require __DIR__ . '/../views/nav.php';
 
     <?php if (!$moduleReady): ?>
         <div class="alert alert-warning shadow-sm">
-            O modulo de auditorias ainda nao foi instalado neste banco. No phpMyAdmin, importe primeiro:
+            O módulo de auditorias ainda não foi instalado neste banco. No phpMyAdmin, importe primeiro:
             <strong>database/migrations/004_add_audits_module.sql</strong> e depois
             <strong>database/migrations/005_expand_audits_for_timeline.sql</strong>.
         </div>
@@ -180,7 +180,7 @@ require __DIR__ . '/../views/nav.php';
         <div>
             <p class="section-kicker">CGU e TCU</p>
             <h1>Painel de auditorias</h1>
-            <p class="text-secondary mb-0">Visao executiva, cadastro manual, acompanhamento de RDC e linha do tempo anual de prazos.</p>
+            <p class="text-secondary mb-0">Visão executiva, cadastro manual, acompanhamento de RDC e linha do tempo anual de prazos.</p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
             <a class="btn btn-primary <?= !$moduleReady ? 'disabled' : '' ?>" href="<?= $moduleReady ? url('audit_form.php') : '#' ?>"><i class="bi bi-plus-lg"></i> Nova auditoria</a>
@@ -193,22 +193,22 @@ require __DIR__ . '/../views/nav.php';
         <input type="hidden" name="timeline_year" value="<?= (int) $timelineYear ?>">
         <div class="card-head">
             <h2>Filtro de Auditorias</h2>
-            <span class="text-secondary">Voce pode selecionar mais de uma opcao no mesmo filtro.</span>
+            <span class="text-secondary">Você pode selecionar mais de uma opção no mesmo filtro.</span>
         </div>
         <div class="row g-3 align-items-end">
             <div class="col-lg-4">
                 <label class="form-label">Buscar auditoria</label>
-                <input class="form-control" name="q" value="<?= e($filters['q']) ?>" placeholder="Codigo, NUP, tema ou objetivo" <?= !$moduleReady ? 'disabled' : '' ?>>
+                <input class="form-control" name="q" value="<?= e($filters['q']) ?>" placeholder="Código, NUP, tema ou objetivo" <?= !$moduleReady ? 'disabled' : '' ?>>
             </div>
             <?php $renderFilterBox('audit_year', 'Ano', $filterOptions['audit_year'], $filters['audit_year']); ?>
             <?php $renderFilterBox('process_status', 'Status do processo', $filterOptions['process_status'], $filters['process_status']); ?>
-            <?php $renderFilterBox('requesting_body', 'Orgao', $filterOptions['requesting_body'], $filters['requesting_body']); ?>
+            <?php $renderFilterBox('requesting_body', 'Órgão', $filterOptions['requesting_body'], $filters['requesting_body']); ?>
             <?php $renderFilterBox('theme', 'Tema', $filterOptions['theme'], $filters['theme']); ?>
-            <?php $renderFilterBox('classification', 'Classificacao', $filterOptions['classification'], $filters['classification']); ?>
+            <?php $renderFilterBox('classification', 'Classificação', $filterOptions['classification'], $filters['classification']); ?>
             <?php $renderFilterBox('audit_phase', 'Fase da Auditoria', $filterOptions['audit_phase'], $filters['audit_phase']); ?>
-            <?php $renderFilterBox('current_owner', 'Responsavel Atual', $filterOptions['current_owner'], $filters['current_owner']); ?>
+            <?php $renderFilterBox('current_owner', 'Responsável Atual', $filterOptions['current_owner'], $filters['current_owner']); ?>
             <?php $renderFilterBox('item_kind', 'RDC', $itemKindOptionRows, $selectedItemKinds); ?>
-            <?php $renderFilterBox('item_status_group', 'Situacao do RDC', $filterOptions['item_status_group'], $selectedItemStatuses); ?>
+            <?php $renderFilterBox('item_status_group', 'Situação do RDC', $filterOptions['item_status_group'], $selectedItemStatuses); ?>
             <div class="col-lg-4 d-flex gap-2">
                 <button class="btn btn-primary" type="submit" <?= !$moduleReady ? 'disabled' : '' ?>><i class="bi bi-funnel"></i> Filtrar</button>
                 <a class="btn btn-outline-secondary" href="<?= url('audits.php') ?>">Limpar</a>
@@ -219,7 +219,7 @@ require __DIR__ . '/../views/nav.php';
     <section class="audit-universe-grid">
         <article class="metric-card universe-core">
             <small class="section-kicker">Universo filtrado</small>
-            <span>Numero de auditorias</span>
+            <span>Número de auditorias</span>
             <strong><?= (int) $metrics['total'] ?></strong>
             <p class="text-secondary mb-0">Esse card representa o universo atual do filtro aplicado em toda a pagina.</p>
             <i class="bi bi-bullseye"></i>
@@ -232,7 +232,7 @@ require __DIR__ . '/../views/nav.php';
             <i class="bi bi-diagram-3"></i>
         </article>
         <article class="metric-card universe-branch warning">
-            <span>Em diligencia/Relatorio</span>
+            <span>Em diligência/Relatório</span>
             <strong><?= (int) $metrics['diligence_report'] ?></strong>
             <i class="bi bi-exclamation-circle"></i>
         </article>
@@ -271,7 +271,7 @@ require __DIR__ . '/../views/nav.php';
                 </a>
                 <div class="timeline-year-title">
                     <h2>Linha do tempo <?= (int) $timelineYear ?></h2>
-                    <span class="text-secondary">Passe o mouse para ver o ID e clique para abrir o resumo da auditoria.</span>
+            <span class="text-secondary">Passe o mouse para ver o ID e clique para abrir o resumo da auditoria.</span>
                 </div>
                 <a class="timeline-nav-arrow" href="<?= e($buildUrl(['timeline_year' => $timelineYear + 1], $timelineAnchor)) ?>" aria-label="Proximo ano">
                     <i class="bi bi-chevron-right"></i>
@@ -306,13 +306,13 @@ require __DIR__ . '/../views/nav.php';
     <section class="row g-4">
         <div class="col-lg-6">
             <div class="app-card h-100">
-                <div class="card-head"><h2>Auditorias por orgao solicitante</h2></div>
+                <div class="card-head"><h2>Auditorias por órgão solicitante</h2></div>
                 <canvas class="chart-canvas bar" data-chart='<?= e(json_encode($byBody, JSON_UNESCAPED_UNICODE)) ?>'></canvas>
             </div>
         </div>
         <div class="col-lg-6">
             <div class="app-card h-100">
-                <div class="card-head"><h2>Diligencia ou fase atual</h2></div>
+                <div class="card-head"><h2>Diligência ou fase atual</h2></div>
                 <canvas class="chart-canvas bar" data-chart='<?= e(json_encode($diligencePhase, JSON_UNESCAPED_UNICODE)) ?>'></canvas>
             </div>
         </div>
@@ -327,7 +327,7 @@ require __DIR__ . '/../views/nav.php';
         </div>
         <div class="col-lg-7">
             <div class="app-card h-100" id="<?= e($rdcAnchor) ?>">
-                <div class="card-head"><h2>Situacao dos RDC</h2></div>
+                <div class="card-head"><h2>Situação dos RDC</h2></div>
                 <canvas class="chart-canvas bar" data-chart='<?= e(json_encode($itemImplementation, JSON_UNESCAPED_UNICODE)) ?>'></canvas>
             </div>
         </div>
@@ -336,10 +336,10 @@ require __DIR__ . '/../views/nav.php';
     <section class="row g-4 mt-1">
         <div class="col-lg-7">
             <div class="app-card h-100">
-                <div class="card-head"><h2>Determinacoes, recomendacoes e ciencia por auditoria</h2></div>
+                <div class="card-head"><h2>Determinações, recomendações e ciência por auditoria</h2></div>
                 <div class="table-responsive">
                     <table class="table modern-table mb-0">
-                        <thead><tr><th>Auditoria</th><th>Orgao</th><th>Determ.</th><th>Recom.</th><th>Ciencia</th><th>Total</th></tr></thead>
+                        <thead><tr><th>Auditoria</th><th>Órgão</th><th>Determ.</th><th>Recom.</th><th>Ciência</th><th>Total</th></tr></thead>
                         <tbody>
                             <?php foreach ($itemTotals as $row): ?>
                                 <tr class="clickable-row" data-href="<?= url('audit_detail.php?id=' . (int) $row['id']) ?>">
@@ -363,7 +363,7 @@ require __DIR__ . '/../views/nav.php';
             <div class="app-card h-100">
                 <div class="card-head">
                     <h2>Pontos de controle dos RDC</h2>
-                    <span class="text-secondary"><?= $selectedItemStatuses !== [] ? e(count($selectedItemStatuses) . ' situacao(oes) selecionada(s)') : 'Todos os status' ?></span>
+                    <span class="text-secondary"><?= $selectedItemStatuses !== [] ? e(count($selectedItemStatuses) . ' situação(ões) selecionada(s)') : 'Todos os status' ?></span>
                 </div>
                 <div class="audit-point-cards">
                     <?php foreach ($itemCards as $item): ?>
@@ -381,7 +381,7 @@ require __DIR__ . '/../views/nav.php';
                         </article>
                     <?php endforeach; ?>
                     <?php if (!$itemCards): ?>
-                        <div class="empty-state">Nenhum item encontrado para a situacao selecionada.</div>
+                        <div class="empty-state">Nenhum item encontrado para a situação selecionada.</div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -395,7 +395,7 @@ require __DIR__ . '/../views/nav.php';
         </div>
         <div class="table-responsive">
             <table class="table modern-table mb-0">
-                <thead><tr><th>Codigo</th><th>Orgao</th><th>Tema</th><th>Fase</th><th>Prazo</th><th>Itens</th><th></th></tr></thead>
+                <thead><tr><th>Código</th><th>Órgão</th><th>Tema</th><th>Fase</th><th>Prazo</th><th>Itens</th><th></th></tr></thead>
                 <tbody>
                     <?php foreach ($audits as $audit): ?>
                         <tr class="clickable-row" data-href="<?= url('audit_detail.php?id=' . (int) $audit['id']) ?>">
@@ -438,11 +438,11 @@ require __DIR__ . '/../views/nav.php';
                 <div class="detail-grid timeline-detail-grid">
                     <dt>ID da auditoria</dt><dd data-timeline-id>-</dd>
                     <dt>NUP</dt><dd data-timeline-nup>-</dd>
-                    <dt>Orgao de controle</dt><dd data-timeline-body>-</dd>
+                    <dt>Órgão de controle</dt><dd data-timeline-body>-</dd>
                     <dt>Tema</dt><dd data-timeline-theme>-</dd>
                     <dt>Fase da auditoria</dt><dd data-timeline-phase>-</dd>
-                    <dt>Responsavel atual</dt><dd data-timeline-owner>-</dd>
-                    <dt>Proximo prazo</dt><dd data-timeline-deadline>-</dd>
+                    <dt>Responsável atual</dt><dd data-timeline-owner>-</dd>
+                    <dt>Próximo prazo</dt><dd data-timeline-deadline>-</dd>
                     <dt>Ponto de controle</dt><dd data-timeline-summary>-</dd>
                 </div>
             </div>

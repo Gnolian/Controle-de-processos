@@ -10,7 +10,7 @@ $user = require_login();
 $id = (int) ($_GET['id'] ?? 0);
 $process = (new ProcessRepository())->find($id, $user);
 if (!$process) {
-    flash('Processo nao encontrado.', 'danger');
+    flash('Processo não encontrado.', 'danger');
     redirect('processes.php');
 }
 
@@ -43,20 +43,20 @@ require __DIR__ . '/../views/nav.php';
     <section class="row g-4">
         <div class="col-lg-8">
             <div class="app-card">
-                <div class="card-head"><h2>Informacoes principais</h2></div>
+                <div class="card-head"><h2>Informações principais</h2></div>
                 <dl class="detail-grid">
-                    <dt>Responsavel pela resposta</dt><dd><?= e($process['response_owner'] ?: '-') ?></dd>
-                    <dt>Orgao solicitante</dt><dd><?= e($process['requesting_agency'] ?: '-') ?></dd>
-                    <dt>Responsavel pela revisao</dt><dd><?= e($process['review_owner'] ?: '-') ?></dd>
+                    <dt>Responsável pela resposta</dt><dd><?= e($process['response_owner'] ?: '-') ?></dd>
+                    <dt>Órgão solicitante</dt><dd><?= e($process['requesting_agency'] ?: '-') ?></dd>
+                    <dt>Responsável pela revisão</dt><dd><?= e($process['review_owner'] ?: '-') ?></dd>
                     <dt>Bloco interno</dt><dd><?= e($process['internal_block'] ?: '-') ?></dd>
-                    <dt>Tipo de prazo</dt><dd><?= ($process['deadline_type'] ?? 'data') === 'tempo_habil' ? 'Tempo Habil' : 'Data definida' ?></dd>
+                    <dt>Tipo de prazo</dt><dd><?= ($process['deadline_type'] ?? 'data') === 'tempo_habil' ? 'Tempo Hábil' : 'Data definida' ?></dd>
                     <dt>Prazo externo/MDS</dt><dd><?= e(format_date($process['external_deadline_mds'])) ?></dd>
                     <dt>Data envio GAB</dt><dd><?= e(format_date($process['gab_sent_date'])) ?></dd>
                 </dl>
                 <hr>
-                <h3 class="h6">Descricao detalhada</h3>
+                <h3 class="h6">Descrição detalhada</h3>
                 <p class="text-secondary"><?= nl2br(e($process['detailed_description'] ?: '-')) ?></p>
-                <h3 class="h6">Comentarios/anotacoes</h3>
+                <h3 class="h6">Comentários/anotações</h3>
                 <p class="text-secondary mb-0"><?= nl2br(e($process['notes'] ?: '-')) ?></p>
             </div>
         </div>
@@ -65,7 +65,7 @@ require __DIR__ . '/../views/nav.php';
                 <div class="card-head"><h2>Fluxo</h2></div>
                 <ul class="status-timeline">
                     <li><span>Resposta</span><?= workflow_badge($process['response_status']) ?></li>
-                    <li><span>Revisao Andrea</span><?= workflow_badge($process['andrea_review_status']) ?></li>
+                    <li><span>Revisão Andrea</span><?= workflow_badge($process['andrea_review_status']) ?></li>
                     <li><span>Assinado</span><?= workflow_badge($process['signed_status']) ?></li>
                     <li><span>Enviado Gab</span><?= workflow_badge($process['sent_gab_status']) ?></li>
                 </ul>
@@ -74,7 +74,7 @@ require __DIR__ . '/../views/nav.php';
     </section>
 
     <section class="app-card mt-4">
-        <div class="card-head"><h2>Historico recente</h2><a href="<?= url('audit.php?process_id=' . $id) ?>">Ver completo</a></div>
+        <div class="card-head"><h2>Histórico recente</h2><a href="<?= url('audit.php?process_id=' . $id) ?>">Ver completo</a></div>
         <div class="table-responsive">
             <table class="table modern-table">
                 <thead><tr><th>Quando</th><th>Campo</th><th>Antes</th><th>Depois</th><th>Origem</th></tr></thead>

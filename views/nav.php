@@ -15,7 +15,7 @@
             <a class="<?= ($activeNav ?? '') === 'import' ? 'active' : '' ?>" href="<?= url('import.php') ?>"><i class="bi bi-cloud-upload"></i> Importar CSV</a>
             <a class="<?= ($activeNav ?? '') === 'management' ? 'active' : '' ?>" href="<?= url('management.php') ?>"><i class="bi bi-bar-chart"></i> Gerencial</a>
             <a class="<?= ($activeNav ?? '') === 'audit' ? 'active' : '' ?>" href="<?= url('audit.php') ?>"><i class="bi bi-clock-history"></i> Auditoria</a>
-            <a class="<?= ($activeNav ?? '') === 'users' ? 'active' : '' ?>" href="<?= url('users.php') ?>"><i class="bi bi-people"></i> Usuarios</a>
+            <a class="<?= ($activeNav ?? '') === 'users' ? 'active' : '' ?>" href="<?= url('users.php') ?>"><i class="bi bi-people"></i> Usuários</a>
         <?php endif; ?>
     </nav>
 </aside>

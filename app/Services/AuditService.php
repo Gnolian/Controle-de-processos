@@ -26,7 +26,7 @@ class AuditService
             } else {
                 $audit = $this->audits->find($id);
                 if (!$audit) {
-                    throw new RuntimeException('Auditoria nao encontrada.');
+                    throw new RuntimeException('Auditoria não encontrada.');
                 }
 
                 $this->audits->updateAudit($id, $payload, (int) $user['id']);

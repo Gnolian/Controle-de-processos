@@ -47,13 +47,13 @@ class DashboardService
 
     private function group(string $column, string $scope): array
     {
-        $sql = "SELECT COALESCE(NULLIF({$column}, ''), 'Nao informado') AS label, COUNT(*) AS total FROM processes{$scope} GROUP BY label ORDER BY total DESC, label ASC LIMIT 10";
+        $sql = "SELECT COALESCE(NULLIF({$column}, ''), 'Não informado') AS label, COUNT(*) AS total FROM processes{$scope} GROUP BY label ORDER BY total DESC, label ASC LIMIT 10";
         return \db()->query($sql)->fetchAll();
     }
 
     private function groupCreator(string $scope): array
     {
-        $sql = 'SELECT COALESCE(u.name, "Nao informado") AS label, COUNT(*) AS total FROM processes p LEFT JOIN users u ON u.id = p.created_by';
+        $sql = 'SELECT COALESCE(u.name, "Não informado") AS label, COUNT(*) AS total FROM processes p LEFT JOIN users u ON u.id = p.created_by';
         if ($scope) {
             $sql .= str_replace('created_by', 'p.created_by', $scope);
         }
@@ -73,7 +73,7 @@ class DashboardService
 
     private function openByOwner(): array
     {
-        return \db()->query("SELECT COALESCE(NULLIF(response_owner, ''), 'Nao informado') AS label, COUNT(*) AS total
+        return \db()->query("SELECT COALESCE(NULLIF(response_owner, ''), 'Não informado') AS label, COUNT(*) AS total
             FROM processes
             WHERE status = 'Aberto'
             GROUP BY label
@@ -84,7 +84,7 @@ class DashboardService
     private function openFlowByOwner(): array
     {
         return \db()->query("SELECT
-                COALESCE(NULLIF(response_owner, ''), 'Nao informado') AS owner,
+                COALESCE(NULLIF(response_owner, ''), 'Não informado') AS owner,
                 SUM(response_status = 'A iniciar') AS a_iniciar,
                 SUM(response_status = 'Em andamento') AS em_andamento,
                 SUM(response_status = 'Concluido') AS concluido,
@@ -99,7 +99,7 @@ class DashboardService
 
     private function reviewByOwner(): array
     {
-        return \db()->query("SELECT COALESCE(NULLIF(review_owner, ''), 'Nao informado') AS label, COUNT(*) AS total
+        return \db()->query("SELECT COALESCE(NULLIF(review_owner, ''), 'Não informado') AS label, COUNT(*) AS total
             FROM processes
             WHERE status = 'Aberto' AND andrea_review_status IN ('A iniciar', 'Em andamento')
             GROUP BY label

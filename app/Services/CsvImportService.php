@@ -22,7 +22,7 @@ class CsvImportService
     public function importUploaded(string $path, array $user): array
     {
         if (!is_file($path)) {
-            throw new RuntimeException('Arquivo CSV nao encontrado.');
+            throw new RuntimeException('Arquivo CSV não encontrado.');
         }
 
         $rows = $this->readCsv($path);
@@ -67,7 +67,7 @@ class CsvImportService
     {
         $content = file_get_contents($path);
         if ($content === false) {
-            throw new RuntimeException('Nao foi possivel ler o CSV.');
+            throw new RuntimeException('Não foi possível ler o CSV.');
         }
 
         if (function_exists('mb_check_encoding') && function_exists('mb_convert_encoding')) {
@@ -104,7 +104,7 @@ class CsvImportService
             }
         }
 
-        throw new RuntimeException('Nao encontrei a linha de cabecalho com a coluna Numero do Processo.');
+        throw new RuntimeException('Não encontrei a linha de cabeçalho com a coluna Número do Processo.');
     }
 
     private function buildColumnMap(array $headers): array
@@ -141,7 +141,7 @@ class CsvImportService
         }
 
         if (!isset($map['process_number'])) {
-            throw new RuntimeException('A coluna Numero do Processo e obrigatoria.');
+            throw new RuntimeException('A coluna Número do Processo é obrigatória.');
         }
 
         return $map;
