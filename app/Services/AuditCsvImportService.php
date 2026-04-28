@@ -9,95 +9,16 @@ use RuntimeException;
 
 class AuditCsvImportService
 {
-    private const AUDIT_HEADERS = [
-        'audit_code',
-        'audit_nup',
-        'audit_year',
-        'process_status',
-        'requesting_body',
-        'audit_type',
-        'objective',
-        'theme',
-        'classification',
-        'audit_phase',
-        'current_owner',
-        'start_date',
-        'last_date_response',
-        'deadline',
-        'flag_estimated',
-        'has_diligence',
-        'last_response_sent_date_diligence',
-        'H1',
-        'stage2_start_date',
-        'flag_stage2_diligence',
-        'stage2_date_last_response_diligence',
-        'stage2_preliminary_document',
-        'stage2_deadline_days',
-        'stage2_comments_due_date',
-        'stage2_final_response',
-        'stage2_final_report',
-        'stage2_service_deadline_days',
-        'stage2_final_deadline',
-        'stage2_final_answer',
-        'stage2_status',
-        'stage3_accord_report',
-        'stage3_accord_report_date',
-        'stage3_status',
-        'monitoring1_start_date',
-        'monitoring1_service_deadline_days',
-        'monitoring1_final_deadline',
-        'monitoring1_final_response',
-        'monitoring1_gap_days_from_report',
-        'monitoring1_next_monitoring_forecast',
-        'monitoring1_status',
-        'monitoring2_start_date',
-        'monitoring2_service_deadline_days',
-        'monitoring2_final_deadline',
-        'monitoring2_final_response',
-        'monitoring2_gap_days_from_previous',
-        'monitoring2_next_monitoring_forecast',
-        'monitoring2_status',
-        'monitoring3_start_date',
-        'monitoring3_service_deadline_days',
-        'monitoring3_final_deadline',
-        'monitoring3_final_response',
-        'monitoring3_gap_days_from_previous',
-        'monitoring3_next_monitoring_forecast',
-        'monitoring3_status',
-        'monitoring4_start_date',
-        'monitoring4_service_deadline_days',
-        'monitoring4_final_deadline',
-        'monitoring4_final_response',
-        'monitoring4_gap_days_from_previous',
-        'monitoring4_next_monitoring_forecast',
-        'related_processes',
-        'H2',
-    ];
-
-    private const ITEM_HEADERS = [
-        'audit_code',
-        'item_kind',
-        'item_code',
-        'item_description',
-        'compliance_deadline_days',
-        'compliance_start_date',
-        'control_body_status',
-        'dgba_status',
-        'item_control_point',
-        'status_geral',
-    ];
-
     public function __construct(
         private readonly AuditService $service = new AuditService(),
         private readonly AuditRepository $repository = new AuditRepository(),
-    )
-    {
+    ) {
     }
 
     public function importNormalizedUploads(string $auditsPath, string $itemsPath, array $user): array
     {
-        $auditRows = $this->readRows($auditsPath, self::AUDIT_HEADERS);
-        $itemRows = $this->readRows($itemsPath, self::ITEM_HEADERS);
+        $auditRows = $this->readRows($auditsPath);
+        $itemRows = $this->readRows($itemsPath);
 
         if ($auditRows === []) {
             throw new RuntimeException('O CSV tratado de auditorias não possui linhas válidas.');
@@ -105,97 +26,126 @@ class AuditCsvImportService
 
         $itemsByAudit = [];
         foreach ($itemRows as $row) {
-            $auditCode = trim((string) ($row['audit_code'] ?? ''));
+            $auditCode = trim((string) $this->value($row, ['audit_code']));
             if ($auditCode === '') {
                 continue;
             }
 
             $itemsByAudit[$auditCode][] = [
-                'item_kind' => $row['item_kind'] ?? '',
-                'item_code' => $row['item_code'] ?? '',
-                'item_description' => $row['item_description'] ?? '',
-                'compliance_deadline_days' => $row['compliance_deadline_days'] ?? '',
-                'compliance_start_date' => $row['compliance_start_date'] ?? '',
-                'control_body_status' => $row['control_body_status'] ?? '',
-                'dgba_status' => $row['dgba_status'] ?? '',
-                'item_control_point' => $row['item_control_point'] ?? '',
-                'status_geral' => $row['status_geral'] ?? '',
+                'item_kind' => $this->value($row, ['item_kind']),
+                'item_code' => $this->value($row, ['item_code']),
+                'item_description' => $this->value($row, ['item_description']),
+                'compliance_deadline_days' => $this->value($row, ['compliance_deadline_days']),
+                'compliance_start_date' => $this->value($row, ['compliance_start_date']),
+                'control_body_status' => $this->value($row, ['control_body_status']),
+                'dgba_status' => $this->value($row, ['dgba_status']),
+                'item_control_point' => $this->value($row, ['item_control_point']),
+                'status_geral' => $this->value($row, ['status_geral']),
+                'stage3_status' => $this->value($row, ['stage3_status']),
+                'monitor_1_start_date' => $this->value($row, ['monitor_1_start_date']),
+                'monitor_1_deadline_days' => $this->value($row, ['monitor_1_deadline_days']),
+                'monitor_1_final_deadline' => $this->value($row, ['monitor_1_final_deadline']),
+                'monitor_1_response' => $this->value($row, ['monitor_1_response']),
+                'monitor_2_start_date' => $this->value($row, ['monitor_2_start_date']),
+                'monitor_2_deadline_days' => $this->value($row, ['monitor_2_deadline_days']),
+                'monitor_2_final_deadline' => $this->value($row, ['monitor_2_final_deadline']),
+                'monitor_2_response' => $this->value($row, ['monitor_2_response']),
+                'monitor_3_start_date' => $this->value($row, ['monitor_3_start_date']),
+                'monitor_3_deadline_days' => $this->value($row, ['monitor_3_deadline_days']),
+                'monitor_3_final_deadline' => $this->value($row, ['monitor_3_final_deadline']),
+                'monitor_3_response' => $this->value($row, ['monitor_3_response']),
+                'monitor_4_start_date' => $this->value($row, ['monitor_4_start_date']),
+                'monitor_4_deadline_days' => $this->value($row, ['monitor_4_deadline_days']),
+                'monitor_4_final_deadline' => $this->value($row, ['monitor_4_final_deadline']),
+                'monitor_4_response' => $this->value($row, ['monitor_4_response']),
             ];
         }
 
         $processed = 0;
         foreach ($auditRows as $row) {
-            if (trim((string) ($row['audit_code'] ?? '')) === '') {
+            $auditCode = trim((string) $this->value($row, ['audit_code']));
+            if ($auditCode === '') {
                 continue;
             }
 
+            [$deadlineLabel, $deadlineDate, $deadlineIsCurrent] = $this->resolveDeadline($row);
+
             $payload = [
-                'audit_code' => $row['audit_code'] ?? '',
-                'audit_nup' => $row['audit_nup'] ?? '',
-                'audit_year' => $row['audit_year'] ?? '',
-                'process_status' => $row['process_status'] ?? '',
-                'requesting_body' => $row['requesting_body'] ?? '',
-                'audit_type' => $row['audit_type'] ?? '',
-                'objective' => $row['objective'] ?? '',
-                'theme' => $row['theme'] ?? '',
-                'classification' => $row['classification'] ?? '',
-                'audit_phase' => $row['audit_phase'] ?? '',
-                'current_owner' => $row['current_owner'] ?? '',
-                'start_date' => $row['start_date'] ?? '',
-                'last_date_response' => $row['last_date_response'] ?? '',
-                'deadline_label' => $row['deadline'] ?? '',
-                'flag_estimated' => $row['flag_estimated'] ?? '',
-                'has_diligence' => $row['has_diligence'] ?? '',
-                'last_response_sent_date_diligence' => $row['last_response_sent_date_diligence'] ?? '',
-                'stage2_start_date' => $row['stage2_start_date'] ?? '',
-                'flag_stage2_diligence' => $row['flag_stage2_diligence'] ?? '',
-                'stage2_date_last_response_diligence' => $row['stage2_date_last_response_diligence'] ?? '',
-                'stage2_preliminary_document' => $row['stage2_preliminary_document'] ?? '',
-                'stage2_deadline_days' => $row['stage2_deadline_days'] ?? '',
-                'comments_due_date' => $row['stage2_comments_due_date'] ?? '',
-                'stage2_final_response' => $row['stage2_final_response'] ?? '',
-                'stage2_final_report' => $row['stage2_final_report'] ?? '',
-                'stage2_service_deadline_days' => $row['stage2_service_deadline_days'] ?? '',
-                'stage2_final_deadline' => $row['stage2_final_deadline'] ?? '',
-                'stage2_final_answer' => $row['stage2_final_answer'] ?? '',
-                'stage2_status' => $row['stage2_status'] ?? '',
-                'stage3_accord_report' => $row['stage3_accord_report'] ?? '',
-                'stage3_accord_report_date' => $row['stage3_accord_report_date'] ?? '',
-                'stage3_status' => $row['stage3_status'] ?? '',
-                'monitoring1_start_date' => $row['monitoring1_start_date'] ?? '',
-                'monitoring1_service_deadline_days' => $row['monitoring1_service_deadline_days'] ?? '',
-                'monitoring1_final_deadline' => $row['monitoring1_final_deadline'] ?? '',
-                'monitoring1_final_response' => $row['monitoring1_final_response'] ?? '',
-                'monitoring1_gap_days_from_report' => $row['monitoring1_gap_days_from_report'] ?? '',
-                'monitoring1_next_monitoring_forecast' => $row['monitoring1_next_monitoring_forecast'] ?? '',
-                'monitoring1_status' => $row['monitoring1_status'] ?? '',
-                'monitoring2_start_date' => $row['monitoring2_start_date'] ?? '',
-                'monitoring2_service_deadline_days' => $row['monitoring2_service_deadline_days'] ?? '',
-                'monitoring2_final_deadline' => $row['monitoring2_final_deadline'] ?? '',
-                'monitoring2_final_response' => $row['monitoring2_final_response'] ?? '',
-                'monitoring2_gap_days_from_previous' => $row['monitoring2_gap_days_from_previous'] ?? '',
-                'monitoring2_next_monitoring_forecast' => $row['monitoring2_next_monitoring_forecast'] ?? '',
-                'monitoring2_status' => $row['monitoring2_status'] ?? '',
-                'monitoring3_start_date' => $row['monitoring3_start_date'] ?? '',
-                'monitoring3_service_deadline_days' => $row['monitoring3_service_deadline_days'] ?? '',
-                'monitoring3_final_deadline' => $row['monitoring3_final_deadline'] ?? '',
-                'monitoring3_final_response' => $row['monitoring3_final_response'] ?? '',
-                'monitoring3_gap_days_from_previous' => $row['monitoring3_gap_days_from_previous'] ?? '',
-                'monitoring3_next_monitoring_forecast' => $row['monitoring3_next_monitoring_forecast'] ?? '',
-                'monitoring3_status' => $row['monitoring3_status'] ?? '',
-                'monitoring4_start_date' => $row['monitoring4_start_date'] ?? '',
-                'monitoring4_service_deadline_days' => $row['monitoring4_service_deadline_days'] ?? '',
-                'monitoring4_final_deadline' => $row['monitoring4_final_deadline'] ?? '',
-                'monitoring4_final_response' => $row['monitoring4_final_response'] ?? '',
-                'monitoring4_gap_days_from_previous' => $row['monitoring4_gap_days_from_previous'] ?? '',
-                'monitoring4_next_monitoring_forecast' => $row['monitoring4_next_monitoring_forecast'] ?? '',
-                'monitoring4_status' => $row['monitoring4_status'] ?? '',
-                'related_processes' => $row['related_processes'] ?? '',
-                'control_summary' => $row['control_summary'] ?? ($row['notes'] ?? ($row['H2'] ?: ($row['related_processes'] ?? ''))),
+                'audit_code' => $auditCode,
+                'audit_nup' => $this->fallbackText($this->value($row, ['audit_nup']), 'N/A'),
+                'audit_year' => $this->value($row, ['audit_year']),
+                'process_status' => $this->fallbackText($this->value($row, ['process_status']), 'Não informado'),
+                'requesting_body' => $this->fallbackText($this->value($row, ['requesting_body']), 'Não informado'),
+                'audit_type' => $this->fallbackText($this->value($row, ['audit_type']), 'Não informado'),
+                'objective' => $this->value($row, ['objective']),
+                'theme' => $this->value($row, ['theme']),
+                'classification' => $this->value($row, ['classification']),
+                'audit_phase' => $this->resolvePhase($row),
+                'current_owner' => $this->fallbackText($this->value($row, ['current_owner']), 'Não informado'),
+                'start_date' => $this->value($row, ['start_date']),
+                'last_date_response' => $this->value($row, ['last_date_response', 'last_response_sent_date']),
+                'deadline_label' => $deadlineLabel,
+                'deadline_date' => $deadlineDate,
+                'deadline_is_current' => $deadlineIsCurrent,
+                'flag_estimated' => $this->value($row, ['flag_estimated']),
+                'has_diligence' => $this->value($row, ['has_diligence']),
+                'last_response_sent_date_diligence' => $this->value($row, ['last_response_sent_date_diligence', 'last_response_sent_date']),
+                'stage2_start_date' => $this->value($row, ['stage2_start_date']),
+                'flag_stage2_diligence' => $this->value($row, ['flag_stage2_diligence']),
+                'stage2_date_last_response_diligence' => $this->value($row, ['stage2_date_last_response_diligence']),
+                'stage2_preliminary_document' => $this->value($row, ['stage2_preliminary_document', 'preliminary_document']),
+                'last_response_sent_date' => $this->value($row, ['last_response_sent_date']),
+                'preliminary_document' => $this->value($row, ['preliminary_document']),
+                'stage2_deadline_days' => $this->value($row, ['stage2_deadline_days']),
+                'comments_due_date' => $this->value($row, ['comments_due_date', 'stage2_comments_due_date']),
+                'stage2_final_response' => $this->value($row, ['stage2_final_response']),
+                'stage2_final_report' => $this->value($row, ['stage2_final_report', 'final_report']),
+                'final_report' => $this->value($row, ['final_report']),
+                'stage2_service_deadline_days' => $this->value($row, ['stage2_service_deadline_days']),
+                'stage2_final_deadline' => $this->value($row, ['stage2_final_deadline']),
+                'stage2_final_answer' => $this->value($row, ['stage2_final_answer']),
+                'stage2_status' => $this->value($row, ['stage2_status']),
+                'stage3_accord_report' => $this->value($row, ['stage3_accord_report', 'accord_report']),
+                'stage3_accord_report_date' => $this->value($row, ['stage3_accord_report_date', 'accord_report_date']),
+                'accord_report' => $this->value($row, ['accord_report']),
+                'accord_report_date' => $this->value($row, ['accord_report_date']),
+                'stage3_status' => $this->value($row, ['stage3_status']),
+                'monitoring1_start_date' => $this->value($row, ['monitoring1_start_date']),
+                'monitoring1_service_deadline_days' => $this->value($row, ['monitoring1_service_deadline_days']),
+                'monitoring1_final_deadline' => $this->value($row, ['monitoring1_final_deadline']),
+                'monitoring1_final_response' => $this->value($row, ['monitoring1_final_response']),
+                'monitoring1_gap_days_from_report' => $this->value($row, ['monitoring1_gap_days_from_report']),
+                'monitoring1_next_monitoring_forecast' => $this->value($row, ['monitoring1_next_monitoring_forecast']),
+                'monitoring1_status' => $this->value($row, ['monitoring1_status']),
+                'monitoring2_start_date' => $this->value($row, ['monitoring2_start_date']),
+                'monitoring2_service_deadline_days' => $this->value($row, ['monitoring2_service_deadline_days']),
+                'monitoring2_final_deadline' => $this->value($row, ['monitoring2_final_deadline']),
+                'monitoring2_final_response' => $this->value($row, ['monitoring2_final_response']),
+                'monitoring2_gap_days_from_previous' => $this->value($row, ['monitoring2_gap_days_from_previous']),
+                'monitoring2_next_monitoring_forecast' => $this->value($row, ['monitoring2_next_monitoring_forecast']),
+                'monitoring2_status' => $this->value($row, ['monitoring2_status']),
+                'monitoring3_start_date' => $this->value($row, ['monitoring3_start_date']),
+                'monitoring3_service_deadline_days' => $this->value($row, ['monitoring3_service_deadline_days']),
+                'monitoring3_final_deadline' => $this->value($row, ['monitoring3_final_deadline']),
+                'monitoring3_final_response' => $this->value($row, ['monitoring3_final_response']),
+                'monitoring3_gap_days_from_previous' => $this->value($row, ['monitoring3_gap_days_from_previous']),
+                'monitoring3_next_monitoring_forecast' => $this->value($row, ['monitoring3_next_monitoring_forecast']),
+                'monitoring3_status' => $this->value($row, ['monitoring3_status']),
+                'monitoring4_start_date' => $this->value($row, ['monitoring4_start_date']),
+                'monitoring4_service_deadline_days' => $this->value($row, ['monitoring4_service_deadline_days']),
+                'monitoring4_final_deadline' => $this->value($row, ['monitoring4_final_deadline']),
+                'monitoring4_final_response' => $this->value($row, ['monitoring4_final_response']),
+                'monitoring4_gap_days_from_previous' => $this->value($row, ['monitoring4_gap_days_from_previous']),
+                'monitoring4_next_monitoring_forecast' => $this->value($row, ['monitoring4_next_monitoring_forecast']),
+                'monitoring4_status' => $this->value($row, ['monitoring4_status']),
+                'control_point' => $this->value($row, ['control_point']),
+                'related_processes' => $this->value($row, ['related_processes']),
+                'control_summary' => $this->value($row, ['control_summary', 'control_point', 'notes', 'related_processes']),
+                'notes' => $this->value($row, ['notes']),
             ];
 
-            $existing = $this->repository->findByCode((string) $payload['audit_code']);
-            $this->service->save($payload + ['items' => $itemsByAudit[$payload['audit_code']] ?? []], $user, $existing ? (int) $existing['id'] : null);
+            $existing = $this->repository->findByCode($auditCode);
+            $this->service->save($payload + ['items' => $itemsByAudit[$auditCode] ?? []], $user, $existing ? (int) $existing['id'] : null);
             $processed++;
         }
 
@@ -205,7 +155,7 @@ class AuditCsvImportService
         ];
     }
 
-    private function readRows(string $path, array $defaultHeaders): array
+    private function readRows(string $path): array
     {
         if (!is_file($path)) {
             throw new RuntimeException('Arquivo CSV não encontrado.');
@@ -219,13 +169,13 @@ class AuditCsvImportService
         $headerRow = fgetcsv($handle, 0, ';');
         if ($headerRow === false) {
             fclose($handle);
-            throw new RuntimeException('CSV vazio ou invalido.');
+            throw new RuntimeException('CSV vazio ou inválido.');
         }
 
         $headers = [];
         foreach ($headerRow as $index => $header) {
-            $normalized = strtolower(trim((string) preg_replace('/^\xEF\xBB\xBF/', '', (string) $header)));
-            $headers[] = $normalized !== '' ? $normalized : ($defaultHeaders[$index] ?? 'col_' . $index);
+            $normalized = $this->normalizeHeader((string) $header);
+            $headers[] = $normalized !== '' ? $normalized : 'col_' . $index;
         }
 
         $rows = [];
@@ -247,6 +197,86 @@ class AuditCsvImportService
         return $rows;
     }
 
+    private function resolvePhase(array $row): string
+    {
+        $phase = trim((string) $this->value($row, ['audit_phase']));
+        if ($phase !== '') {
+            return $phase;
+        }
+
+        $hasDiligence = $this->normalizeToken((string) $this->value($row, ['has_diligence']));
+        return in_array($hasDiligence, ['SIM', 'S', '1', 'TRUE'], true) ? 'Em diligência' : 'Não informada';
+    }
+
+    private function resolveDeadline(array $row): array
+    {
+        $explicit = trim((string) $this->value($row, ['deadline_label', 'deadline']));
+        if ($explicit !== '') {
+            $token = $this->normalizeToken($explicit);
+            if ($token === 'DATAATUAL') {
+                return ['DATA ATUAL', null, 1];
+            }
+
+            return [$explicit, $explicit, 0];
+        }
+
+        foreach ([
+            'stage2_final_deadline',
+            'monitoring1_final_deadline',
+            'monitoring2_final_deadline',
+            'monitoring3_final_deadline',
+            'monitoring4_final_deadline',
+            'comments_due_date',
+        ] as $field) {
+            $candidate = trim((string) $this->value($row, [$field]));
+            if ($candidate !== '') {
+                return [$candidate, $candidate, 0];
+            }
+        }
+
+        return [null, null, 0];
+    }
+
+    private function fallbackText(?string $value, string $fallback): string
+    {
+        $value = trim((string) $value);
+        return $value !== '' ? $value : $fallback;
+    }
+
+    private function value(array $row, array $keys): ?string
+    {
+        foreach ($keys as $key) {
+            $normalized = $this->normalizeHeader($key);
+            if (!array_key_exists($normalized, $row)) {
+                continue;
+            }
+
+            $value = trim((string) $row[$normalized]);
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        foreach ($keys as $key) {
+            $normalized = $this->normalizeHeader($key);
+            if (array_key_exists($normalized, $row)) {
+                return trim((string) $row[$normalized]);
+            }
+        }
+
+        return null;
+    }
+
+    private function normalizeHeader(string $header): string
+    {
+        $header = preg_replace('/^\xEF\xBB\xBF/', '', $header) ?? $header;
+        $header = trim(mb_strtolower($header, 'UTF-8'));
+        $normalized = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $header);
+        $header = $normalized !== false ? $normalized : $header;
+        $header = preg_replace('/[^a-z0-9]+/', '_', $header) ?? $header;
+        return trim($header, '_');
+    }
+
     private function rowEmpty(array $row): bool
     {
         foreach ($row as $value) {
@@ -261,6 +291,15 @@ class AuditCsvImportService
     private function fixText(string $value): string
     {
         $value = str_replace("\xC2\xA0", ' ', trim($value));
-        return preg_replace('/\s+/', ' ', $value) ?? $value;
+        $value = preg_replace('/\s+/', ' ', $value) ?? $value;
+        return $value;
+    }
+
+    private function normalizeToken(string $value): string
+    {
+        $value = strtoupper(trim($value));
+        $normalized = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+        $value = $normalized !== false ? $normalized : $value;
+        return preg_replace('/[^A-Z0-9]+/', '', $value) ?? '';
     }
 }

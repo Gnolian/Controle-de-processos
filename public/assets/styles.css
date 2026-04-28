@@ -85,14 +85,14 @@ a {
 
 .app-body {
     display: grid;
-    grid-template-columns: 280px minmax(0, 1fr);
+    grid-template-columns: 248px minmax(0, 1fr);
 }
 
 .app-sidebar {
     position: sticky;
     top: 0;
     height: 100vh;
-    padding: 22px;
+    padding: 18px 16px;
     background: var(--sidebar);
     color: #fff;
 }
@@ -100,11 +100,11 @@ a {
 .sidebar-brand {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     color: #fff;
-    font-size: 18px;
+    font-size: 16px;
     line-height: 1.1;
-    margin-bottom: 34px;
+    margin-bottom: 28px;
 }
 
 .sidebar-brand:hover {
@@ -113,7 +113,7 @@ a {
 
 .sidebar-nav {
     display: grid;
-    gap: 8px;
+    gap: 6px;
 }
 
 .sidebar-nav a {
@@ -121,8 +121,9 @@ a {
     align-items: center;
     gap: 10px;
     color: #cbd5e1;
-    padding: 11px 12px;
+    padding: 10px 12px;
     border-radius: 10px;
+    font-size: 15px;
 }
 
 .sidebar-nav a:hover,
@@ -235,12 +236,30 @@ a {
     grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.audit-universe-grid {
+.audit-summary-shell {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
     margin-bottom: 24px;
-    align-items: stretch;
+}
+
+.audit-summary-column {
+    display: grid;
+    gap: 16px;
+    align-content: start;
+}
+
+.audit-summary-subgrid {
+    display: grid;
+    gap: 16px;
+}
+
+.audit-summary-subgrid--audits {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.audit-summary-subgrid--rdc {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .filter-select {
@@ -346,7 +365,6 @@ a {
 }
 
 .universe-core {
-    grid-column: 1 / span 2;
     min-height: 248px;
     display: flex;
     flex-direction: column;
@@ -370,7 +388,6 @@ a {
 }
 
 .rdc-core {
-    grid-column: 3 / span 2;
     min-height: 248px;
     display: flex;
     flex-direction: column;
@@ -393,10 +410,6 @@ a {
     color: rgba(37, 99, 235, 0.14);
 }
 
-.rdc-status-card {
-    min-height: 126px;
-}
-
 .metric-card-caption {
     margin: 8px 0 0;
     color: var(--muted);
@@ -407,6 +420,10 @@ a {
     min-height: 126px;
 }
 
+.rdc-branch {
+    min-height: 126px;
+}
+
 .app-card,
 .filter-card {
     padding: 22px;
@@ -414,6 +431,38 @@ a {
 
 .filter-card {
     margin-bottom: 18px;
+}
+
+.audit-filter-head {
+    align-items: flex-start;
+    margin-bottom: 14px;
+}
+
+.audit-filter-head h2 {
+    margin-bottom: 4px;
+}
+
+.audit-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 16px;
+    align-items: end;
+}
+
+.audit-filter-field {
+    grid-column: span 3;
+    min-width: 0;
+}
+
+.audit-filter-field--wide {
+    grid-column: span 6;
+}
+
+.audit-filter-actions {
+    grid-column: span 12;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-start;
 }
 
 .modern-table th {
@@ -806,18 +855,17 @@ a {
 
     .metric-grid,
     .metric-grid.xl,
-    .audit-universe-grid {
+    .audit-summary-shell {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .universe-core {
-        grid-column: 1 / -1;
-        grid-row: auto;
+    .audit-summary-subgrid--rdc {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .rdc-core {
-        grid-column: 1 / -1;
-        grid-row: auto;
+    .audit-filter-field,
+    .audit-filter-field--wide {
+        grid-column: span 6;
     }
 
     .timeline-board {
@@ -846,9 +894,21 @@ a {
 
     .metric-grid,
     .metric-grid.xl,
-    .audit-universe-grid,
+    .audit-summary-shell,
     .sidebar-nav {
         grid-template-columns: 1fr;
+    }
+
+    .audit-summary-subgrid--audits,
+    .audit-summary-subgrid--rdc,
+    .audit-filter-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .audit-filter-field,
+    .audit-filter-field--wide,
+    .audit-filter-actions {
+        grid-column: 1 / -1;
     }
 
     .detail-grid {

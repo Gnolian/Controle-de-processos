@@ -18,17 +18,13 @@ $getMulti = static function (string $key): array {
     ), static fn (string $value): bool => $value !== ''));
 };
 
-$isSelected = static function (array $selectedValues, string $value): string {
-    return in_array($value, $selectedValues, true) ? 'selected' : '';
-};
-
-$renderFilterBox = static function (string $name, string $label, array $options, array $selectedValues): void {
+$renderFilterBox = static function (string $name, string $label, array $options, array $selectedValues, string $class = ''): void {
     $selectedCount = count($selectedValues);
     $summary = $selectedCount === 0
         ? 'Todos'
         : ($selectedCount === 1 ? $selectedValues[0] : $selectedCount . ' selecionados');
     ?>
-    <div class="col-lg-4 col-xl-3">
+    <div class="audit-filter-field <?= e($class) ?>">
         <label class="form-label"><?= e($label) ?></label>
         <details class="filter-select">
             <summary>
@@ -63,8 +59,6 @@ $filters = [
     'item_status_group' => $getMulti('item_status_group'),
 ];
 
-$selectedItemKinds = $filters['item_kind'];
-$selectedItemStatuses = $filters['item_status_group'];
 $timelineYear = max(2026, (int) ($_GET['timeline_year'] ?? 2026));
 $resultAnchor = 'audit-results';
 $rdcAnchor = 'rdc-status-section';
@@ -80,7 +74,6 @@ $metrics = [
     'second_monitoring' => 0,
     'third_monitoring' => 0,
     'fourth_monitoring' => 0,
-    'other_phases' => 0,
 ];
 $filterOptions = [
     'audit_year' => [],
@@ -99,16 +92,12 @@ $itemTotals = [];
 $itemImplementation = [];
 $itemCards = [];
 $timelineEntries = [];
-$itemKindOptions = [
-    'DETERMINACAO' => 'Determinacoes',
-    'RECOMENDACAO' => 'Recomendacoes',
-    'CIENCIA' => 'Ciência',
+$itemKindOptionRows = [
+    ['value' => 'DETERMINACAO', 'label' => 'Determinações'],
+    ['value' => 'RECOMENDACAO', 'label' => 'Recomendações'],
+    ['value' => 'CIENCIA', 'label' => 'Ciência'],
 ];
-$itemKindOptionRows = array_map(
-    static fn (string $value, string $label): array => ['value' => $value, 'label' => $label],
-    array_keys($itemKindOptions),
-    array_values($itemKindOptions)
-);
+
 $buildUrl = function (array $overrides = [], string $anchor = 'audit-results') use ($filters, $timelineYear): string {
     $params = $filters;
     $params['timeline_year'] = $timelineYear;
@@ -151,6 +140,15 @@ if ($moduleReady) {
     $timelineEntries = $repo->timelineEntries($timelineYear, $filters);
 }
 
+$totalDeterminacoes = 0;
+$totalRecomendacoes = 0;
+$totalCiencias = 0;
+foreach ($itemTotals as $row) {
+    $totalDeterminacoes += (int) ($row['determinacoes'] ?? 0);
+    $totalRecomendacoes += (int) ($row['recomendacoes'] ?? 0);
+    $totalCiencias += (int) ($row['ciencias'] ?? 0);
+}
+
 $timelineColumns = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 $timelineByMonth = array_fill(1, 12, []);
 foreach ($timelineEntries as $entry) {
@@ -170,7 +168,7 @@ require __DIR__ . '/../views/nav.php';
 
     <?php if (!$moduleReady): ?>
         <div class="alert alert-warning shadow-sm">
-            O módulo de auditorias ainda não foi instalado neste banco. No phpMyAdmin, importe primeiro:
+            O módulo de auditorias ainda não foi instalado neste banco. No phpMyAdmin, importe primeiro
             <strong>database/migrations/004_add_audits_module.sql</strong> e depois
             <strong>database/migrations/005_expand_audits_for_timeline.sql</strong>.
         </div>
@@ -179,7 +177,7 @@ require __DIR__ . '/../views/nav.php';
     <section class="hero-panel">
         <div>
             <p class="section-kicker">CGU e TCU</p>
-            <h1>Painel de auditorias</h1>
+            <h1>Painel de Auditorias</h1>
             <p class="text-secondary mb-0">Visão executiva, cadastro manual, acompanhamento de RDC e linha do tempo anual de prazos.</p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
@@ -191,15 +189,19 @@ require __DIR__ . '/../views/nav.php';
 
     <form class="filter-card" id="audit-filters" method="get" action="<?= url('audits.php') ?>">
         <input type="hidden" name="timeline_year" value="<?= (int) $timelineYear ?>">
-        <div class="card-head">
-            <h2>Filtro de Auditorias</h2>
-            <span class="text-secondary">Você pode selecionar mais de uma opção no mesmo filtro.</span>
+        <div class="card-head audit-filter-head">
+            <div>
+                <h2>Filtro de Auditorias</h2>
+                <span class="text-secondary">Você pode selecionar mais de uma opção no mesmo filtro.</span>
+            </div>
         </div>
-        <div class="row g-3 align-items-end">
-            <div class="col-lg-4">
+
+        <div class="audit-filter-grid">
+            <div class="audit-filter-field audit-filter-field--wide">
                 <label class="form-label">Buscar auditoria</label>
                 <input class="form-control" name="q" value="<?= e($filters['q']) ?>" placeholder="Código, NUP, tema ou objetivo" <?= !$moduleReady ? 'disabled' : '' ?>>
             </div>
+
             <?php $renderFilterBox('audit_year', 'Ano', $filterOptions['audit_year'], $filters['audit_year']); ?>
             <?php $renderFilterBox('process_status', 'Status do processo', $filterOptions['process_status'], $filters['process_status']); ?>
             <?php $renderFilterBox('requesting_body', 'Órgão', $filterOptions['requesting_body'], $filters['requesting_body']); ?>
@@ -207,60 +209,87 @@ require __DIR__ . '/../views/nav.php';
             <?php $renderFilterBox('classification', 'Classificação', $filterOptions['classification'], $filters['classification']); ?>
             <?php $renderFilterBox('audit_phase', 'Fase da Auditoria', $filterOptions['audit_phase'], $filters['audit_phase']); ?>
             <?php $renderFilterBox('current_owner', 'Responsável Atual', $filterOptions['current_owner'], $filters['current_owner']); ?>
-            <?php $renderFilterBox('item_kind', 'RDC', $itemKindOptionRows, $selectedItemKinds); ?>
-            <?php $renderFilterBox('item_status_group', 'Situação do RDC', $filterOptions['item_status_group'], $selectedItemStatuses); ?>
-            <div class="col-lg-4 d-flex gap-2">
+            <?php $renderFilterBox('item_kind', 'RDC', $itemKindOptionRows, $filters['item_kind']); ?>
+            <?php $renderFilterBox('item_status_group', 'Situação do RDC', $filterOptions['item_status_group'], $filters['item_status_group']); ?>
+
+            <div class="audit-filter-actions">
                 <button class="btn btn-primary" type="submit" <?= !$moduleReady ? 'disabled' : '' ?>><i class="bi bi-funnel"></i> Filtrar</button>
                 <a class="btn btn-outline-secondary" href="<?= url('audits.php') ?>">Limpar</a>
             </div>
         </div>
     </form>
 
-    <section class="audit-universe-grid">
-        <article class="metric-card universe-core">
-            <small class="section-kicker">Universo filtrado</small>
-            <span>Número de auditorias</span>
-            <strong><?= (int) $metrics['total'] ?></strong>
-            <p class="text-secondary mb-0">Esse card representa o universo atual do filtro aplicado em toda a pagina.</p>
-            <i class="bi bi-bullseye"></i>
-        </article>
-        <article class="metric-card rdc-core">
-            <small class="section-kicker">RDC gerados</small>
-            <span>Quantidade de RDC</span>
-            <strong><?= (int) $metrics['rdc_total'] ?></strong>
-            <p class="text-secondary mb-0">As auditorias geraram <?= (int) $metrics['rdc_total'] ?> quantidades de RDC.</p>
-            <i class="bi bi-diagram-3"></i>
-        </article>
-        <article class="metric-card universe-branch warning">
-            <span>Em diligência/Relatório</span>
-            <strong><?= (int) $metrics['diligence_report'] ?></strong>
-            <i class="bi bi-exclamation-circle"></i>
-        </article>
-        <article class="metric-card universe-branch muted">
-            <span>Monitoramento a iniciar</span>
-            <strong><?= (int) $metrics['monitoring_pending'] ?></strong>
-            <i class="bi bi-hourglass-split"></i>
-        </article>
-        <article class="metric-card universe-branch">
-            <span>1&ordm; monitoramento</span>
-            <strong><?= (int) $metrics['first_monitoring'] ?></strong>
-            <i class="bi bi-1-circle"></i>
-        </article>
-        <article class="metric-card universe-branch">
-            <span>2&ordm; monitoramento</span>
-            <strong><?= (int) $metrics['second_monitoring'] ?></strong>
-            <i class="bi bi-2-circle"></i>
-        </article>
-        <article class="metric-card universe-branch">
-            <span>3&ordm; monitoramento</span>
-            <strong><?= (int) $metrics['third_monitoring'] ?></strong>
-            <i class="bi bi-3-circle"></i>
-        </article>
-        <article class="metric-card universe-branch">
-            <span>4&ordm; monitoramento</span>
-            <strong><?= (int) $metrics['fourth_monitoring'] ?></strong>
-            <i class="bi bi-4-circle"></i>
-        </article>
+    <section class="audit-summary-shell">
+        <div class="audit-summary-column">
+            <article class="metric-card universe-core">
+                <small class="section-kicker">Universo filtrado</small>
+                <span>Número de Auditorias</span>
+                <strong><?= (int) $metrics['total'] ?></strong>
+                <p class="text-secondary mb-0">Esse card representa o universo atual do filtro aplicado em toda a página.</p>
+                <i class="bi bi-bullseye"></i>
+            </article>
+
+            <div class="audit-summary-subgrid audit-summary-subgrid--audits">
+                <article class="metric-card universe-branch warning">
+                    <span>Em Diligência/Relatório</span>
+                    <strong><?= (int) $metrics['diligence_report'] ?></strong>
+                    <i class="bi bi-exclamation-circle"></i>
+                </article>
+                <article class="metric-card universe-branch muted">
+                    <span>Monitoramento A Iniciar</span>
+                    <strong><?= (int) $metrics['monitoring_pending'] ?></strong>
+                    <i class="bi bi-hourglass-split"></i>
+                </article>
+                <article class="metric-card universe-branch">
+                    <span>1&ordm; Monitoramento</span>
+                    <strong><?= (int) $metrics['first_monitoring'] ?></strong>
+                    <i class="bi bi-1-circle"></i>
+                </article>
+                <article class="metric-card universe-branch">
+                    <span>2&ordm; Monitoramento</span>
+                    <strong><?= (int) $metrics['second_monitoring'] ?></strong>
+                    <i class="bi bi-2-circle"></i>
+                </article>
+                <article class="metric-card universe-branch">
+                    <span>3&ordm; Monitoramento</span>
+                    <strong><?= (int) $metrics['third_monitoring'] ?></strong>
+                    <i class="bi bi-3-circle"></i>
+                </article>
+                <article class="metric-card universe-branch">
+                    <span>4&ordm; Monitoramento</span>
+                    <strong><?= (int) $metrics['fourth_monitoring'] ?></strong>
+                    <i class="bi bi-4-circle"></i>
+                </article>
+            </div>
+        </div>
+
+        <div class="audit-summary-column">
+            <article class="metric-card rdc-core">
+                <small class="section-kicker">RDC gerados</small>
+                <span>Quantidade de RDC</span>
+                <strong><?= (int) $metrics['rdc_total'] ?></strong>
+                <p class="text-secondary mb-0">As auditorias geraram <?= (int) $metrics['rdc_total'] ?> quantidades de RDC.</p>
+                <i class="bi bi-diagram-3"></i>
+            </article>
+
+            <div class="audit-summary-subgrid audit-summary-subgrid--rdc">
+                <article class="metric-card rdc-branch">
+                    <span>Determinações</span>
+                    <strong><?= $totalDeterminacoes ?></strong>
+                    <i class="bi bi-list-check"></i>
+                </article>
+                <article class="metric-card rdc-branch">
+                    <span>Recomendações</span>
+                    <strong><?= $totalRecomendacoes ?></strong>
+                    <i class="bi bi-journal-check"></i>
+                </article>
+                <article class="metric-card rdc-branch">
+                    <span>Ciência</span>
+                    <strong><?= $totalCiencias ?></strong>
+                    <i class="bi bi-info-circle"></i>
+                </article>
+            </div>
+        </div>
     </section>
 
     <section class="app-card mb-4" id="<?= e($timelineAnchor) ?>">
@@ -270,10 +299,10 @@ require __DIR__ . '/../views/nav.php';
                     <i class="bi bi-chevron-left"></i>
                 </a>
                 <div class="timeline-year-title">
-                    <h2>Linha do tempo <?= (int) $timelineYear ?></h2>
-            <span class="text-secondary">Passe o mouse para ver o ID e clique para abrir o resumo da auditoria.</span>
+                    <h2>Linha do Tempo <?= (int) $timelineYear ?></h2>
+                    <span class="text-secondary">Passe o mouse para ver o ID e clique para abrir o resumo da auditoria.</span>
                 </div>
-                <a class="timeline-nav-arrow" href="<?= e($buildUrl(['timeline_year' => $timelineYear + 1], $timelineAnchor)) ?>" aria-label="Proximo ano">
+                <a class="timeline-nav-arrow" href="<?= e($buildUrl(['timeline_year' => $timelineYear + 1], $timelineAnchor)) ?>" aria-label="Próximo ano">
                     <i class="bi bi-chevron-right"></i>
                 </a>
             </div>
@@ -306,13 +335,13 @@ require __DIR__ . '/../views/nav.php';
     <section class="row g-4">
         <div class="col-lg-6">
             <div class="app-card h-100">
-                <div class="card-head"><h2>Auditorias por órgão solicitante</h2></div>
+                <div class="card-head"><h2>Auditorias por Órgão Solicitante</h2></div>
                 <canvas class="chart-canvas bar" data-chart='<?= e(json_encode($byBody, JSON_UNESCAPED_UNICODE)) ?>'></canvas>
             </div>
         </div>
         <div class="col-lg-6">
             <div class="app-card h-100">
-                <div class="card-head"><h2>Diligência ou fase atual</h2></div>
+                <div class="card-head"><h2>Diligência ou Fase Atual</h2></div>
                 <canvas class="chart-canvas bar" data-chart='<?= e(json_encode($diligencePhase, JSON_UNESCAPED_UNICODE)) ?>'></canvas>
             </div>
         </div>
@@ -321,7 +350,7 @@ require __DIR__ . '/../views/nav.php';
     <section class="row g-4 mt-1">
         <div class="col-lg-5">
             <div class="app-card h-100">
-                <div class="card-head"><h2>Por tipo de auditoria</h2></div>
+                <div class="card-head"><h2>Por Tipo de Auditoria</h2></div>
                 <canvas class="chart-canvas bar" data-chart-mode="horizontal-bar" data-chart-legend="none" data-chart='<?= e(json_encode($byType, JSON_UNESCAPED_UNICODE)) ?>'></canvas>
             </div>
         </div>
@@ -336,7 +365,7 @@ require __DIR__ . '/../views/nav.php';
     <section class="row g-4 mt-1">
         <div class="col-lg-7">
             <div class="app-card h-100">
-                <div class="card-head"><h2>Determinações, recomendações e ciência por auditoria</h2></div>
+                <div class="card-head"><h2>Determinações, Recomendações e Ciência por Auditoria</h2></div>
                 <div class="table-responsive">
                     <table class="table modern-table mb-0">
                         <thead><tr><th>Auditoria</th><th>Órgão</th><th>Determ.</th><th>Recom.</th><th>Ciência</th><th>Total</th></tr></thead>
@@ -362,8 +391,8 @@ require __DIR__ . '/../views/nav.php';
         <div class="col-lg-5">
             <div class="app-card h-100">
                 <div class="card-head">
-                    <h2>Pontos de controle dos RDC</h2>
-                    <span class="text-secondary"><?= $selectedItemStatuses !== [] ? e(count($selectedItemStatuses) . ' situação(ões) selecionada(s)') : 'Todos os status' ?></span>
+                    <h2>Pontos de Controle dos RDC</h2>
+                    <span class="text-secondary"><?= $filters['item_status_group'] !== [] ? e(count($filters['item_status_group']) . ' situação(ões) selecionada(s)') : 'Todos os status' ?></span>
                 </div>
                 <div class="audit-point-cards">
                     <?php foreach ($itemCards as $item): ?>
