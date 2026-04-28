@@ -236,30 +236,33 @@ a {
     grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.audit-summary-shell {
+.audit-dashboard-cards {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px;
+    gap: 16px;
     margin-bottom: 24px;
 }
 
-.audit-summary-column {
+.audit-dashboard-top {
     display: grid;
-    gap: 16px;
-    align-content: start;
-}
-
-.audit-summary-subgrid {
-    display: grid;
-    gap: 16px;
-}
-
-.audit-summary-subgrid--audits {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
 }
 
-.audit-summary-subgrid--rdc {
+.audit-dashboard-bottom {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+}
+
+.audit-dashboard-group {
+    display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.audit-dashboard-group--rdc {
+    grid-template-columns: 1fr;
 }
 
 .filter-select {
@@ -442,27 +445,21 @@ a {
     margin-bottom: 4px;
 }
 
-.audit-filter-grid {
-    display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    gap: 16px;
-    align-items: end;
-}
-
 .audit-filter-field {
-    grid-column: span 3;
     min-width: 0;
 }
 
-.audit-filter-field--wide {
-    grid-column: span 6;
+.audit-filter-row .form-label {
+    margin-bottom: 8px;
+    font-weight: 600;
 }
 
 .audit-filter-actions {
-    grid-column: span 12;
-    display: flex;
-    gap: 10px;
-    justify-content: flex-start;
+    padding-top: 30px;
+}
+
+.audit-filter-actions .btn {
+    min-width: 110px;
 }
 
 .modern-table th {
@@ -855,17 +852,16 @@ a {
 
     .metric-grid,
     .metric-grid.xl,
-    .audit-summary-shell {
+    .audit-dashboard-top {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .audit-summary-subgrid--rdc {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    .audit-dashboard-bottom {
+        grid-template-columns: 1fr;
     }
 
-    .audit-filter-field,
-    .audit-filter-field--wide {
-        grid-column: span 6;
+    .audit-dashboard-group {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .timeline-board {
@@ -894,21 +890,17 @@ a {
 
     .metric-grid,
     .metric-grid.xl,
-    .audit-summary-shell,
+    .audit-dashboard-top,
     .sidebar-nav {
         grid-template-columns: 1fr;
     }
 
-    .audit-summary-subgrid--audits,
-    .audit-summary-subgrid--rdc,
-    .audit-filter-grid {
+    .audit-dashboard-group {
         grid-template-columns: 1fr;
     }
 
-    .audit-filter-field,
-    .audit-filter-field--wide,
     .audit-filter-actions {
-        grid-column: 1 / -1;
+        padding-top: 0;
     }
 
     .detail-grid {

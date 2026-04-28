@@ -18,13 +18,13 @@ $getMulti = static function (string $key): array {
     ), static fn (string $value): bool => $value !== ''));
 };
 
-$renderFilterBox = static function (string $name, string $label, array $options, array $selectedValues, string $class = ''): void {
+$renderFilterBox = static function (string $name, string $label, array $options, array $selectedValues): void {
     $selectedCount = count($selectedValues);
     $summary = $selectedCount === 0
         ? 'Todos'
         : ($selectedCount === 1 ? $selectedValues[0] : $selectedCount . ' selecionados');
     ?>
-    <div class="audit-filter-field <?= e($class) ?>">
+    <div class="audit-filter-field">
         <label class="form-label"><?= e($label) ?></label>
         <details class="filter-select">
             <summary>
@@ -196,31 +196,49 @@ require __DIR__ . '/../views/nav.php';
             </div>
         </div>
 
-        <div class="audit-filter-grid">
-            <div class="audit-filter-field audit-filter-field--wide">
+        <div class="row g-3 audit-filter-row">
+            <div class="col-lg-4">
                 <label class="form-label">Buscar auditoria</label>
                 <input class="form-control" name="q" value="<?= e($filters['q']) ?>" placeholder="Código, NUP, tema ou objetivo" <?= !$moduleReady ? 'disabled' : '' ?>>
             </div>
+            <div class="col-lg-2">
+                <?php $renderFilterBox('audit_year', 'Ano', $filterOptions['audit_year'], $filters['audit_year']); ?>
+            </div>
+            <div class="col-lg-3">
+                <?php $renderFilterBox('process_status', 'Status do processo', $filterOptions['process_status'], $filters['process_status']); ?>
+            </div>
+            <div class="col-lg-3">
+                <?php $renderFilterBox('requesting_body', 'Órgão', $filterOptions['requesting_body'], $filters['requesting_body']); ?>
+            </div>
 
-            <?php $renderFilterBox('audit_year', 'Ano', $filterOptions['audit_year'], $filters['audit_year']); ?>
-            <?php $renderFilterBox('process_status', 'Status do processo', $filterOptions['process_status'], $filters['process_status']); ?>
-            <?php $renderFilterBox('requesting_body', 'Órgão', $filterOptions['requesting_body'], $filters['requesting_body']); ?>
-            <?php $renderFilterBox('theme', 'Tema', $filterOptions['theme'], $filters['theme']); ?>
-            <?php $renderFilterBox('classification', 'Classificação', $filterOptions['classification'], $filters['classification']); ?>
-            <?php $renderFilterBox('audit_phase', 'Fase da Auditoria', $filterOptions['audit_phase'], $filters['audit_phase']); ?>
-            <?php $renderFilterBox('current_owner', 'Responsável Atual', $filterOptions['current_owner'], $filters['current_owner']); ?>
-            <?php $renderFilterBox('item_kind', 'RDC', $itemKindOptionRows, $filters['item_kind']); ?>
-            <?php $renderFilterBox('item_status_group', 'Situação do RDC', $filterOptions['item_status_group'], $filters['item_status_group']); ?>
+            <div class="col-lg-3">
+                <?php $renderFilterBox('theme', 'Tema', $filterOptions['theme'], $filters['theme']); ?>
+            </div>
+            <div class="col-lg-3">
+                <?php $renderFilterBox('classification', 'Classificação', $filterOptions['classification'], $filters['classification']); ?>
+            </div>
+            <div class="col-lg-3">
+                <?php $renderFilterBox('audit_phase', 'Fase da Auditoria', $filterOptions['audit_phase'], $filters['audit_phase']); ?>
+            </div>
+            <div class="col-lg-3">
+                <?php $renderFilterBox('current_owner', 'Responsável Atual', $filterOptions['current_owner'], $filters['current_owner']); ?>
+            </div>
 
-            <div class="audit-filter-actions">
+            <div class="col-lg-3">
+                <?php $renderFilterBox('item_kind', 'RDC', $itemKindOptionRows, $filters['item_kind']); ?>
+            </div>
+            <div class="col-lg-3">
+                <?php $renderFilterBox('item_status_group', 'Situação do RDC', $filterOptions['item_status_group'], $filters['item_status_group']); ?>
+            </div>
+            <div class="col-lg-6 d-flex gap-2 align-items-end audit-filter-actions">
                 <button class="btn btn-primary" type="submit" <?= !$moduleReady ? 'disabled' : '' ?>><i class="bi bi-funnel"></i> Filtrar</button>
                 <a class="btn btn-outline-secondary" href="<?= url('audits.php') ?>">Limpar</a>
             </div>
         </div>
     </form>
 
-    <section class="audit-summary-shell">
-        <div class="audit-summary-column">
+    <section class="audit-dashboard-cards">
+        <div class="audit-dashboard-top">
             <article class="metric-card universe-core">
                 <small class="section-kicker">Universo filtrado</small>
                 <span>Número de Auditorias</span>
@@ -229,7 +247,17 @@ require __DIR__ . '/../views/nav.php';
                 <i class="bi bi-bullseye"></i>
             </article>
 
-            <div class="audit-summary-subgrid audit-summary-subgrid--audits">
+            <article class="metric-card rdc-core">
+                <small class="section-kicker">RDC gerados</small>
+                <span>Quantidade de RDC</span>
+                <strong><?= (int) $metrics['rdc_total'] ?></strong>
+                <p class="text-secondary mb-0">As auditorias geraram <?= (int) $metrics['rdc_total'] ?> quantidades de RDC.</p>
+                <i class="bi bi-diagram-3"></i>
+            </article>
+        </div>
+
+        <div class="audit-dashboard-bottom">
+            <div class="audit-dashboard-group">
                 <article class="metric-card universe-branch warning">
                     <span>Em Diligência/Relatório</span>
                     <strong><?= (int) $metrics['diligence_report'] ?></strong>
@@ -261,18 +289,8 @@ require __DIR__ . '/../views/nav.php';
                     <i class="bi bi-4-circle"></i>
                 </article>
             </div>
-        </div>
 
-        <div class="audit-summary-column">
-            <article class="metric-card rdc-core">
-                <small class="section-kicker">RDC gerados</small>
-                <span>Quantidade de RDC</span>
-                <strong><?= (int) $metrics['rdc_total'] ?></strong>
-                <p class="text-secondary mb-0">As auditorias geraram <?= (int) $metrics['rdc_total'] ?> quantidades de RDC.</p>
-                <i class="bi bi-diagram-3"></i>
-            </article>
-
-            <div class="audit-summary-subgrid audit-summary-subgrid--rdc">
+            <div class="audit-dashboard-group audit-dashboard-group--rdc">
                 <article class="metric-card rdc-branch">
                     <span>Determinações</span>
                     <strong><?= $totalDeterminacoes ?></strong>

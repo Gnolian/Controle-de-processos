@@ -12,9 +12,7 @@
             <a class="<?= ($activeNav ?? '') === 'audits' ? 'active' : '' ?>" href="<?= url('audits.php') ?>"><i class="bi bi-shield-check"></i> Auditorias</a>
         <?php endif; ?>
         <?php if ($navUser && can_manage($navUser)): ?>
-            <a class="<?= ($activeNav ?? '') === 'import' ? 'active' : '' ?>" href="<?= url('import.php') ?>"><i class="bi bi-cloud-upload"></i> Importar CSV</a>
             <a class="<?= ($activeNav ?? '') === 'management' ? 'active' : '' ?>" href="<?= url('management.php') ?>"><i class="bi bi-bar-chart"></i> Gerencial</a>
-            <a class="<?= ($activeNav ?? '') === 'audit' ? 'active' : '' ?>" href="<?= url('audit.php') ?>"><i class="bi bi-clock-history"></i> Auditoria</a>
             <a class="<?= ($activeNav ?? '') === 'users' ? 'active' : '' ?>" href="<?= url('users.php') ?>"><i class="bi bi-people"></i> Usuários</a>
         <?php endif; ?>
     </nav>
