@@ -25,11 +25,18 @@ class AuditCsvImportService
         }
 
         $itemsByAudit = [];
+        $validItemCount = 0;
         foreach ($itemRows as $row) {
             $auditCode = trim((string) $this->value($row, ['audit_code']));
             if ($auditCode === '') {
                 continue;
             }
+
+            if ($this->skipItemRow($row)) {
+                continue;
+            }
+
+            $validItemCount++;
 
             $itemsByAudit[$auditCode][] = [
                 'item_kind' => $this->value($row, ['item_kind']),
@@ -72,16 +79,16 @@ class AuditCsvImportService
 
             $payload = [
                 'audit_code' => $auditCode,
-                'audit_nup' => $this->fallbackText($this->value($row, ['audit_nup']), 'N/A'),
+                'audit_nup' => $this->value($row, ['audit_nup']),
                 'audit_year' => $this->value($row, ['audit_year']),
-                'process_status' => $this->fallbackText($this->value($row, ['process_status']), 'Não informado'),
-                'requesting_body' => $this->fallbackText($this->value($row, ['requesting_body']), 'Não informado'),
-                'audit_type' => $this->fallbackText($this->value($row, ['audit_type']), 'Não informado'),
+                'process_status' => $this->value($row, ['process_status']),
+                'requesting_body' => $this->value($row, ['requesting_body']),
+                'audit_type' => $this->value($row, ['audit_type']),
                 'objective' => $this->value($row, ['objective']),
                 'theme' => $this->value($row, ['theme']),
                 'classification' => $this->value($row, ['classification']),
-                'audit_phase' => $this->resolvePhase($row),
-                'current_owner' => $this->fallbackText($this->value($row, ['current_owner']), 'Não informado'),
+                'audit_phase' => $this->value($row, ['audit_phase']),
+                'current_owner' => $this->value($row, ['current_owner']),
                 'start_date' => $this->value($row, ['start_date']),
                 'last_date_response' => $this->value($row, ['last_date_response', 'last_response_sent_date']),
                 'deadline_label' => $deadlineLabel,
@@ -151,7 +158,7 @@ class AuditCsvImportService
 
         return [
             'audits' => $processed,
-            'items' => count($itemRows),
+            'items' => $validItemCount,
         ];
     }
 
@@ -197,17 +204,6 @@ class AuditCsvImportService
         return $rows;
     }
 
-    private function resolvePhase(array $row): string
-    {
-        $phase = trim((string) $this->value($row, ['audit_phase']));
-        if ($phase !== '') {
-            return $phase;
-        }
-
-        $hasDiligence = $this->normalizeToken((string) $this->value($row, ['has_diligence']));
-        return in_array($hasDiligence, ['SIM', 'S', '1', 'TRUE'], true) ? 'Em diligência' : 'Não informada';
-    }
-
     private function resolveDeadline(array $row): array
     {
         $explicit = trim((string) $this->value($row, ['deadline_label', 'deadline']));
@@ -237,12 +233,6 @@ class AuditCsvImportService
         return [null, null, 0];
     }
 
-    private function fallbackText(?string $value, string $fallback): string
-    {
-        $value = trim((string) $value);
-        return $value !== '' ? $value : $fallback;
-    }
-
     private function value(array $row, array $keys): ?string
     {
         foreach ($keys as $key) {
@@ -265,6 +255,27 @@ class AuditCsvImportService
         }
 
         return null;
+    }
+
+    private function skipItemRow(array $row): bool
+    {
+        $kind = trim((string) $this->value($row, ['item_kind']));
+        $code = trim((string) $this->value($row, ['item_code']));
+        $description = trim((string) $this->value($row, ['item_description']));
+        $controlPoint = trim((string) $this->value($row, ['item_control_point']));
+        $controlStatus = trim((string) $this->value($row, ['control_body_status']));
+        $dgbaStatus = trim((string) $this->value($row, ['dgba_status']));
+        $deadline = trim((string) $this->value($row, ['compliance_deadline_days']));
+        $startDate = trim((string) $this->value($row, ['compliance_start_date']));
+
+        return $kind === ''
+            && $code === ''
+            && $description === ''
+            && $controlPoint === ''
+            && $controlStatus === ''
+            && $dgbaStatus === ''
+            && $deadline === ''
+            && $startDate === '';
     }
 
     private function normalizeHeader(string $header): string
