@@ -45,6 +45,21 @@ $renderFilterBox = static function (string $name, string $label, array $options,
     <?php
 };
 
+$formatPhaseLegend = static function (string $value): string {
+    $normalized = mb_strtoupper(trim($value), 'UTF-8');
+
+    return match ($normalized) {
+        'INICIAL/DILIGÊNCIA' => 'Em Diligência',
+        'MONITORAMENTO À INICIAR' => 'Monitoramento a Iniciar',
+        '1º MONITORAMENTO' => '1º Monitoramento',
+        '2º MONITORAMENTO' => '2º Monitoramento',
+        '3º MONITORAMENTO' => '3º Monitoramento',
+        '4º MONITORAMENTO' => '4º Monitoramento',
+        'ELABORAÇÃO DE RELATÓRIO FINAL' => 'Relatório Final',
+        default => $value,
+    };
+};
+
 $filters = [
     'q' => trim((string) ($_GET['q'] ?? '')),
     'audit_year' => $getMulti('audit_year'),
@@ -124,7 +139,11 @@ if ($moduleReady) {
         $repo->countsByBody($filters)
     );
     $diligencePhase = array_map(
-        fn (array $row) => $row + ['url' => $buildUrl(['audit_phase' => [$row['label']]], $resultAnchor)],
+        fn (array $row) => [
+            'label' => $formatPhaseLegend((string) ($row['label'] ?? '')),
+            'total' => $row['total'] ?? 0,
+            'url' => $buildUrl(['audit_phase' => [(string) ($row['label'] ?? '')]], $resultAnchor),
+        ],
         $repo->diligencePhaseOverview($filters)
     );
     $byType = array_map(
