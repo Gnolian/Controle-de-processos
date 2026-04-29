@@ -88,12 +88,12 @@ $formatPhaseLegend = static function (string $value): string {
 $sortFilterOptions = static function (string $name, array $options) use ($formatPhaseLegend): array {
     $phaseOrder = [
         'Em Diligência' => 10,
-        'Relatório Final' => 20,
-        'Monitoramento a Iniciar' => 30,
+        'Monitoramento a Iniciar' => 20,
         '1º Monitoramento' => 40,
         '2º Monitoramento' => 50,
         '3º Monitoramento' => 60,
         '4º Monitoramento' => 70,
+        'Relatório Final' => 80,
     ];
 
     usort($options, static function (array $left, array $right) use ($name, $phaseOrder, $formatPhaseLegend): int {
@@ -166,8 +166,8 @@ $itemImplementation = [];
 $itemCards = [];
 $timelineEntries = [];
 $itemKindOptionRows = [
-    ['value' => 'DETERMINACAO', 'label' => 'Determinações'],
     ['value' => 'RECOMENDACAO', 'label' => 'Recomendações'],
+    ['value' => 'DETERMINACAO', 'label' => 'Determinações'],
     ['value' => 'CIENCIA', 'label' => 'Ciência'],
 ];
 
@@ -370,14 +370,14 @@ require __DIR__ . '/../views/nav.php';
 
             <div class="audit-overview-branch audit-overview-branch--rdc">
                 <article class="metric-card rdc-branch">
-                    <span>Determinações</span>
-                    <strong><?= $totalDeterminacoes ?></strong>
-                    <i class="bi bi-list-check"></i>
-                </article>
-                <article class="metric-card rdc-branch">
                     <span>Recomendações</span>
                     <strong><?= $totalRecomendacoes ?></strong>
                     <i class="bi bi-journal-check"></i>
+                </article>
+                <article class="metric-card rdc-branch">
+                    <span>Determinações</span>
+                    <strong><?= $totalDeterminacoes ?></strong>
+                    <i class="bi bi-list-check"></i>
                 </article>
                 <article class="metric-card rdc-branch">
                     <span>Ciência</span>
@@ -405,10 +405,15 @@ require __DIR__ . '/../views/nav.php';
         </div>
         <div class="timeline-board">
             <?php foreach ($timelineColumns as $offset => $label): $index = $offset + 1; ?>
+                <?php
+                $monthEntries = $timelineByMonth[$index];
+                $estimatedCount = count(array_filter($monthEntries, static fn (array $entry): bool => !empty($entry['deadline_is_current'])));
+                $deadlineCount = count($monthEntries) - $estimatedCount;
+                ?>
                 <div class="timeline-month <?= ((int) date('n') === $index && $timelineYear === (int) date('Y')) ? 'timeline-month-current' : '' ?>">
                     <div class="timeline-month-head"><?= e($label) ?></div>
                     <div class="timeline-month-body">
-                        <?php foreach ($timelineByMonth[$index] as $entry): ?>
+                        <?php foreach ($monthEntries as $entry): ?>
                             <button
                                 type="button"
                                 class="timeline-chip <?= $entry['deadline_is_current'] ? 'timeline-chip-current' : '' ?> <?= !empty($entry['is_dgba']) ? 'timeline-chip-dgba' : '' ?>"
@@ -419,12 +424,13 @@ require __DIR__ . '/../views/nav.php';
                                 <small><?= e($entry['deadline_is_current'] ? 'Hoje' : $entry['deadline_label']) ?></small>
                             </button>
                         <?php endforeach; ?>
-                        <?php if (!$timelineByMonth[$index]): ?>
+                        <?php if (!$monthEntries): ?>
                             <div class="timeline-empty">-</div>
                         <?php endif; ?>
                     </div>
                     <div class="timeline-month-foot">
-                        Total no mês: <?= count($timelineByMonth[$index]) ?>
+                        <span class="timeline-month-total timeline-month-total-current"><?= $estimatedCount ?> Estimados</span>
+                        <span class="timeline-month-total"><?= $deadlineCount ?> com Prazo</span>
                     </div>
                 </div>
             <?php endforeach; ?>

@@ -337,6 +337,7 @@ a {
 
 .metric-card strong {
     font-size: 38px;
+    line-height: 1;
 }
 
 .metric-card i {
@@ -425,6 +426,16 @@ a {
     min-height: 126px;
     border-color: rgba(37, 99, 235, 0.14);
     background: linear-gradient(180deg, rgba(37, 99, 235, 0.04), #fff 55%);
+}
+
+.universe-branch span,
+.rdc-branch span {
+    min-height: 52px;
+}
+
+.universe-branch strong,
+.rdc-branch strong {
+    margin-top: 2px;
 }
 
 .app-card,
@@ -824,10 +835,20 @@ a {
     margin-top: auto;
     padding: 12px 14px 14px;
     border-top: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: rgba(248, 250, 252, 0.88);
+}
+
+.timeline-month-total {
     font-size: 13px;
     font-weight: 700;
     color: var(--muted);
-    background: rgba(248, 250, 252, 0.88);
+}
+
+.timeline-month-total-current {
+    color: #b45309;
 }
 
 .timeline-empty {
