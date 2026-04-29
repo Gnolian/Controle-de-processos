@@ -844,11 +844,11 @@ a {
 .timeline-month-total {
     font-size: 13px;
     font-weight: 700;
-    color: var(--muted);
+    color: #b91c1c;
 }
 
 .timeline-month-total-current {
-    color: #b45309;
+    color: var(--muted);
 }
 
 .timeline-empty {
