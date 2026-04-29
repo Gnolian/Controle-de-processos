@@ -18,11 +18,36 @@ $getMulti = static function (string $key): array {
     ), static fn (string $value): bool => $value !== ''));
 };
 
-$renderFilterBox = static function (string $name, string $label, array $options, array $selectedValues): void {
+$formatFilterOptionLabel = static function (string $name, string $value) use (&$formatPhaseLegend): string {
+    if ($name === 'audit_phase') {
+        return $formatPhaseLegend($value);
+    }
+
+    if ($name === 'item_kind') {
+        return match ($value) {
+            'DETERMINACAO' => 'Determinações',
+            'RECOMENDACAO' => 'Recomendações',
+            'CIENCIA' => 'Ciência',
+            default => $value,
+        };
+    }
+
+    return $value;
+};
+
+$renderFilterBox = static function (string $name, string $label, array $options, array $selectedValues) use ($formatFilterOptionLabel): void {
+    $labelsByValue = [];
+    foreach ($options as $option) {
+        $value = (string) ($option['value'] ?? '');
+        $labelsByValue[$value] = (string) ($option['label'] ?? $formatFilterOptionLabel($name, $value));
+    }
+
     $selectedCount = count($selectedValues);
     $summary = $selectedCount === 0
         ? 'Todos'
-        : ($selectedCount === 1 ? $selectedValues[0] : $selectedCount . ' selecionados');
+        : ($selectedCount === 1
+            ? ($labelsByValue[$selectedValues[0]] ?? $formatFilterOptionLabel($name, $selectedValues[0]))
+            : $selectedCount . ' selecionados');
     ?>
     <div class="audit-filter-field">
         <label class="form-label"><?= e($label) ?></label>
@@ -36,7 +61,7 @@ $renderFilterBox = static function (string $name, string $label, array $options,
                     <?php $value = (string) ($option['value'] ?? ''); ?>
                     <label class="filter-select-option">
                         <input type="checkbox" name="<?= e($name) ?>[]" value="<?= e($value) ?>" <?= in_array($value, $selectedValues, true) ? 'checked' : '' ?>>
-                        <span><?= e((string) ($option['label'] ?? $value)) ?></span>
+                        <span><?= e((string) ($option['label'] ?? $formatFilterOptionLabel($name, $value))) ?></span>
                     </label>
                 <?php endforeach; ?>
             </div>
@@ -58,6 +83,39 @@ $formatPhaseLegend = static function (string $value): string {
         'ELABORAÇÃO DE RELATÓRIO FINAL' => 'Relatório Final',
         default => $value,
     };
+};
+
+$sortFilterOptions = static function (string $name, array $options) use ($formatPhaseLegend): array {
+    $phaseOrder = [
+        'Em Diligência' => 10,
+        'Relatório Final' => 20,
+        'Monitoramento a Iniciar' => 30,
+        '1º Monitoramento' => 40,
+        '2º Monitoramento' => 50,
+        '3º Monitoramento' => 60,
+        '4º Monitoramento' => 70,
+    ];
+
+    usort($options, static function (array $left, array $right) use ($name, $phaseOrder, $formatPhaseLegend): int {
+        $leftValue = trim((string) ($left['value'] ?? ''));
+        $rightValue = trim((string) ($right['value'] ?? ''));
+
+        if ($name === 'audit_year') {
+            return (int) $rightValue <=> (int) $leftValue;
+        }
+
+        if ($name === 'audit_phase') {
+            $leftLabel = $formatPhaseLegend($leftValue);
+            $rightLabel = $formatPhaseLegend($rightValue);
+            $leftRank = $phaseOrder[$leftLabel] ?? 999;
+            $rightRank = $phaseOrder[$rightLabel] ?? 999;
+            return $leftRank <=> $rightRank ?: strcasecmp($leftLabel, $rightLabel);
+        }
+
+        return strcasecmp($leftValue, $rightValue);
+    });
+
+    return $options;
 };
 
 $filters = [
@@ -129,9 +187,10 @@ if ($moduleReady) {
     $metrics = $repo->dashboardMetrics($filters);
 
     foreach (array_keys($filterOptions) as $field) {
-        $filterOptions[$field] = $field === 'item_status_group'
+        $options = $field === 'item_status_group'
             ? $repo->itemStatusOptions()
             : $repo->distinctValues($field);
+        $filterOptions[$field] = $sortFilterOptions($field, $options);
     }
 
     $byBody = array_map(
@@ -278,9 +337,9 @@ require __DIR__ . '/../views/nav.php';
         <div class="audit-overview-bottom">
             <div class="audit-overview-branch audit-overview-branch--universe">
                 <article class="metric-card universe-branch warning">
-                    <span>Em Diligência/Relatório</span>
+                    <span>Diligência/Relatório</span>
                     <strong><?= (int) $metrics['diligence_report'] ?></strong>
-                    <i class="bi bi-exclamation-circle"></i>
+                    <i class="bi bi-hourglass-top"></i>
                 </article>
                 <article class="metric-card universe-branch muted">
                     <span>Monitoramento A Iniciar</span>
@@ -364,6 +423,9 @@ require __DIR__ . '/../views/nav.php';
                             <div class="timeline-empty">-</div>
                         <?php endif; ?>
                     </div>
+                    <div class="timeline-month-foot">
+                        Total no mês: <?= count($timelineByMonth[$index]) ?>
+                    </div>
                 </div>
             <?php endforeach; ?>
         </div>
@@ -378,7 +440,7 @@ require __DIR__ . '/../views/nav.php';
         </div>
         <div class="col-lg-6">
             <div class="app-card h-100">
-                <div class="card-head"><h2>Diligência ou Fase Atual</h2></div>
+                <div class="card-head"><h2>Fase da Auditoria</h2></div>
                 <canvas class="chart-canvas bar" data-chart='<?= e(json_encode($diligencePhase, JSON_UNESCAPED_UNICODE)) ?>'></canvas>
             </div>
         </div>

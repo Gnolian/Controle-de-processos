@@ -815,8 +815,19 @@ a {
 }
 
 #audit-results,
-#rdc-status-section {
+#rdc-status-section,
+#audit-timeline {
     scroll-margin-top: 94px;
+}
+
+.timeline-month-foot {
+    margin-top: auto;
+    padding: 12px 14px 14px;
+    border-top: 1px solid var(--line);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    background: rgba(248, 250, 252, 0.88);
 }
 
 .timeline-empty {
