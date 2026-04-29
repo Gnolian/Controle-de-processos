@@ -16,12 +16,12 @@ class AuthService
             return false;
         }
 
-        $stored = (string) $user['password_hash'];
-        $valid = password_verify($password, $stored) || hash_equals(strtolower($stored), hash('sha256', $password));
+        $valid = $this->passwordMatches($user, $password);
         if (!$valid) {
             return false;
         }
 
+        $stored = (string) $user['password_hash'];
         if (strlen($stored) === 64) {
             $repo->rehashPassword((int) $user['id'], $password);
         }
@@ -29,5 +29,21 @@ class AuthService
         $_SESSION['user_id'] = (int) $user['id'];
         return true;
     }
-}
 
+    public function changePassword(string $email, string $currentPassword, string $newPassword): void
+    {
+        $repo = new UserRepository();
+        $user = $repo->findByEmail($email);
+        if (!$user || !$this->passwordMatches($user, $currentPassword)) {
+            throw new \RuntimeException('Email ou senha atual inválidos.');
+        }
+
+        $repo->updatePassword((int) $user['id'], $newPassword);
+    }
+
+    private function passwordMatches(array $user, string $password): bool
+    {
+        $stored = (string) ($user['password_hash'] ?? '');
+        return password_verify($password, $stored) || hash_equals(strtolower($stored), hash('sha256', $password));
+    }
+}

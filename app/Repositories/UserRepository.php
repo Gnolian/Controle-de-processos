@@ -71,6 +71,12 @@ class UserRepository
         $stmt->execute([password_hash($password, PASSWORD_DEFAULT), $id]);
     }
 
+    public function updatePassword(int $id, string $password): void
+    {
+        $stmt = \db()->prepare('UPDATE users SET password_hash = ? WHERE id = ?');
+        $stmt->execute([password_hash($password, PASSWORD_DEFAULT), $id]);
+    }
+
     private function hasAuditAccessColumn(): bool
     {
         static $hasColumn = null;

@@ -38,6 +38,8 @@ require __DIR__ . '/../views/header.php';
         <p class="text-primary fw-semibold mb-2">Acesso interno</p>
         <h2 class="h4 mb-4">Entrar no sistema</h2>
 
+        <?php require __DIR__ . '/../views/flash.php'; ?>
+
         <?php if ($error): ?>
             <div class="alert alert-danger"><?= e($error) ?></div>
         <?php endif; ?>
@@ -54,8 +56,13 @@ require __DIR__ . '/../views/header.php';
             </label>
             <button class="btn btn-primary btn-lg w-100" type="submit"><i class="bi bi-box-arrow-in-right"></i> Entrar</button>
         </form>
+
+        <div class="text-center mt-3">
+            <a class="btn btn-link text-decoration-none" href="<?= url('change_password.php') ?>">
+                <i class="bi bi-key"></i> Alterar minha senha
+            </a>
+        </div>
     </section>
 </main>
 
 <?php require __DIR__ . '/../views/footer.php'; ?>
-
