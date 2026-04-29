@@ -407,8 +407,8 @@ require __DIR__ . '/../views/nav.php';
             <?php foreach ($timelineColumns as $offset => $label): $index = $offset + 1; ?>
                 <?php
                 $monthEntries = $timelineByMonth[$index];
-                $estimatedCount = count(array_filter($monthEntries, static fn (array $entry): bool => !empty($entry['deadline_is_current'])));
-                $deadlineCount = count($monthEntries) - $estimatedCount;
+                $deadlineCount = count(array_filter($monthEntries, static fn (array $entry): bool => !empty($entry['is_dgba'])));
+                $estimatedCount = count($monthEntries) - $deadlineCount;
                 ?>
                 <div class="timeline-month <?= ((int) date('n') === $index && $timelineYear === (int) date('Y')) ? 'timeline-month-current' : '' ?>">
                     <div class="timeline-month-head"><?= e($label) ?></div>
