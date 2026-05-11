@@ -249,20 +249,13 @@ a {
 }
 
 .audit-overview-bottom {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
-    align-items: start;
+    display: block;
 }
 
-.audit-overview-branch {
+.audit-overview-metrics-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(176px, 1fr));
-    gap: 16px;
-}
-
-.audit-overview-branch--universe {
-    grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 12px;
 }
 
 .filter-select {
@@ -435,10 +428,10 @@ a {
 }
 
 .metric-card-small {
-    min-height: 146px;
-    padding: 14px 18px 16px;
+    min-height: 132px;
+    padding: 13px 16px 14px;
     display: grid;
-    grid-template-rows: 54px minmax(60px, 1fr);
+    grid-template-rows: 42px minmax(58px, 1fr);
     align-items: stretch;
     transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
@@ -449,7 +442,7 @@ a {
 }
 
 .metric-card-small__header {
-    min-height: 54px;
+    min-height: 42px;
     position: relative;
     z-index: 2;
 }
@@ -457,12 +450,12 @@ a {
 .metric-card-small__title {
     margin: 0;
     color: #5f6b7f;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
-    line-height: 1.28;
+    line-height: 1.22;
     letter-spacing: 0;
     word-break: normal;
-    overflow-wrap: break-word;
+    overflow-wrap: anywhere;
     hyphens: none;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -471,31 +464,33 @@ a {
 }
 
 .metric-card-small--compact .metric-card-small__title {
-    font-size: 13.5px;
-    line-height: 1.24;
+    font-size: 12.5px;
+    line-height: 1.2;
+}
+
+.metric-card-small__body {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    padding: 6px 34px 0 10px;
 }
 
 .metric-card-small__value {
-    align-self: stretch;
-    justify-self: stretch;
-    display: grid;
-    place-items: center;
     text-align: center;
     font-size: 44px;
     line-height: 1;
     font-weight: 800;
     color: var(--ink);
-    position: relative;
-    z-index: 2;
 }
 
 .metric-card-small__icon {
     position: absolute;
-    right: 10px;
-    bottom: 10px;
-    font-size: 18px;
+    right: 14px;
+    bottom: 12px;
+    font-size: 26px;
     line-height: 1;
-    opacity: 0.16;
+    opacity: 0.12;
     pointer-events: none;
     z-index: 1;
 }
@@ -1124,8 +1119,8 @@ a {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .audit-overview-branch {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    .audit-overview-metrics-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 
     .timeline-board {
@@ -1160,8 +1155,8 @@ a {
         grid-template-columns: 1fr;
     }
 
-    .audit-overview-branch {
-        grid-template-columns: 1fr;
+    .audit-overview-metrics-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .audit-filter-actions {
