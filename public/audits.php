@@ -385,49 +385,19 @@ require __DIR__ . '/../views/nav.php';
 
         <div class="audit-overview-bottom">
             <div class="audit-overview-branch audit-overview-branch--universe">
-                <article class="metric-card universe-branch warning">
-                    <span>Diligência/Relatório</span>
-                    <strong><?= (int) $metrics['diligence_report'] ?></strong>
-                </article>
-                <article class="metric-card universe-branch muted">
-                    <span>Monitoramento A Iniciar</span>
-                    <strong><?= (int) $metrics['monitoring_pending'] ?></strong>
-                </article>
-                <article class="metric-card universe-branch">
-                    <span>1&ordm; Monitoramento</span>
-                    <strong><?= (int) $metrics['first_monitoring'] ?></strong>
-                </article>
-                <article class="metric-card universe-branch">
-                    <span>2&ordm; Monitoramento</span>
-                    <strong><?= (int) $metrics['second_monitoring'] ?></strong>
-                </article>
-                <article class="metric-card universe-branch">
-                    <span>3&ordm; Monitoramento</span>
-                    <strong><?= (int) $metrics['third_monitoring'] ?></strong>
-                </article>
-                <article class="metric-card universe-branch">
-                    <span>4&ordm; Monitoramento</span>
-                    <strong><?= (int) $metrics['fourth_monitoring'] ?></strong>
-                </article>
-                <article class="metric-card universe-branch success">
-                    <span>Concluídas</span>
-                    <strong><?= (int) $metrics['done'] ?></strong>
-                </article>
+                <?php render_dashboard_metric_card('Diligência/Relatório', (int) $metrics['diligence_report'], 'bi-hourglass-split', 'universe-branch warning'); ?>
+                <?php render_dashboard_metric_card('Monitoramento a Iniciar', (int) $metrics['monitoring_pending'], 'bi-play-circle', 'universe-branch muted'); ?>
+                <?php render_dashboard_metric_card('1º Monitoramento', (int) $metrics['first_monitoring'], 'bi-1-circle', 'universe-branch', 'compact'); ?>
+                <?php render_dashboard_metric_card('2º Monitoramento', (int) $metrics['second_monitoring'], 'bi-2-circle', 'universe-branch', 'compact'); ?>
+                <?php render_dashboard_metric_card('3º Monitoramento', (int) $metrics['third_monitoring'], 'bi-3-circle', 'universe-branch', 'compact'); ?>
+                <?php render_dashboard_metric_card('4º Monitoramento', (int) $metrics['fourth_monitoring'], 'bi-4-circle', 'universe-branch', 'compact'); ?>
+                <?php render_dashboard_metric_card('Concluídas', (int) $metrics['done'], 'bi-check2-circle', 'universe-branch success'); ?>
             </div>
 
             <div class="audit-overview-branch audit-overview-branch--rdc">
-                <article class="metric-card rdc-branch">
-                    <span>Recomendações</span>
-                    <strong><?= $totalRecomendacoes ?></strong>
-                </article>
-                <article class="metric-card rdc-branch">
-                    <span>Determinações</span>
-                    <strong><?= $totalDeterminacoes ?></strong>
-                </article>
-                <article class="metric-card rdc-branch">
-                    <span>Ciência</span>
-                    <strong><?= $totalCiencias ?></strong>
-                </article>
+                <?php render_dashboard_metric_card('Recomendações', $totalRecomendacoes, 'bi-journal-check', 'rdc-branch'); ?>
+                <?php render_dashboard_metric_card('Determinações', $totalDeterminacoes, 'bi-list-check', 'rdc-branch'); ?>
+                <?php render_dashboard_metric_card('Ciência', $totalCiencias, 'bi-info-circle', 'rdc-branch'); ?>
             </div>
         </div>
     </section>

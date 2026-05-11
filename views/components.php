@@ -150,3 +150,28 @@ function audit_item_kind_label(?string $kind): string
         default => (string) ($kind ?: '-'),
     };
 }
+
+function render_dashboard_metric_card(
+    string $title,
+    int|string $value,
+    string $icon,
+    string $theme = '',
+    string $titleMode = 'default'
+): void {
+    $classes = ['metric-card', 'metric-card-small'];
+    if ($theme !== '') {
+        $classes[] = $theme;
+    }
+    if ($titleMode !== 'default') {
+        $classes[] = 'metric-card-small--' . $titleMode;
+    }
+    ?>
+    <article class="<?= e(implode(' ', $classes)) ?>">
+        <div class="metric-card-small__header">
+            <h3 class="metric-card-small__title"><?= e($title) ?></h3>
+        </div>
+        <div class="metric-card-small__value"><?= e((string) $value) ?></div>
+        <i class="bi <?= e($icon) ?> metric-card-small__icon" aria-hidden="true"></i>
+    </article>
+    <?php
+}
