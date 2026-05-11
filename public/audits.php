@@ -32,6 +32,15 @@ $formatFilterOptionLabel = static function (string $name, string $value) use (&$
         };
     }
 
+    if ($name === 'complexity') {
+        return match ((string) $value) {
+            '1' => '1 - Baixa',
+            '2' => '2 - Média',
+            '3' => '3 - Alta',
+            default => $value,
+        };
+    }
+
     return $value;
 };
 
@@ -104,6 +113,10 @@ $sortFilterOptions = static function (string $name, array $options) use ($format
             return (int) $rightValue <=> (int) $leftValue;
         }
 
+        if ($name === 'complexity') {
+            return (int) $leftValue <=> (int) $rightValue;
+        }
+
         if ($name === 'audit_phase') {
             $leftLabel = $formatPhaseLegend($leftValue);
             $rightLabel = $formatPhaseLegend($rightValue);
@@ -126,6 +139,7 @@ $filters = [
     'audit_type' => $getMulti('audit_type'),
     'theme' => $getMulti('theme'),
     'classification' => $getMulti('classification'),
+    'complexity' => $getMulti('complexity'),
     'audit_phase' => $getMulti('audit_phase'),
     'current_owner' => $getMulti('current_owner'),
     'item_kind' => $getMulti('item_kind'),
@@ -154,6 +168,7 @@ $filterOptions = [
     'requesting_body' => [],
     'theme' => [],
     'classification' => [],
+    'complexity' => [],
     'audit_phase' => [],
     'current_owner' => [],
     'item_status_group' => [],
@@ -296,6 +311,9 @@ require __DIR__ . '/../views/nav.php';
                 <?php $renderFilterBox('classification', 'Classificação', $filterOptions['classification'], $filters['classification']); ?>
             </div>
             <div class="col-lg-3">
+                <?php $renderFilterBox('complexity', 'Complexidade', $filterOptions['complexity'], $filters['complexity']); ?>
+            </div>
+            <div class="col-lg-3">
                 <?php $renderFilterBox('audit_phase', 'Fase da Auditoria', $filterOptions['audit_phase'], $filters['audit_phase']); ?>
             </div>
             <div class="col-lg-3">
@@ -414,13 +432,30 @@ require __DIR__ . '/../views/nav.php';
                     <div class="timeline-month-head"><?= e($label) ?></div>
                     <div class="timeline-month-body">
                         <?php foreach ($monthEntries as $entry): ?>
+                            <?php
+                            $complexityClass = match ((int) ($entry['complexity'] ?? 0)) {
+                                1 => 'timeline-chip-complexity-low',
+                                2 => 'timeline-chip-complexity-medium',
+                                3 => 'timeline-chip-complexity-high',
+                                default => 'timeline-chip-complexity-unknown',
+                            };
+                            $complexityLabel = match ((int) ($entry['complexity'] ?? 0)) {
+                                1 => 'Complexidade baixa',
+                                2 => 'Complexidade média',
+                                3 => 'Complexidade alta',
+                                default => 'Complexidade não informada',
+                            };
+                            ?>
                             <button
                                 type="button"
                                 class="timeline-chip <?= $entry['deadline_is_current'] ? 'timeline-chip-current' : '' ?> <?= !empty($entry['is_dgba']) ? 'timeline-chip-dgba' : '' ?>"
-                                title="<?= e($entry['audit_code']) ?>"
+                                title="<?= e($entry['audit_code'] . ' • ' . $complexityLabel) ?>"
                                 data-timeline-entry='<?= e(json_encode($entry, JSON_UNESCAPED_UNICODE)) ?>'
                             >
-                                <span><?= e($entry['audit_code']) ?></span>
+                                <span class="timeline-chip-title">
+                                    <span><?= e($entry['audit_code']) ?></span>
+                                    <span class="timeline-chip-complexity <?= e($complexityClass) ?>" aria-hidden="true"></span>
+                                </span>
                                 <small><?= e($entry['deadline_is_current'] ? 'Hoje' : $entry['deadline_label']) ?></small>
                             </button>
                         <?php endforeach; ?>

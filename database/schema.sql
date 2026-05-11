@@ -87,6 +87,7 @@ CREATE TABLE audits (
     deadline_date DATE NULL,
     deadline_is_current TINYINT(1) NOT NULL DEFAULT 0,
     flag_estimated TINYINT(1) NOT NULL DEFAULT 0,
+    complexity TINYINT NULL,
     has_diligence TINYINT(1) NOT NULL DEFAULT 0,
     last_response_sent_date_diligence DATE NULL,
     stage2_start_date DATE NULL,
@@ -150,6 +151,7 @@ CREATE TABLE audits (
     INDEX idx_audits_diligence (has_diligence),
     INDEX idx_audits_deadline_date (deadline_date),
     INDEX idx_audits_deadline_current (deadline_is_current),
+    INDEX idx_audits_complexity (complexity),
     INDEX idx_audits_process_status (process_status),
     CONSTRAINT fk_audits_user FOREIGN KEY (imported_by) REFERENCES users(id) ON DELETE SET NULL
 );

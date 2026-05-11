@@ -132,6 +132,10 @@ class AuditService
             }
         }
 
+        if (($payload['complexity'] ?? null) !== null && !in_array((int) $payload['complexity'], [1, 2, 3], true)) {
+            throw new RuntimeException('A complexidade da auditoria deve ser 1, 2 ou 3.');
+        }
+
         $existing = $this->audits->findByCode((string) $payload['audit_code']);
         if ($existing && (int) $existing['id'] !== (int) $id) {
             throw new RuntimeException('Ja existe uma auditoria com este codigo.');
@@ -176,6 +180,7 @@ class AuditService
     {
         return [
             'audit_year',
+            'complexity',
             'stage2_deadline_days',
             'stage2_service_deadline_days',
             'monitoring1_service_deadline_days',

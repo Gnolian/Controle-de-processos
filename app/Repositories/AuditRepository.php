@@ -24,6 +24,7 @@ class AuditRepository
         'deadline_date',
         'deadline_is_current',
         'flag_estimated',
+        'complexity',
         'has_diligence',
         'last_response_sent_date_diligence',
         'stage2_start_date',
@@ -122,8 +123,9 @@ class AuditRepository
 
     public function createAudit(array $payload, ?int $userId = null): int
     {
-        $columns = array_merge(self::AUDIT_COLUMNS, ['imported_by']);
-        $values = array_map(static fn (string $column) => $payload[$column] ?? null, self::AUDIT_COLUMNS);
+        $auditColumns = $this->resolvedAuditColumns();
+        $columns = array_merge($auditColumns, ['imported_by']);
+        $values = array_map(static fn (string $column) => $payload[$column] ?? null, $auditColumns);
         $values[] = $userId;
         $placeholders = implode(', ', array_fill(0, count($columns), '?'));
 
@@ -134,8 +136,9 @@ class AuditRepository
 
     public function updateAudit(int $id, array $payload, ?int $userId = null): void
     {
-        $sets = implode(', ', array_map(static fn (string $column) => "{$column} = ?", self::AUDIT_COLUMNS));
-        $values = array_map(static fn (string $column) => $payload[$column] ?? null, self::AUDIT_COLUMNS);
+        $auditColumns = $this->resolvedAuditColumns();
+        $sets = implode(', ', array_map(static fn (string $column) => "{$column} = ?", $auditColumns));
+        $values = array_map(static fn (string $column) => $payload[$column] ?? null, $auditColumns);
         $values[] = $userId;
         $values[] = $id;
         \db()->prepare("UPDATE audits SET {$sets}, imported_by = ? WHERE id = ?")->execute($values);
@@ -413,7 +416,9 @@ class AuditRepository
     {
         [$joins, $where, $params] = $this->buildAuditScope($filters);
         $currentYear = (int) date('Y');
+        $complexitySelect = $this->hasAuditColumn('complexity') ? 'a.complexity' : 'NULL AS complexity';
         $sql = 'SELECT DISTINCT a.id, a.audit_code, a.audit_nup, a.requesting_body, a.theme, a.audit_phase, a.current_owner,
+                ' . $complexitySelect . ',
                 a.deadline_label, a.deadline_date, a.deadline_is_current, a.flag_estimated, a.control_summary, a.related_processes
             FROM audits a' . $joins . '
             WHERE (';
@@ -444,6 +449,7 @@ class AuditRepository
                 'theme' => $row['theme'],
                 'audit_phase' => $row['audit_phase'],
                 'current_owner' => $row['current_owner'],
+                'complexity' => isset($row['complexity']) ? (int) $row['complexity'] : null,
                 'deadline_label' => $row['deadline_label'] ?: ($row['deadline_date'] ? \format_date($row['deadline_date']) : 'Sem prazo'),
                 'deadline_date' => $row['deadline_date'],
                 'deadline_is_current' => (int) $row['deadline_is_current'],
@@ -466,8 +472,12 @@ class AuditRepository
 
     public function distinctValues(string $column): array
     {
-        $allowed = ['audit_year', 'process_status', 'requesting_body', 'theme', 'classification', 'audit_phase', 'current_owner', 'audit_type'];
+        $allowed = ['audit_year', 'process_status', 'requesting_body', 'theme', 'classification', 'audit_phase', 'current_owner', 'audit_type', 'complexity'];
         if (!in_array($column, $allowed, true)) {
+            return [];
+        }
+
+        if ($column === 'complexity' && !$this->hasAuditColumn('complexity')) {
             return [];
         }
 
@@ -508,7 +518,11 @@ class AuditRepository
             'classification' => 'a.classification',
             'current_owner' => 'a.current_owner',
             'audit_type' => 'a.audit_type',
+            'complexity' => 'a.complexity',
         ] as $filter => $column) {
+            if ($filter === 'complexity' && !$this->hasAuditColumn('complexity')) {
+                continue;
+            }
             $values = $this->normalizeFilterValues($filters[$filter] ?? '');
             if ($values === []) {
                 continue;
@@ -667,5 +681,34 @@ class AuditRepository
             'Não informada' => ['(ai.control_body_status IS NULL OR TRIM(ai.control_body_status) = "" OR UPPER(ai.control_body_status) IN ("NAO", "NÃO", "N/A", "NAO INFORMADA", "NÃO INFORMADA", "NAO APLICA", "NÃO APLICA"))', []],
             default => ['ai.control_body_status = ?', [$status]],
         };
+    }
+
+    private function resolvedAuditColumns(): array
+    {
+        static $columns = null;
+        if ($columns !== null) {
+            return $columns;
+        }
+
+        $columns = array_values(array_filter(
+            self::AUDIT_COLUMNS,
+            fn (string $column): bool => $this->hasAuditColumn($column)
+        ));
+
+        return $columns;
+    }
+
+    private function hasAuditColumn(string $column): bool
+    {
+        static $map = [];
+        if (array_key_exists($column, $map)) {
+            return $map[$column];
+        }
+
+        $stmt = \db()->prepare('SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?');
+        $stmt->execute(['audits', $column]);
+        $map[$column] = (int) $stmt->fetchColumn() > 0;
+
+        return $map[$column];
     }
 }

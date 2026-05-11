@@ -95,6 +95,7 @@ class AuditCsvImportService
                 'deadline_date' => $deadlineDate,
                 'deadline_is_current' => $deadlineIsCurrent,
                 'flag_estimated' => $this->value($row, ['flag_estimated']),
+                'complexity' => $this->value($row, ['complexity']),
                 'has_diligence' => $this->value($row, ['has_diligence']),
                 'last_response_sent_date_diligence' => $this->value($row, ['last_response_sent_date_diligence', 'last_response_sent_date']),
                 'stage2_start_date' => $this->value($row, ['stage2_start_date']),

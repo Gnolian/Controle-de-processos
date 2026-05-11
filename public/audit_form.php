@@ -93,6 +93,12 @@ require __DIR__ . '/../views/nav.php';
                 <?php field_input('audit_code', 'Código da auditoria', $values, 'text', true, 'bi-hash'); ?>
                 <?php field_input('audit_nup', 'NUP', $values, 'text', true, 'bi-file-earmark-text'); ?>
                 <?php field_input('audit_year', 'Ano', $values, 'number', false, 'bi-calendar3'); ?>
+                <?php field_select_assoc('complexity', 'Complexidade', [
+                    '' => 'Selecione',
+                    '1' => '1 - Baixa',
+                    '2' => '2 - Média',
+                    '3' => '3 - Alta',
+                ], $values, 'bi-layers', false); ?>
                 <?php field_input('requesting_body', 'Órgão de controle', $values, 'text', true, 'bi-building'); ?>
                 <?php field_input('audit_type', 'Tipo de auditoria', $values, 'text', true, 'bi-diagram-3'); ?>
                 <?php field_input('process_status', 'Status da auditoria', $values, 'text', false, 'bi-flag'); ?>
