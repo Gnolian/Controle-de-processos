@@ -505,7 +505,7 @@ require __DIR__ . '/../views/nav.php';
 
     <section class="row g-4 mt-1 audit-analysis-row">
         <div class="col-lg-7">
-            <div class="app-card h-100 audit-table-panel">
+            <div class="app-card audit-table-panel">
                 <div class="card-head"><h2>Determinações, Recomendações e Ciência por Auditoria</h2></div>
                 <div class="table-responsive">
                     <table class="table modern-table mb-0">
@@ -530,7 +530,7 @@ require __DIR__ . '/../views/nav.php';
             </div>
         </div>
         <div class="col-lg-5">
-            <div class="app-card h-100 audit-point-panel">
+            <div class="app-card audit-point-panel">
                 <div class="card-head">
                     <h2>Pontos de Controle dos RDC</h2>
                     <span class="text-secondary"><?= $filters['item_status_group'] !== [] ? e(count($filters['item_status_group']) . ' situação(ões) selecionada(s)') : 'Todos os status' ?></span>

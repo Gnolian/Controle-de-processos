@@ -961,6 +961,10 @@ a {
     background: #fbfcfe;
 }
 
+.audit-analysis-row {
+    align-items: flex-start;
+}
+
 .audit-point-panel {
     display: flex;
     flex-direction: column;
@@ -971,7 +975,8 @@ a {
 .audit-point-cards {
     display: grid;
     gap: 12px;
-    max-height: none;
+    flex: 1 1 auto;
+    min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 6px;

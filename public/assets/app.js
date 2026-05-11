@@ -50,6 +50,8 @@ const syncAuditPanels = () => {
 
   if (!leftPanel || !rightPanel || !rightBody) return;
 
+  rightPanel.style.height = '';
+  rightBody.style.height = '';
   rightBody.style.maxHeight = '';
 
   if (window.innerWidth < 992) {
@@ -64,9 +66,11 @@ const syncAuditPanels = () => {
   const headerHeight = rightHeader ? rightHeader.getBoundingClientRect().height : 0;
   const availableBodyHeight = Math.max(140, leftHeight - headerHeight - paddingTop - paddingBottom);
 
-  rightBody.style.maxHeight = `${availableBodyHeight}px`;
+  rightPanel.style.height = `${leftHeight}px`;
+  rightBody.style.height = `${availableBodyHeight}px`;
 };
 
+requestAnimationFrame(syncAuditPanels);
 window.addEventListener('load', syncAuditPanels);
 window.addEventListener('resize', syncAuditPanels);
 
