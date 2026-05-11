@@ -156,6 +156,7 @@ $metrics = [
     'total' => 0,
     'rdc_total' => 0,
     'diligence_report' => 0,
+    'done' => 0,
     'monitoring_pending' => 0,
     'first_monitoring' => 0,
     'second_monitoring' => 0,
@@ -200,6 +201,10 @@ $buildUrl = function (array $overrides = [], string $anchor = 'audit-results') u
 if ($moduleReady) {
     $audits = $repo->list($filters);
     $metrics = $repo->dashboardMetrics($filters);
+    $metrics['done'] = count(array_filter($audits, static function (array $audit): bool {
+        $status = mb_strtoupper(trim((string) ($audit['process_status'] ?? '')), 'UTF-8');
+        return str_contains($status, 'CONCLU');
+    }));
 
     foreach (array_keys($filterOptions) as $field) {
         $options = $field === 'item_status_group'
@@ -360,6 +365,11 @@ require __DIR__ . '/../views/nav.php';
                     <span>Diligência/Relatório</span>
                     <strong><?= (int) $metrics['diligence_report'] ?></strong>
                     <i class="bi bi-hourglass-top"></i>
+                </article>
+                <article class="metric-card universe-branch success">
+                    <span>Concluídas</span>
+                    <strong><?= (int) $metrics['done'] ?></strong>
+                    <i class="bi bi-check-circle"></i>
                 </article>
                 <article class="metric-card universe-branch muted">
                     <span>Monitoramento A Iniciar</span>
