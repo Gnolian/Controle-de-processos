@@ -253,6 +253,30 @@ foreach ($timelineEntries as $entry) {
     $index = max(1, min(12, (int) $entry['month_index']));
     $timelineByMonth[$index][] = $entry;
 }
+foreach ($timelineByMonth as &$monthEntries) {
+    usort($monthEntries, static function (array $left, array $right): int {
+        $leftHasDeadline = !empty($left['is_dgba']) ? 1 : 0;
+        $rightHasDeadline = !empty($right['is_dgba']) ? 1 : 0;
+        if ($leftHasDeadline !== $rightHasDeadline) {
+            return $rightHasDeadline <=> $leftHasDeadline;
+        }
+
+        $leftComplexity = (int) ($left['complexity'] ?? 0);
+        $rightComplexity = (int) ($right['complexity'] ?? 0);
+        if ($leftComplexity !== $rightComplexity) {
+            return $rightComplexity <=> $leftComplexity;
+        }
+
+        $leftTime = !empty($left['deadline_date']) ? strtotime((string) $left['deadline_date']) : PHP_INT_MAX;
+        $rightTime = !empty($right['deadline_date']) ? strtotime((string) $right['deadline_date']) : PHP_INT_MAX;
+        if ($leftTime !== $rightTime) {
+            return $leftTime <=> $rightTime;
+        }
+
+        return strcmp((string) ($left['audit_code'] ?? ''), (string) ($right['audit_code'] ?? ''));
+    });
+}
+unset($monthEntries);
 
 $pageTitle = 'Auditorias';
 $activeNav = 'audits';
@@ -426,7 +450,12 @@ require __DIR__ . '/../views/nav.php';
                 </a>
                 <div class="timeline-year-title">
                     <h2>Linha do Tempo <?= (int) $timelineYear ?></h2>
-                    <span class="text-secondary">Passe o mouse para ver o ID e clique para abrir o resumo da auditoria.</span>
+                    <div class="d-flex align-items-center justify-content-center gap-2 flex-wrap">
+                        <span class="text-secondary">Passe o mouse para ver o ID e clique para abrir o resumo da auditoria.</span>
+                        <button type="button" class="btn btn-sm btn-outline-secondary timeline-legend-trigger" data-bs-toggle="modal" data-bs-target="#timelineLegendModal">
+                            <i class="bi bi-info-circle"></i> Legenda
+                        </button>
+                    </div>
                 </div>
                 <a class="timeline-nav-arrow" href="<?= e($buildUrl(['timeline_year' => $timelineYear + 1], $timelineAnchor)) ?>" aria-label="Próximo ano">
                     <i class="bi bi-chevron-right"></i>
@@ -631,6 +660,52 @@ require __DIR__ . '/../views/nav.php';
             </div>
             <div class="modal-footer">
                 <a href="#" class="btn btn-primary" data-timeline-link>Abrir auditoria</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="timelineLegendModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <p class="section-kicker mb-1">Linha do tempo</p>
+                    <h2 class="modal-title fs-4 mb-0">Legenda visual</h2>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="timeline-legend-list">
+                    <div class="timeline-legend-item">
+                        <span class="timeline-legend-chip timeline-legend-chip-estimated"></span>
+                        <div>
+                            <strong>Card claro</strong>
+                            <p>Auditorias estimadas ou trazidas para o grupo que pode chegar hoje.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-legend-item">
+                        <span class="timeline-legend-chip timeline-legend-chip-deadline"></span>
+                        <div>
+                            <strong>Card em vermelho suave</strong>
+                            <p>Auditorias com prazo definido e responsável atual na DGBA.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-legend-item">
+                        <span class="timeline-legend-dot timeline-chip-complexity-high"></span>
+                        <div>
+                            <strong>Círculos de complexidade</strong>
+                            <p>Vermelho = alta, amarelo = média, verde = baixa e cinza = não informada.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-legend-item timeline-legend-item-note">
+                        <i class="bi bi-clipboard2-check"></i>
+                        <div>
+                            <strong>Definição da complexidade</strong>
+                            <p>A complexidade foi definida por critério subjetivo do gestor que cadastrou a auditoria.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

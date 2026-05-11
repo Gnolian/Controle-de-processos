@@ -443,15 +443,15 @@ a {
 .rdc-branch {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    padding: 20px 18px;
+    justify-content: flex-start;
+    align-items: stretch;
+    text-align: left;
+    padding: 16px 18px 18px;
 }
 
 .universe-branch strong,
 .rdc-branch strong {
-    margin-top: 8px;
+    margin-top: 28px;
     text-align: center;
     font-size: 44px;
 }
@@ -460,17 +460,78 @@ a {
 .rdc-branch span {
     min-height: 0;
     margin-bottom: 0;
-    text-align: center;
+    text-align: left;
+    font-size: 12px;
+    line-height: 1.15;
+    white-space: nowrap;
 }
 
 .universe-branch i,
 .rdc-branch i {
     position: absolute;
-    top: 50%;
-    right: 18px;
-    bottom: auto;
-    transform: translateY(-50%);
-    font-size: 48px;
+    right: 16px;
+    bottom: 14px;
+    top: auto;
+    transform: none;
+    font-size: 38px;
+}
+
+.timeline-legend-trigger {
+    border-radius: 999px;
+}
+
+.timeline-legend-list {
+    display: grid;
+    gap: 14px;
+}
+
+.timeline-legend-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.timeline-legend-item strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.timeline-legend-item p {
+    margin: 0;
+    color: var(--muted);
+}
+
+.timeline-legend-chip {
+    width: 28px;
+    height: 20px;
+    border-radius: 8px;
+    flex: 0 0 auto;
+    margin-top: 2px;
+    border: 1px solid var(--line);
+}
+
+.timeline-legend-chip-estimated {
+    background: #fff7ed;
+    border-color: rgba(180, 83, 9, 0.25);
+}
+
+.timeline-legend-chip-deadline {
+    background: #fef2f2;
+    border-color: rgba(220, 38, 38, 0.28);
+}
+
+.timeline-legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    flex: 0 0 auto;
+    margin-top: 6px;
+}
+
+.timeline-legend-item-note i {
+    color: var(--primary);
+    font-size: 18px;
+    margin-top: 3px;
 }
 
 .app-card,
