@@ -6,7 +6,7 @@ use App\Repositories\ProcessRepository;
 require __DIR__ . '/../app/bootstrap.php';
 require __DIR__ . '/../views/components.php';
 
-$user = require_login();
+$user = require_process_access();
 $id = (int) ($_GET['id'] ?? 0);
 $process = (new ProcessRepository())->find($id, $user);
 if (!$process) {

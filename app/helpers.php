@@ -98,9 +98,24 @@ function can_manage(array $user): bool
     return in_array($user['role'], ['admin', 'coordenador'], true);
 }
 
+function is_audit_only(array $user): bool
+{
+    return !empty($user['audit_only']);
+}
+
+function can_access_process_area(array $user): bool
+{
+    return !is_audit_only($user);
+}
+
 function can_access_audits(array $user): bool
 {
-    return can_manage($user) || !empty($user['audit_access']);
+    return can_manage($user) || !empty($user['audit_access']) || is_audit_only($user);
+}
+
+function can_edit_audits(array $user): bool
+{
+    return can_access_audits($user) && !is_audit_only($user);
 }
 
 function require_role(array $roles): array
@@ -120,6 +135,28 @@ function require_audit_access(): array
     if (!can_access_audits($user)) {
         flash('Você não tem permissão para acessar a área de auditorias.', 'danger');
         redirect('dashboard.php');
+    }
+
+    return $user;
+}
+
+function require_audit_edit_access(): array
+{
+    $user = require_audit_access();
+    if (!can_edit_audits($user)) {
+        flash('Este usuário possui acesso apenas para consulta do painel de auditorias.', 'warning');
+        redirect('audits.php');
+    }
+
+    return $user;
+}
+
+function require_process_access(): array
+{
+    $user = require_login();
+    if (!can_access_process_area($user)) {
+        flash('Este usuário tem acesso apenas ao painel de auditorias.', 'warning');
+        redirect('audits.php');
     }
 
     return $user;

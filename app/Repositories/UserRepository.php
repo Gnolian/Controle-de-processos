@@ -14,6 +14,11 @@ class UserRepository
         } else {
             $select .= ', 0 AS audit_access';
         }
+        if ($this->hasAuditOnlyColumn()) {
+            $select .= ', audit_only';
+        } else {
+            $select .= ', 0 AS audit_only';
+        }
         $stmt = \db()->prepare($select . ' FROM users WHERE id = ? AND active = 1');
         $stmt->execute([$id]);
         $user = $stmt->fetch();
@@ -38,12 +43,30 @@ class UserRepository
         } else {
             $select .= ', 0 AS audit_access';
         }
+        if ($this->hasAuditOnlyColumn()) {
+            $select .= ', audit_only';
+        } else {
+            $select .= ', 0 AS audit_only';
+        }
 
         return \db()->query($select . ' FROM users ORDER BY name')->fetchAll();
     }
 
     public function create(array $data): void
     {
+        if ($this->hasAuditAccessColumn() && $this->hasAuditOnlyColumn()) {
+            $stmt = \db()->prepare('INSERT INTO users (name, email, password_hash, role, audit_access, audit_only) VALUES (?, ?, ?, ?, ?, ?)');
+            $stmt->execute([
+                trim((string) $data['name']),
+                trim((string) $data['email']),
+                password_hash((string) $data['password'], PASSWORD_DEFAULT),
+                (string) $data['role'],
+                !empty($data['audit_access']) ? 1 : 0,
+                !empty($data['audit_only']) ? 1 : 0,
+            ]);
+            return;
+        }
+
         if ($this->hasAuditAccessColumn()) {
             $stmt = \db()->prepare('INSERT INTO users (name, email, password_hash, role, audit_access) VALUES (?, ?, ?, ?, ?)');
             $stmt->execute([
@@ -86,6 +109,20 @@ class UserRepository
 
         $stmt = \db()->prepare('SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?');
         $stmt->execute(['users', 'audit_access']);
+        $hasColumn = (int) $stmt->fetchColumn() > 0;
+
+        return $hasColumn;
+    }
+
+    private function hasAuditOnlyColumn(): bool
+    {
+        static $hasColumn = null;
+        if ($hasColumn !== null) {
+            return $hasColumn;
+        }
+
+        $stmt = \db()->prepare('SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?');
+        $stmt->execute(['users', 'audit_only']);
         $hasColumn = (int) $stmt->fetchColumn() > 0;
 
         return $hasColumn;

@@ -423,7 +423,7 @@ class AuditRepository
             FROM audits a' . $joins . '
             WHERE (';
         if ($year === $currentYear) {
-            $sql .= 'a.deadline_is_current = 1 OR ';
+            $sql .= 'a.deadline_is_current = 1 OR (a.flag_estimated = 1 AND a.deadline_date IS NOT NULL AND a.deadline_date < CURDATE()) OR ';
         }
         $sql .= '(a.deadline_date BETWEEN ? AND ?))';
         $timelineParams = ["{$year}-01-01", "{$year}-12-31"];
@@ -440,6 +440,10 @@ class AuditRepository
         return array_map(function (array $row): array {
             $summary = $row['control_summary'] ?: $row['related_processes'] ?: '-';
             $ownerToken = $this->normalizeToken((string) ($row['current_owner'] ?? ''));
+            $deadlineDate = !empty($row['deadline_date']) ? strtotime((string) $row['deadline_date']) : null;
+            $todayStart = strtotime(date('Y-m-d'));
+            $estimatedOverdue = !empty($row['flag_estimated']) && $deadlineDate !== null && $deadlineDate < $todayStart;
+            $effectiveCurrent = (int) $row['deadline_is_current'] === 1 || $estimatedOverdue;
 
             return [
                 'id' => (int) $row['id'],
@@ -452,11 +456,11 @@ class AuditRepository
                 'complexity' => isset($row['complexity']) ? (int) $row['complexity'] : null,
                 'deadline_label' => $row['deadline_label'] ?: ($row['deadline_date'] ? \format_date($row['deadline_date']) : 'Sem prazo'),
                 'deadline_date' => $row['deadline_date'],
-                'deadline_is_current' => (int) $row['deadline_is_current'],
+                'deadline_is_current' => $effectiveCurrent ? 1 : 0,
                 'flag_estimated' => (int) $row['flag_estimated'],
                 'control_summary' => $summary,
                 'is_dgba' => str_contains($ownerToken, 'DGBA') ? 1 : 0,
-                'month_index' => (int) ($row['deadline_is_current'] ? date('n') : date('n', strtotime((string) $row['deadline_date']))),
+                'month_index' => (int) ($effectiveCurrent ? date('n') : date('n', strtotime((string) $row['deadline_date']))),
             ];
         }, $rows);
     }

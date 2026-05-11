@@ -66,13 +66,20 @@ require __DIR__ . '/../views/nav.php';
                     </div>
                 </label>
             </div>
+            <div class="col-md-2">
+                <label class="form-label d-block">Somente auditorias
+                    <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" type="checkbox" name="audit_only" value="1">
+                    </div>
+                </label>
+            </div>
             <div class="col-md-12 d-flex justify-content-end"><button class="btn btn-primary" type="submit"><i class="bi bi-person-plus"></i> Criar</button></div>
         </form>
     </section>
 
     <section class="app-card p-0 overflow-hidden">
         <table class="table modern-table mb-0">
-            <thead><tr><th>Nome</th><th>Email</th><th>Perfil</th><th>Auditorias</th><th>Ativo</th><th>Criado em</th></tr></thead>
+            <thead><tr><th>Nome</th><th>Email</th><th>Perfil</th><th>Auditorias</th><th>Somente Auditorias</th><th>Ativo</th><th>Criado em</th></tr></thead>
             <tbody>
                 <?php foreach ($users as $item): ?>
                     <tr>
@@ -80,6 +87,7 @@ require __DIR__ . '/../views/nav.php';
                         <td><?= e($item['email']) ?></td>
                         <td><span class="badge text-bg-light"><?= e($item['role']) ?></span></td>
                         <td><?= !empty($item['audit_access']) || in_array($item['role'], ['admin', 'coordenador'], true) ? '<span class="badge text-bg-info">Sim</span>' : '<span class="badge text-bg-secondary">Não</span>' ?></td>
+                        <td><?= !empty($item['audit_only']) ? '<span class="badge text-bg-warning">Sim</span>' : '<span class="badge text-bg-secondary">Não</span>' ?></td>
                         <td><?= $item['active'] ? '<span class="badge text-bg-success">Sim</span>' : '<span class="badge text-bg-secondary">Não</span>' ?></td>
                         <td><?= e($item['created_at']) ?></td>
                     </tr>

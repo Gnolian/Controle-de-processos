@@ -4,7 +4,7 @@ use App\Repositories\ProcessRepository;
 
 require __DIR__ . '/../app/bootstrap.php';
 
-$user = require_login();
+$user = require_process_access();
 $filters = [
     'q' => trim((string) ($_GET['q'] ?? '')),
     'status' => trim((string) ($_GET['status'] ?? '')),
@@ -31,4 +31,3 @@ foreach ($rows as $row) {
     fputcsv($out, $line, ';');
 }
 fclose($out);
-

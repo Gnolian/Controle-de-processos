@@ -17,6 +17,7 @@ CREATE TABLE users (
     role ENUM('servidor', 'coordenador', 'admin') NOT NULL DEFAULT 'servidor',
     active TINYINT(1) NOT NULL DEFAULT 1,
     audit_access TINYINT(1) NOT NULL DEFAULT 0,
+    audit_only TINYINT(1) NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

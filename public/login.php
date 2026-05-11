@@ -5,7 +5,8 @@ use App\Services\AuthService;
 require __DIR__ . '/../app/bootstrap.php';
 
 if (current_user()) {
-    redirect('dashboard.php');
+    $user = current_user();
+    redirect(can_access_process_area($user) ? 'dashboard.php' : 'audits.php');
 }
 
 $error = null;
@@ -14,7 +15,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         verify_csrf();
         if ((new AuthService())->attempt(trim((string) ($_POST['email'] ?? '')), (string) ($_POST['password'] ?? ''))) {
-            redirect('dashboard.php');
+            $user = current_user();
+            redirect($user && can_access_process_area($user) ? 'dashboard.php' : 'audits.php');
         }
         $error = 'Email ou senha invalidos.';
     } catch (Throwable $exception) {

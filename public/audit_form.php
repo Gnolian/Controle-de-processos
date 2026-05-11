@@ -35,7 +35,7 @@ if (!function_exists('audit_defaults')) {
     }
 }
 
-$user = require_audit_access();
+$user = require_audit_edit_access();
 $moduleReady = audits_schema_ready();
 if (!$moduleReady) {
     flash('Antes de cadastrar auditorias, execute a migration 004_add_audits_module.sql e depois a 005_expand_audits_for_timeline.sql.', 'danger');

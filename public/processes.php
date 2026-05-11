@@ -5,7 +5,7 @@ use App\Repositories\ProcessRepository;
 require __DIR__ . '/../app/bootstrap.php';
 require __DIR__ . '/../views/components.php';
 
-$user = require_login();
+$user = require_process_access();
 $pageTitle = 'Lista de processos';
 $activeNav = 'processes';
 $repo = new ProcessRepository();

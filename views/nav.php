@@ -6,8 +6,10 @@
     </a>
 
     <nav class="sidebar-nav">
-        <a class="<?= ($activeNav ?? '') === 'dashboard' ? 'active' : '' ?>" href="<?= url('dashboard.php') ?>"><i class="bi bi-speedometer2"></i> Painel pessoal</a>
-        <a class="<?= ($activeNav ?? '') === 'processes' ? 'active' : '' ?>" href="<?= url('processes.php') ?>"><i class="bi bi-folder2-open"></i> Processos</a>
+        <?php if ($navUser && can_access_process_area($navUser)): ?>
+            <a class="<?= ($activeNav ?? '') === 'dashboard' ? 'active' : '' ?>" href="<?= url('dashboard.php') ?>"><i class="bi bi-speedometer2"></i> Painel pessoal</a>
+            <a class="<?= ($activeNav ?? '') === 'processes' ? 'active' : '' ?>" href="<?= url('processes.php') ?>"><i class="bi bi-folder2-open"></i> Processos</a>
+        <?php endif; ?>
         <?php if ($navUser && can_access_audits($navUser)): ?>
             <a class="<?= ($activeNav ?? '') === 'audits' ? 'active' : '' ?>" href="<?= url('audits.php') ?>"><i class="bi bi-shield-check"></i> Auditorias</a>
         <?php endif; ?>
@@ -25,9 +27,9 @@
             <strong><?= e($pageTitle ?? 'Controle de Processos') ?></strong>
         </div>
         <div class="topbar-actions">
-            <?php if (($activeNav ?? '') === 'audits' && $navUser && can_access_audits($navUser)): ?>
+            <?php if (($activeNav ?? '') === 'audits' && $navUser && can_edit_audits($navUser)): ?>
                 <a class="btn btn-primary btn-sm" href="<?= url('audit_form.php') ?>"><i class="bi bi-plus-lg"></i> Nova auditoria</a>
-            <?php else: ?>
+            <?php elseif ($navUser && can_access_process_area($navUser)): ?>
                 <a class="btn btn-primary btn-sm" href="<?= url('process_form.php') ?>"><i class="bi bi-plus-lg"></i> Novo processo</a>
             <?php endif; ?>
             <div class="user-chip">

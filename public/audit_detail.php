@@ -63,7 +63,9 @@ require __DIR__ . '/../views/nav.php';
             </div>
         </div>
         <div class="d-flex gap-2 flex-wrap">
-            <a class="btn btn-outline-primary" href="<?= url('audit_form.php?id=' . (int) $audit['id']) ?>"><i class="bi bi-pencil"></i> Editar</a>
+            <?php if (can_edit_audits($user)): ?>
+                <a class="btn btn-outline-primary" href="<?= url('audit_form.php?id=' . (int) $audit['id']) ?>"><i class="bi bi-pencil"></i> Editar</a>
+            <?php endif; ?>
             <a class="btn btn-outline-secondary" href="<?= url('audits.php') ?>"><i class="bi bi-arrow-left"></i> Voltar</a>
         </div>
     </section>

@@ -4,7 +4,7 @@ use App\Services\ProcessService;
 
 require __DIR__ . '/../app/bootstrap.php';
 
-$user = require_login();
+$user = require_process_access();
 $id = (int) ($_GET['id'] ?? 0);
 
 try {

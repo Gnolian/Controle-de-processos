@@ -6,7 +6,7 @@ use App\Services\DashboardService;
 require __DIR__ . '/../app/bootstrap.php';
 require __DIR__ . '/../views/components.php';
 
-$user = require_login();
+$user = require_process_access();
 $pageTitle = 'Painel pessoal';
 $activeNav = 'dashboard';
 $dashboard = new DashboardService();

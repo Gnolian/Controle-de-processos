@@ -4,7 +4,7 @@ use App\Services\AuditCsvImportService;
 
 require __DIR__ . '/../app/bootstrap.php';
 
-$user = require_audit_access();
+$user = require_audit_edit_access();
 
 if (!audits_schema_ready()) {
     flash('Antes de importar a base de auditorias, execute as migrations 004_add_audits_module.sql e 005_expand_audits_for_timeline.sql no banco.', 'danger');

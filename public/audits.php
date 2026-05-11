@@ -274,8 +274,10 @@ require __DIR__ . '/../views/nav.php';
             <p class="text-secondary mb-0">Visão executiva, cadastro manual, acompanhamento de RDC e linha do tempo anual de prazos.</p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
-            <a class="btn btn-primary <?= !$moduleReady ? 'disabled' : '' ?>" href="<?= $moduleReady ? url('audit_form.php') : '#' ?>"><i class="bi bi-plus-lg"></i> Nova auditoria</a>
-            <a class="btn btn-outline-primary <?= !$moduleReady ? 'disabled' : '' ?>" href="<?= $moduleReady ? url('audit_import.php') : '#' ?>"><i class="bi bi-cloud-upload"></i> Importar base tratada</a>
+            <?php if (can_edit_audits($user)): ?>
+                <a class="btn btn-primary <?= !$moduleReady ? 'disabled' : '' ?>" href="<?= $moduleReady ? url('audit_form.php') : '#' ?>"><i class="bi bi-plus-lg"></i> Nova auditoria</a>
+                <a class="btn btn-outline-primary <?= !$moduleReady ? 'disabled' : '' ?>" href="<?= $moduleReady ? url('audit_import.php') : '#' ?>"><i class="bi bi-cloud-upload"></i> Importar base tratada</a>
+            <?php endif; ?>
             <a class="btn btn-outline-secondary" href="<?= url('audits.php') ?>"><i class="bi bi-arrow-clockwise"></i> Limpar filtros</a>
         </div>
     </section>
@@ -326,7 +328,7 @@ require __DIR__ . '/../views/nav.php';
             <div class="col-lg-3">
                 <?php $renderFilterBox('item_status_group', 'Situação do RDC', $filterOptions['item_status_group'], $filters['item_status_group']); ?>
             </div>
-            <div class="col-lg-6 d-flex gap-2 align-items-end audit-filter-actions">
+            <div class="col-12 d-flex gap-2 align-items-end audit-filter-actions">
                 <button class="btn btn-primary" type="submit" <?= !$moduleReady ? 'disabled' : '' ?>><i class="bi bi-funnel"></i> Filtrar</button>
                 <a class="btn btn-outline-secondary" href="<?= url('audits.php') ?>">Limpar</a>
             </div>
@@ -580,7 +582,9 @@ require __DIR__ . '/../views/nav.php';
                             <td><?= (int) $audit['total_items'] ?></td>
                             <td class="text-end d-flex gap-2 justify-content-end">
                                 <a class="btn btn-sm btn-light" href="<?= url('audit_detail.php?id=' . (int) $audit['id']) ?>"><i class="bi bi-eye"></i></a>
-                                <a class="btn btn-sm btn-light" href="<?= url('audit_form.php?id=' . (int) $audit['id']) ?>"><i class="bi bi-pencil"></i></a>
+                                <?php if (can_edit_audits($user)): ?>
+                                    <a class="btn btn-sm btn-light" href="<?= url('audit_form.php?id=' . (int) $audit['id']) ?>"><i class="bi bi-pencil"></i></a>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>
