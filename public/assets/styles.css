@@ -964,9 +964,8 @@ a {
 .audit-point-cards {
     display: grid;
     gap: 12px;
-    max-height: 520px;
-    overflow: auto;
-    padding-right: 4px;
+    max-height: none;
+    overflow: visible;
 }
 
 .audit-point-card {
@@ -974,6 +973,20 @@ a {
     border-radius: 12px;
     padding: 14px;
     background: #fff;
+    min-width: 0;
+}
+
+.audit-point-card p,
+.audit-point-card small,
+.audit-point-card strong,
+.audit-point-card span {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.audit-point-card .badge {
+    max-width: 100%;
+    white-space: normal;
 }
 
 .timeline-board {
