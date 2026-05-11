@@ -964,7 +964,6 @@ a {
 .audit-point-panel {
     display: flex;
     flex-direction: column;
-    min-height: 100%;
     width: 100%;
     overflow: hidden;
 }
@@ -972,27 +971,14 @@ a {
 .audit-point-cards {
     display: grid;
     gap: 12px;
-    flex: 1 1 auto;
-    min-height: 0;
+    max-height: none;
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 6px;
 }
 
 .audit-table-panel {
-    display: flex;
-    flex-direction: column;
-    min-height: 100%;
     width: 100%;
-}
-
-.audit-table-panel .table-responsive {
-    flex: 1 1 auto;
-}
-
-.audit-analysis-row > [class*="col-"] {
-    display: flex;
-    align-items: stretch;
 }
 
 .audit-point-card {
