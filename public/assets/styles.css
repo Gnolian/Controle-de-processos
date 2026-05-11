@@ -489,7 +489,7 @@ a {
 .metric-card-small__value {
     justify-self: start;
     text-align: left;
-    font-size: 34px;
+    font-size: 39px;
     line-height: 1;
     font-weight: 800;
     color: var(--ink);
@@ -499,11 +499,11 @@ a {
 
 .metric-card-small__icon {
     position: absolute;
-    right: 12px;
-    bottom: 10px;
-    font-size: 24px;
+    right: 10px;
+    bottom: 8px;
+    font-size: 18px;
     line-height: 1;
-    opacity: 0.11;
+    opacity: 0.10;
     pointer-events: none;
     z-index: 1;
 }
