@@ -364,8 +364,8 @@ require __DIR__ . '/../views/nav.php';
         </div>
     </form>
 
-    <section class="audit-dashboard-overview">
-        <div class="audit-overview-top audit-overview-summary">
+    <section class="audit-dashboard-overview dashboard-summary-grid">
+        <div class="summary-group summary-group--audit">
             <article class="metric-card universe-core">
                 <small class="section-kicker">Universo filtrado</small>
                 <span>Número de Auditorias</span>
@@ -374,6 +374,18 @@ require __DIR__ . '/../views/nav.php';
                 <i class="bi bi-bullseye"></i>
             </article>
 
+            <div class="audit-cards-grid">
+                <?php render_dashboard_metric_card('Diligência/Relatório', (int) $metrics['diligence_report'], 'bi-hourglass-split', 'universe-branch warning'); ?>
+                <?php render_dashboard_metric_card('Monitoramento a Iniciar', (int) $metrics['monitoring_pending'], 'bi-play-circle', 'universe-branch muted'); ?>
+                <?php render_dashboard_metric_card('1º Monitoramento', (int) $metrics['first_monitoring'], 'bi-1-circle', 'universe-branch', 'compact'); ?>
+                <?php render_dashboard_metric_card('2º Monitoramento', (int) $metrics['second_monitoring'], 'bi-2-circle', 'universe-branch', 'compact'); ?>
+                <?php render_dashboard_metric_card('3º Monitoramento', (int) $metrics['third_monitoring'], 'bi-3-circle', 'universe-branch', 'compact'); ?>
+                <?php render_dashboard_metric_card('4º Monitoramento', (int) $metrics['fourth_monitoring'], 'bi-4-circle', 'universe-branch', 'compact'); ?>
+                <?php render_dashboard_metric_card('Concluídas', (int) $metrics['done'], 'bi-check2-circle', 'universe-branch success'); ?>
+            </div>
+        </div>
+
+        <div class="summary-group summary-group--rdc">
             <article class="metric-card rdc-core">
                 <small class="section-kicker">RDC gerados</small>
                 <span>Quantidade de RDC</span>
@@ -381,20 +393,11 @@ require __DIR__ . '/../views/nav.php';
                 <p class="text-secondary mb-0">As auditorias geraram <?= (int) $metrics['rdc_total'] ?> quantidades de RDC.</p>
                 <i class="bi bi-diagram-3"></i>
             </article>
-        </div>
 
-        <div class="audit-overview-bottom audit-overview-indicators">
-            <div class="audit-overview-metrics-grid">
-                <?php render_dashboard_metric_card('Diligência/Relatório', (int) $metrics['diligence_report'], 'bi-hourglass-split', 'universe-branch warning'); ?>
-                <?php render_dashboard_metric_card('Monitoramento a Iniciar', (int) $metrics['monitoring_pending'], 'bi-play-circle', 'universe-branch muted', 'compact'); ?>
-                <?php render_dashboard_metric_card('1º Monitoramento', (int) $metrics['first_monitoring'], 'bi-1-circle', 'universe-branch', 'compact'); ?>
+            <div class="rdc-cards-grid">
                 <?php render_dashboard_metric_card('Recomendações', $totalRecomendacoes, 'bi-journal-check', 'rdc-branch'); ?>
                 <?php render_dashboard_metric_card('Determinações', $totalDeterminacoes, 'bi-list-check', 'rdc-branch'); ?>
-                <?php render_dashboard_metric_card('2º Monitoramento', (int) $metrics['second_monitoring'], 'bi-2-circle', 'universe-branch', 'compact'); ?>
-                <?php render_dashboard_metric_card('3º Monitoramento', (int) $metrics['third_monitoring'], 'bi-3-circle', 'universe-branch', 'compact'); ?>
-                <?php render_dashboard_metric_card('4º Monitoramento', (int) $metrics['fourth_monitoring'], 'bi-4-circle', 'universe-branch', 'compact'); ?>
                 <?php render_dashboard_metric_card('Ciência', $totalCiencias, 'bi-info-circle', 'rdc-branch'); ?>
-                <?php render_dashboard_metric_card('Concluídas', (int) $metrics['done'], 'bi-check2-circle', 'universe-branch success'); ?>
             </div>
         </div>
     </section>
