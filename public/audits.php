@@ -365,7 +365,7 @@ require __DIR__ . '/../views/nav.php';
     </form>
 
     <section class="audit-dashboard-overview">
-        <div class="audit-overview-top">
+        <div class="audit-overview-top audit-overview-summary">
             <article class="metric-card universe-core">
                 <small class="section-kicker">Universo filtrado</small>
                 <span>Número de Auditorias</span>
@@ -383,17 +383,17 @@ require __DIR__ . '/../views/nav.php';
             </article>
         </div>
 
-        <div class="audit-overview-bottom">
+        <div class="audit-overview-bottom audit-overview-indicators">
             <div class="audit-overview-metrics-grid">
                 <?php render_dashboard_metric_card('Diligência/Relatório', (int) $metrics['diligence_report'], 'bi-hourglass-split', 'universe-branch warning'); ?>
                 <?php render_dashboard_metric_card('Monitoramento a Iniciar', (int) $metrics['monitoring_pending'], 'bi-play-circle', 'universe-branch muted', 'compact'); ?>
                 <?php render_dashboard_metric_card('1º Monitoramento', (int) $metrics['first_monitoring'], 'bi-1-circle', 'universe-branch', 'compact'); ?>
                 <?php render_dashboard_metric_card('Recomendações', $totalRecomendacoes, 'bi-journal-check', 'rdc-branch'); ?>
                 <?php render_dashboard_metric_card('Determinações', $totalDeterminacoes, 'bi-list-check', 'rdc-branch'); ?>
-                <?php render_dashboard_metric_card('Ciência', $totalCiencias, 'bi-info-circle', 'rdc-branch'); ?>
                 <?php render_dashboard_metric_card('2º Monitoramento', (int) $metrics['second_monitoring'], 'bi-2-circle', 'universe-branch', 'compact'); ?>
                 <?php render_dashboard_metric_card('3º Monitoramento', (int) $metrics['third_monitoring'], 'bi-3-circle', 'universe-branch', 'compact'); ?>
                 <?php render_dashboard_metric_card('4º Monitoramento', (int) $metrics['fourth_monitoring'], 'bi-4-circle', 'universe-branch', 'compact'); ?>
+                <?php render_dashboard_metric_card('Ciência', $totalCiencias, 'bi-info-circle', 'rdc-branch'); ?>
                 <?php render_dashboard_metric_card('Concluídas', (int) $metrics['done'], 'bi-check2-circle', 'universe-branch success'); ?>
             </div>
         </div>

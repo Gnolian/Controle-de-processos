@@ -238,7 +238,7 @@ a {
 
 .audit-dashboard-overview {
     display: grid;
-    gap: 16px;
+    gap: 14px;
     margin-bottom: 24px;
 }
 
@@ -250,12 +250,13 @@ a {
 
 .audit-overview-bottom {
     display: block;
+    width: 100%;
 }
 
 .audit-overview-metrics-grid {
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
 }
 
 .filter-select {
@@ -428,10 +429,10 @@ a {
 }
 
 .metric-card-small {
-    min-height: 132px;
-    padding: 13px 16px 14px;
+    min-height: 118px;
+    padding: 12px 14px;
     display: grid;
-    grid-template-rows: 42px minmax(58px, 1fr);
+    grid-template-rows: 38px minmax(52px, 1fr);
     align-items: stretch;
     transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
@@ -442,7 +443,7 @@ a {
 }
 
 .metric-card-small__header {
-    min-height: 42px;
+    min-height: 38px;
     position: relative;
     z-index: 2;
 }
@@ -450,12 +451,12 @@ a {
 .metric-card-small__title {
     margin: 0;
     color: #5f6b7f;
-    font-size: 13px;
+    font-size: 12.75px;
     font-weight: 700;
-    line-height: 1.22;
+    line-height: 1.18;
     letter-spacing: 0;
     word-break: normal;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
     hyphens: none;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -465,7 +466,7 @@ a {
 
 .metric-card-small--compact .metric-card-small__title {
     font-size: 12.5px;
-    line-height: 1.2;
+    line-height: 1.16;
 }
 
 .metric-card-small__body {
@@ -473,12 +474,12 @@ a {
     z-index: 2;
     display: grid;
     place-items: center;
-    padding: 6px 34px 0 10px;
+    padding: 2px 34px 0 8px;
 }
 
 .metric-card-small__value {
     text-align: center;
-    font-size: 44px;
+    font-size: 46px;
     line-height: 1;
     font-weight: 800;
     color: var(--ink);
@@ -486,11 +487,11 @@ a {
 
 .metric-card-small__icon {
     position: absolute;
-    right: 14px;
-    bottom: 12px;
-    font-size: 26px;
+    right: 12px;
+    bottom: 10px;
+    font-size: 24px;
     line-height: 1;
-    opacity: 0.12;
+    opacity: 0.11;
     pointer-events: none;
     z-index: 1;
 }
@@ -1114,8 +1115,7 @@ a {
 
     .metric-grid,
     .metric-grid.xl,
-    .audit-overview-top,
-    .audit-overview-bottom {
+    .audit-overview-top {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
@@ -1150,13 +1150,12 @@ a {
     .metric-grid,
     .metric-grid.xl,
     .audit-overview-top,
-    .audit-overview-bottom,
     .sidebar-nav {
         grid-template-columns: 1fr;
     }
 
     .audit-overview-metrics-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .audit-filter-actions {
@@ -1177,5 +1176,17 @@ a {
 
     .timeline-legend-section {
         padding: 16px;
+    }
+}
+
+@media (max-width: 620px) {
+    .audit-overview-metrics-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 420px) {
+    .audit-overview-metrics-grid {
+        grid-template-columns: 1fr;
     }
 }
