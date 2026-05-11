@@ -388,37 +388,30 @@ require __DIR__ . '/../views/nav.php';
                 <article class="metric-card universe-branch warning">
                     <span>Diligência/Relatório</span>
                     <strong><?= (int) $metrics['diligence_report'] ?></strong>
-                    <i class="bi bi-hourglass-top"></i>
-                </article>
-                <article class="metric-card universe-branch success">
-                    <span>Concluídas</span>
-                    <strong><?= (int) $metrics['done'] ?></strong>
-                    <i class="bi bi-check-circle"></i>
                 </article>
                 <article class="metric-card universe-branch muted">
                     <span>Monitoramento A Iniciar</span>
                     <strong><?= (int) $metrics['monitoring_pending'] ?></strong>
-                    <i class="bi bi-hourglass-split"></i>
                 </article>
                 <article class="metric-card universe-branch">
                     <span>1&ordm; Monitoramento</span>
                     <strong><?= (int) $metrics['first_monitoring'] ?></strong>
-                    <i class="bi bi-1-circle"></i>
                 </article>
                 <article class="metric-card universe-branch">
                     <span>2&ordm; Monitoramento</span>
                     <strong><?= (int) $metrics['second_monitoring'] ?></strong>
-                    <i class="bi bi-2-circle"></i>
                 </article>
                 <article class="metric-card universe-branch">
                     <span>3&ordm; Monitoramento</span>
                     <strong><?= (int) $metrics['third_monitoring'] ?></strong>
-                    <i class="bi bi-3-circle"></i>
                 </article>
                 <article class="metric-card universe-branch">
                     <span>4&ordm; Monitoramento</span>
                     <strong><?= (int) $metrics['fourth_monitoring'] ?></strong>
-                    <i class="bi bi-4-circle"></i>
+                </article>
+                <article class="metric-card universe-branch success">
+                    <span>Concluídas</span>
+                    <strong><?= (int) $metrics['done'] ?></strong>
                 </article>
             </div>
 
@@ -426,17 +419,14 @@ require __DIR__ . '/../views/nav.php';
                 <article class="metric-card rdc-branch">
                     <span>Recomendações</span>
                     <strong><?= $totalRecomendacoes ?></strong>
-                    <i class="bi bi-journal-check"></i>
                 </article>
                 <article class="metric-card rdc-branch">
                     <span>Determinações</span>
                     <strong><?= $totalDeterminacoes ?></strong>
-                    <i class="bi bi-list-check"></i>
                 </article>
                 <article class="metric-card rdc-branch">
                     <span>Ciência</span>
                     <strong><?= $totalCiencias ?></strong>
-                    <i class="bi bi-info-circle"></i>
                 </article>
             </div>
         </div>
@@ -692,10 +682,27 @@ require __DIR__ . '/../views/nav.php';
                         </div>
                     </div>
                     <div class="timeline-legend-item">
-                        <span class="timeline-legend-dot timeline-chip-complexity-high"></span>
+                        <div class="timeline-legend-complexity-list">
+                            <div class="timeline-legend-complexity-row">
+                                <span class="timeline-legend-dot timeline-chip-complexity-high"></span>
+                                <span>Vermelho = alta complexidade</span>
+                            </div>
+                            <div class="timeline-legend-complexity-row">
+                                <span class="timeline-legend-dot timeline-chip-complexity-medium"></span>
+                                <span>Amarelo = média complexidade</span>
+                            </div>
+                            <div class="timeline-legend-complexity-row">
+                                <span class="timeline-legend-dot timeline-chip-complexity-low"></span>
+                                <span>Verde = baixa complexidade</span>
+                            </div>
+                            <div class="timeline-legend-complexity-row">
+                                <span class="timeline-legend-dot timeline-chip-complexity-unknown"></span>
+                                <span>Cinza = não informada</span>
+                            </div>
+                        </div>
                         <div>
                             <strong>Círculos de complexidade</strong>
-                            <p>Vermelho = alta, amarelo = média, verde = baixa e cinza = não informada.</p>
+                            <p>Use a bolinha de cor para identificar rapidamente o nível de complexidade da auditoria.</p>
                         </div>
                     </div>
                     <div class="timeline-legend-item timeline-legend-item-note">

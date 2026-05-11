@@ -451,7 +451,7 @@ a {
 
 .universe-branch strong,
 .rdc-branch strong {
-    margin-top: 28px;
+    margin-top: 18px;
     text-align: center;
     font-size: 44px;
 }
@@ -461,19 +461,31 @@ a {
     min-height: 0;
     margin-bottom: 0;
     text-align: left;
-    font-size: 12px;
-    line-height: 1.15;
+    font-size: 16px;
+    line-height: 1.2;
+}
+
+.universe-branch span:not([class]),
+.rdc-branch span:not([class]) {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.universe-branch:nth-child(3) span,
+.universe-branch:nth-child(4) span,
+.universe-branch:nth-child(5) span,
+.universe-branch:nth-child(6) span {
+    font-size: 14px;
     white-space: nowrap;
+    display: block;
+    overflow: visible;
 }
 
 .universe-branch i,
 .rdc-branch i {
-    position: absolute;
-    right: 16px;
-    bottom: 14px;
-    top: auto;
-    transform: none;
-    font-size: 38px;
+    display: none;
 }
 
 .timeline-legend-trigger {
@@ -526,6 +538,19 @@ a {
     border-radius: 999px;
     flex: 0 0 auto;
     margin-top: 6px;
+}
+
+.timeline-legend-complexity-list {
+    display: grid;
+    gap: 8px;
+    min-width: 220px;
+}
+
+.timeline-legend-complexity-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--muted);
 }
 
 .timeline-legend-item-note i {
