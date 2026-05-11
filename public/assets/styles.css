@@ -961,11 +961,21 @@ a {
     background: #fbfcfe;
 }
 
+.audit-point-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    overflow: hidden;
+}
+
 .audit-point-cards {
     display: grid;
     gap: 12px;
-    max-height: none;
-    overflow: visible;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 6px;
 }
 
 .audit-point-card {

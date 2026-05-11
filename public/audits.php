@@ -530,7 +530,7 @@ require __DIR__ . '/../views/nav.php';
             </div>
         </div>
         <div class="col-lg-5">
-            <div class="app-card h-100">
+            <div class="app-card h-100 audit-point-panel">
                 <div class="card-head">
                     <h2>Pontos de Controle dos RDC</h2>
                     <span class="text-secondary"><?= $filters['item_status_group'] !== [] ? e(count($filters['item_status_group']) . ' situação(ões) selecionada(s)') : 'Todos os status' ?></span>
