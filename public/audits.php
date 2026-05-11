@@ -626,62 +626,67 @@ require __DIR__ . '/../views/nav.php';
 </div>
 
 <div class="modal fade" id="timelineLegendModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header timeline-legend-modal__header">
                 <div>
                     <p class="section-kicker mb-1">Linha do tempo</p>
                     <h2 class="modal-title fs-4 mb-0">Legenda visual</h2>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body timeline-legend-modal__body">
                 <div class="timeline-legend-list">
-                    <div class="timeline-legend-item">
-                        <span class="timeline-legend-chip timeline-legend-chip-estimated"></span>
-                        <div>
-                            <strong>Card claro</strong>
-                            <p>Auditorias estimadas ou trazidas para o grupo que pode chegar hoje.</p>
-                        </div>
-                    </div>
-                    <div class="timeline-legend-item">
-                        <span class="timeline-legend-chip timeline-legend-chip-deadline"></span>
-                        <div>
-                            <strong>Card em vermelho suave</strong>
-                            <p>Auditorias com prazo definido e responsável atual na DGBA.</p>
-                        </div>
-                    </div>
-                    <div class="timeline-legend-item">
-                        <div class="timeline-legend-complexity-list">
-                            <div class="timeline-legend-complexity-row">
-                                <span class="timeline-legend-dot timeline-chip-complexity-high"></span>
-                                <span>Vermelho = alta complexidade</span>
-                            </div>
-                            <div class="timeline-legend-complexity-row">
-                                <span class="timeline-legend-dot timeline-chip-complexity-medium"></span>
-                                <span>Amarelo = média complexidade</span>
-                            </div>
-                            <div class="timeline-legend-complexity-row">
-                                <span class="timeline-legend-dot timeline-chip-complexity-low"></span>
-                                <span>Verde = baixa complexidade</span>
-                            </div>
-                            <div class="timeline-legend-complexity-row">
-                                <span class="timeline-legend-dot timeline-chip-complexity-unknown"></span>
-                                <span>Cinza = não informada</span>
+                    <section class="timeline-legend-section">
+                        <div class="timeline-legend-item">
+                            <span class="timeline-legend-chip timeline-legend-chip-estimated"></span>
+                            <div class="timeline-legend-copy">
+                                <strong>Card claro</strong>
+                                <p>Auditorias estimadas ou trazidas para o grupo que pode chegar hoje.</p>
                             </div>
                         </div>
-                        <div>
-                            <strong>Círculos de complexidade</strong>
-                            <p>Use a bolinha de cor para identificar rapidamente o nível de complexidade da auditoria.</p>
+                        <div class="timeline-legend-item">
+                            <span class="timeline-legend-chip timeline-legend-chip-deadline"></span>
+                            <div class="timeline-legend-copy">
+                                <strong>Card em vermelho suave</strong>
+                                <p>Auditorias com prazo definido e responsável atual na DGBA.</p>
+                            </div>
                         </div>
-                    </div>
-                    <div class="timeline-legend-item timeline-legend-item-note">
-                        <i class="bi bi-clipboard2-check"></i>
-                        <div>
+                    </section>
+
+                    <section class="timeline-legend-section timeline-legend-section--complexity">
+                        <div class="timeline-legend-complexity-block">
+                            <div class="timeline-legend-copy">
+                                <strong>Círculos de complexidade</strong>
+                                <p>A bolinha colorida indica rapidamente o nível de complexidade da auditoria.</p>
+                            </div>
+                            <div class="timeline-legend-complexity-list">
+                                <div class="timeline-legend-complexity-row">
+                                    <span class="timeline-legend-dot timeline-chip-complexity-high"></span>
+                                    <span>alta complexidade</span>
+                                </div>
+                                <div class="timeline-legend-complexity-row">
+                                    <span class="timeline-legend-dot timeline-chip-complexity-medium"></span>
+                                    <span>média complexidade</span>
+                                </div>
+                                <div class="timeline-legend-complexity-row">
+                                    <span class="timeline-legend-dot timeline-chip-complexity-low"></span>
+                                    <span>baixa complexidade</span>
+                                </div>
+                                <div class="timeline-legend-complexity-row">
+                                    <span class="timeline-legend-dot timeline-chip-complexity-unknown"></span>
+                                    <span>não informada</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-legend-note">
+                            <i class="bi bi-clipboard2-check"></i>
+                            <div class="timeline-legend-copy">
                             <strong>Definição da complexidade</strong>
                             <p>A complexidade foi definida por critério subjetivo do gestor que cadastrou a auditoria.</p>
+                            </div>
                         </div>
-                    </div>
+                    </section>
                 </div>
             </div>
         </div>
