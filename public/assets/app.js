@@ -43,35 +43,6 @@ document.addEventListener('click', (event) => {
   });
 });
 
-const syncAuditPanels = () => {
-  const leftPanel = document.querySelector('.audit-table-panel');
-  const rightPanel = document.querySelector('.audit-point-panel');
-  const rightBody = document.querySelector('.audit-point-cards');
-
-  if (!leftPanel || !rightPanel || !rightBody) return;
-
-  rightPanel.style.height = '';
-  rightBody.style.height = '';
-
-  if (window.innerWidth < 992) {
-    return;
-  }
-
-  const leftHeight = leftPanel.getBoundingClientRect().height;
-  const rightHeader = rightPanel.querySelector('.card-head');
-  const panelStyle = window.getComputedStyle(rightPanel);
-  const paddingTop = parseFloat(panelStyle.paddingTop || '0');
-  const paddingBottom = parseFloat(panelStyle.paddingBottom || '0');
-  const headerHeight = rightHeader ? rightHeader.getBoundingClientRect().height : 0;
-  const availableBodyHeight = Math.max(120, leftHeight - headerHeight - paddingTop - paddingBottom);
-
-  rightPanel.style.height = `${leftHeight}px`;
-  rightBody.style.height = `${availableBodyHeight}px`;
-};
-
-window.addEventListener('load', syncAuditPanels);
-window.addEventListener('resize', syncAuditPanels);
-
 const renderChartLegend = (canvas, rows, colors) => {
   if (!rows.length || !canvas.parentElement) return;
 
