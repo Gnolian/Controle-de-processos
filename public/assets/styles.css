@@ -965,17 +965,28 @@ a {
     display: flex;
     flex-direction: column;
     min-height: 100%;
-    overflow: hidden;
+    width: 100%;
 }
 
 .audit-point-cards {
     display: grid;
     gap: 12px;
+    overflow: visible;
+}
+
+.audit-table-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    width: 100%;
+}
+
+.audit-table-panel .table-responsive {
     flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding-right: 6px;
+}
+
+.audit-analysis-row > [class*="col-"] {
+    display: flex;
 }
 
 .audit-point-card {

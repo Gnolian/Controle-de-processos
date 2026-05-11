@@ -503,9 +503,9 @@ require __DIR__ . '/../views/nav.php';
         </div>
     </section>
 
-    <section class="row g-4 mt-1">
+    <section class="row g-4 mt-1 audit-analysis-row">
         <div class="col-lg-7">
-            <div class="app-card h-100">
+            <div class="app-card h-100 audit-table-panel">
                 <div class="card-head"><h2>Determinações, Recomendações e Ciência por Auditoria</h2></div>
                 <div class="table-responsive">
                     <table class="table modern-table mb-0">
