@@ -80,40 +80,42 @@ require __DIR__ . '/../views/nav.php';
         </div>
     </section>
 
-    <section class="app-card mb-4">
-        <div class="card-head"><h2>Novo usuário</h2></div>
-        <form method="post" class="row g-3 align-items-end">
-            <?= csrf_field() ?>
-            <input type="hidden" name="action" value="create">
-            <div class="col-md-3"><label class="form-label">Nome<input class="form-control mt-1" name="name" required></label></div>
-            <div class="col-md-3"><label class="form-label">Email<input class="form-control mt-1" type="email" name="email" required></label></div>
-            <div class="col-md-2"><label class="form-label">Senha<input class="form-control mt-1" type="password" name="password" required></label></div>
-            <div class="col-md-2">
-                <label class="form-label">Perfil
-                    <select class="form-select mt-1" name="role">
-                        <?php foreach (config('dropdowns.roles') as $role): ?>
-                            <option value="<?= e($role) ?>"><?= e($role) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </label>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label d-block">Acesso a auditorias
-                    <div class="form-check form-switch mt-2">
-                        <input class="form-check-input" type="checkbox" name="audit_access" value="1">
-                    </div>
-                </label>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label d-block">Somente auditorias
-                    <div class="form-check form-switch mt-2">
-                        <input class="form-check-input" type="checkbox" name="audit_only" value="1">
-                    </div>
-                </label>
-            </div>
-            <div class="col-md-12 d-flex justify-content-end"><button class="btn btn-primary" type="submit"><i class="bi bi-person-plus"></i> Criar</button></div>
-        </form>
-    </section>
+    <?php if (!$editUser): ?>
+        <section class="app-card mb-4">
+            <div class="card-head"><h2>Novo usuário</h2></div>
+            <form method="post" class="row g-3 align-items-end">
+                <?= csrf_field() ?>
+                <input type="hidden" name="action" value="create">
+                <div class="col-md-3"><label class="form-label">Nome<input class="form-control mt-1" name="name" required></label></div>
+                <div class="col-md-3"><label class="form-label">Email<input class="form-control mt-1" type="email" name="email" required></label></div>
+                <div class="col-md-2"><label class="form-label">Senha<input class="form-control mt-1" type="password" name="password" required></label></div>
+                <div class="col-md-2">
+                    <label class="form-label">Perfil
+                        <select class="form-select mt-1" name="role">
+                            <?php foreach (config('dropdowns.roles') as $role): ?>
+                                <option value="<?= e($role) ?>"><?= e($role) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </label>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label d-block">Acesso a auditorias
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" name="audit_access" value="1">
+                        </div>
+                    </label>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label d-block">Somente auditorias
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" name="audit_only" value="1">
+                        </div>
+                    </label>
+                </div>
+                <div class="col-md-12 d-flex justify-content-end"><button class="btn btn-primary" type="submit"><i class="bi bi-person-plus"></i> Criar</button></div>
+            </form>
+        </section>
+    <?php endif; ?>
 
     <?php if ($editUser): ?>
         <section class="app-card mb-4 border border-primary-subtle">
@@ -150,6 +152,7 @@ require __DIR__ . '/../views/nav.php';
                         <div class="form-check form-switch mt-2">
                             <input class="form-check-input" type="checkbox" name="audit_only" value="1" <?= checked(!empty($editUser['audit_only'])) ?>>
                         </div>
+                        <small class="text-muted">Quando marcado, o usuário só acessa o painel de auditorias.</small>
                     </label>
                 </div>
                 <div class="col-md-2">

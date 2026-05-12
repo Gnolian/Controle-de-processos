@@ -6,6 +6,11 @@ namespace App\Repositories;
 
 class UserRepository
 {
+    public function __construct()
+    {
+        $this->ensureAccessColumns();
+    }
+
     public function findActive(int $id): ?array
     {
         $select = 'SELECT id, name, email, role';
@@ -151,9 +156,7 @@ class UserRepository
             return $hasColumn;
         }
 
-        $stmt = \db()->prepare('SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?');
-        $stmt->execute(['users', 'audit_access']);
-        $hasColumn = (int) $stmt->fetchColumn() > 0;
+        $hasColumn = $this->columnExists('audit_access');
 
         return $hasColumn;
     }
@@ -165,10 +168,34 @@ class UserRepository
             return $hasColumn;
         }
 
-        $stmt = \db()->prepare('SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?');
-        $stmt->execute(['users', 'audit_only']);
-        $hasColumn = (int) $stmt->fetchColumn() > 0;
+        $hasColumn = $this->columnExists('audit_only');
 
         return $hasColumn;
+    }
+
+    private function ensureAccessColumns(): void
+    {
+        static $checked = false;
+        if ($checked) {
+            return;
+        }
+
+        if (!$this->columnExists('audit_access')) {
+            \db()->exec('ALTER TABLE users ADD COLUMN audit_access TINYINT(1) NOT NULL DEFAULT 0 AFTER active');
+        }
+
+        if (!$this->columnExists('audit_only')) {
+            \db()->exec('ALTER TABLE users ADD COLUMN audit_only TINYINT(1) NOT NULL DEFAULT 0 AFTER audit_access');
+        }
+
+        $checked = true;
+    }
+
+    private function columnExists(string $column): bool
+    {
+        $stmt = \db()->prepare('SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?');
+        $stmt->execute(['users', $column]);
+
+        return (int) $stmt->fetchColumn() > 0;
     }
 }
