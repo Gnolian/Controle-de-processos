@@ -1,6 +1,6 @@
 <?php $navUser = current_user(); ?>
 <aside class="app-sidebar">
-    <a class="sidebar-brand" href="<?= url('dashboard.php') ?>">
+    <a class="sidebar-brand" href="<?= url($navUser && !can_access_process_area($navUser) ? 'audits.php' : 'dashboard.php') ?>">
         <span class="brand-mark"><i class="bi bi-kanban"></i></span>
         <span>Controle<br><strong>Processos</strong></span>
     </a>

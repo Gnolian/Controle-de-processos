@@ -95,7 +95,7 @@ function require_login(): array
 
 function can_manage(array $user): bool
 {
-    return in_array($user['role'], ['admin', 'coordenador'], true);
+    return in_array($user['role'], ['admin', 'coordenador'], true) && !is_audit_only($user);
 }
 
 function is_audit_only(array $user): bool
@@ -124,6 +124,10 @@ function require_role(array $roles): array
     if (!in_array($user['role'], $roles, true)) {
         flash('Você não tem permissão para acessar esta tela.', 'danger');
         redirect('dashboard.php');
+    }
+    if (is_audit_only($user)) {
+        flash('Este usuário tem acesso apenas ao painel de auditorias.', 'warning');
+        redirect('audits.php');
     }
 
     return $user;

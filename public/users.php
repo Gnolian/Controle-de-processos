@@ -25,11 +25,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($targetId === (int) $user['id'] && empty($_POST['active'])) {
                 throw new RuntimeException('Você não pode desativar seu próprio usuário.');
             }
+            if ($targetId === (int) $user['id'] && !empty($_POST['audit_only'])) {
+                throw new RuntimeException('Você não pode limitar seu próprio usuário para somente auditorias.');
+            }
 
             $repo->updateAccess($targetId, [
                 'role' => $role,
                 'active' => !empty($_POST['active']),
-                'audit_access' => !empty($_POST['audit_access']),
+                'audit_access' => !empty($_POST['audit_access']) || !empty($_POST['audit_only']),
                 'audit_only' => !empty($_POST['audit_only']),
             ]);
             flash('Acessos do usuário atualizados com sucesso.');
@@ -37,6 +40,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             if (trim((string) ($_POST['name'] ?? '')) === '' || trim((string) ($_POST['email'] ?? '')) === '' || (string) ($_POST['password'] ?? '') === '') {
                 throw new RuntimeException('Preencha nome, email e senha.');
+            }
+            if (!empty($_POST['audit_only'])) {
+                $_POST['audit_access'] = '1';
             }
             $repo->create($_POST);
             flash('Usuário criado com sucesso.');
@@ -169,7 +175,7 @@ require __DIR__ . '/../views/nav.php';
                         <td><?= e($item['name']) ?></td>
                         <td><?= e($item['email']) ?></td>
                         <td><span class="badge text-bg-light"><?= e($item['role']) ?></span></td>
-                        <td><?= !empty($item['audit_access']) || in_array($item['role'], ['admin', 'coordenador'], true) ? '<span class="badge text-bg-info">Sim</span>' : '<span class="badge text-bg-secondary">Não</span>' ?></td>
+                        <td><?= !empty($item['audit_access']) || !empty($item['audit_only']) || in_array($item['role'], ['admin', 'coordenador'], true) ? '<span class="badge text-bg-info">Sim</span>' : '<span class="badge text-bg-secondary">Não</span>' ?></td>
                         <td><?= !empty($item['audit_only']) ? '<span class="badge text-bg-warning">Sim</span>' : '<span class="badge text-bg-secondary">Não</span>' ?></td>
                         <td><?= $item['active'] ? '<span class="badge text-bg-success">Sim</span>' : '<span class="badge text-bg-secondary">Não</span>' ?></td>
                         <td><?= e($item['created_at']) ?></td>
