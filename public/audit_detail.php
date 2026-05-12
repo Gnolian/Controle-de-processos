@@ -57,7 +57,7 @@ require __DIR__ . '/../views/nav.php';
             <p><?= e($audit['theme'] ?: $audit['audit_type']) ?></p>
             <div class="d-flex gap-2 flex-wrap">
                 <span class="badge text-bg-light"><?= e($audit['requesting_body']) ?></span>
-                <span class="badge text-bg-light"><?= e($audit['audit_phase'] ?: 'Sem fase') ?></span>
+                <span class="badge text-bg-light"><?= e(AuditRepository::auditPhaseLabel($audit['audit_phase'] ?: '')) ?></span>
                 <span class="badge text-bg-light"><?= e($complexityLabel) ?></span>
                 <span class="badge <?= !empty($audit['deadline_is_current']) ? 'text-bg-warning' : 'text-bg-light' ?>"><?= e($nextDeadline) ?></span>
             </div>
@@ -90,7 +90,7 @@ require __DIR__ . '/../views/nav.php';
                     <dt>Tipo</dt><dd><?= e($audit['audit_type']) ?></dd>
                     <dt>Classificação</dt><dd><?= e($audit['classification'] ?: '-') ?></dd>
                     <dt>Complexidade</dt><dd><?= e($complexityLabel) ?></dd>
-                    <dt>Fase</dt><dd><?= e($audit['audit_phase'] ?: '-') ?></dd>
+                    <dt>Fase</dt><dd><?= e(AuditRepository::auditPhaseLabel($audit['audit_phase'] ?: '')) ?></dd>
                     <dt>Responsável atual</dt><dd><?= e($audit['current_owner'] ?: '-') ?></dd>
                     <dt>Data de início</dt><dd><?= e(format_date($audit['start_date'])) ?></dd>
                     <dt>Última resposta</dt><dd><?= e(format_date($audit['last_date_response'])) ?></dd>

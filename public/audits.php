@@ -80,32 +80,11 @@ $renderFilterBox = static function (string $name, string $label, array $options,
 };
 
 $formatPhaseLegend = static function (string $value): string {
-    $normalized = mb_strtoupper(trim($value), 'UTF-8');
-
-    return match ($normalized) {
-        'INICIAL/DILIGÊNCIA' => 'Em Diligência',
-        'MONITORAMENTO À INICIAR' => 'Monitoramento a Iniciar',
-        '1º MONITORAMENTO' => '1º Monitoramento',
-        '2º MONITORAMENTO' => '2º Monitoramento',
-        '3º MONITORAMENTO' => '3º Monitoramento',
-        '4º MONITORAMENTO' => '4º Monitoramento',
-        'ELABORAÇÃO DE RELATÓRIO FINAL' => 'Relatório Final',
-        default => $value,
-    };
+    return AuditRepository::auditPhaseLabel($value);
 };
 
 $sortFilterOptions = static function (string $name, array $options) use ($formatPhaseLegend): array {
-    $phaseOrder = [
-        'Em Diligência' => 10,
-        'Monitoramento a Iniciar' => 20,
-        '1º Monitoramento' => 40,
-        '2º Monitoramento' => 50,
-        '3º Monitoramento' => 60,
-        '4º Monitoramento' => 70,
-        'Relatório Final' => 80,
-    ];
-
-    usort($options, static function (array $left, array $right) use ($name, $phaseOrder, $formatPhaseLegend): int {
+    usort($options, static function (array $left, array $right) use ($name, $formatPhaseLegend): int {
         $leftValue = trim((string) ($left['value'] ?? ''));
         $rightValue = trim((string) ($right['value'] ?? ''));
 
@@ -120,8 +99,8 @@ $sortFilterOptions = static function (string $name, array $options) use ($format
         if ($name === 'audit_phase') {
             $leftLabel = $formatPhaseLegend($leftValue);
             $rightLabel = $formatPhaseLegend($rightValue);
-            $leftRank = $phaseOrder[$leftLabel] ?? 999;
-            $rightRank = $phaseOrder[$rightLabel] ?? 999;
+            $leftRank = AuditRepository::auditPhaseRank($leftLabel);
+            $rightRank = AuditRepository::auditPhaseRank($rightLabel);
             return $leftRank <=> $rightRank ?: strcasecmp($leftLabel, $rightLabel);
         }
 
@@ -156,6 +135,7 @@ $metrics = [
     'total' => 0,
     'rdc_total' => 0,
     'diligence_report' => 0,
+    'final_report' => 0,
     'done' => 0,
     'monitoring_pending' => 0,
     'first_monitoring' => 0,
@@ -375,13 +355,14 @@ require __DIR__ . '/../views/nav.php';
             </article>
 
             <div class="audit-cards-grid">
-                <?php render_dashboard_metric_card('Diligência/Relatório', (int) $metrics['diligence_report'], 'bi-hourglass-split', 'universe-branch warning'); ?>
+                <?php render_dashboard_metric_card('Diligência/Relatório Preliminar', (int) $metrics['diligence_report'], 'bi-hourglass-split', 'universe-branch warning', 'compact'); ?>
+                <?php render_dashboard_metric_card('Relatório Final', (int) $metrics['final_report'], 'bi-file-earmark-check', 'universe-branch muted'); ?>
                 <?php render_dashboard_metric_card('Monitoramento a Iniciar', (int) $metrics['monitoring_pending'], 'bi-play-circle', 'universe-branch muted'); ?>
                 <?php render_dashboard_metric_card('1º Monitoramento', (int) $metrics['first_monitoring'], 'bi-1-circle', 'universe-branch', 'compact'); ?>
                 <?php render_dashboard_metric_card('2º Monitoramento', (int) $metrics['second_monitoring'], 'bi-2-circle', 'universe-branch', 'compact'); ?>
                 <?php render_dashboard_metric_card('3º Monitoramento', (int) $metrics['third_monitoring'], 'bi-3-circle', 'universe-branch', 'compact'); ?>
                 <?php render_dashboard_metric_card('4º Monitoramento', (int) $metrics['fourth_monitoring'], 'bi-4-circle', 'universe-branch', 'compact'); ?>
-                <?php render_dashboard_metric_card('Concluídas', (int) $metrics['done'], 'bi-check2-circle', 'universe-branch success'); ?>
+                <?php render_dashboard_metric_card('Concluídos', (int) $metrics['done'], 'bi-check2-circle', 'universe-branch success'); ?>
             </div>
         </div>
 
@@ -465,8 +446,8 @@ require __DIR__ . '/../views/nav.php';
                         <?php endif; ?>
                     </div>
                     <div class="timeline-month-foot">
-                        <span class="timeline-month-total timeline-month-total-current"><?= $estimatedCount ?> Estimados</span>
-                        <span class="timeline-month-total"><?= $deadlineCount ?> com Prazo</span>
+                        <span class="timeline-month-total timeline-month-total-current"><?= $estimatedCount ?> Prazo Estimado</span>
+                        <span class="timeline-month-total"><?= $deadlineCount ?> Prazo Exato</span>
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -572,7 +553,7 @@ require __DIR__ . '/../views/nav.php';
                             <td><strong><?= e($audit['audit_code']) ?></strong><small><?= e($audit['audit_nup']) ?></small></td>
                             <td><?= e($audit['requesting_body']) ?></td>
                             <td class="text-truncate-cell"><?= e($audit['theme'] ?: '-') ?></td>
-                            <td><?= e($audit['audit_phase'] ?: '-') ?></td>
+                            <td><?= e(AuditRepository::auditPhaseLabel($audit['audit_phase'] ?: '')) ?></td>
                             <td>
                                 <span class="badge rounded-pill <?= !empty($audit['deadline_is_current']) ? 'text-bg-warning' : 'text-bg-light' ?>">
                                     <?= e($audit['deadline_label'] ?: ($audit['deadline_date'] ? format_date($audit['deadline_date']) : 'Sem prazo')) ?>
@@ -626,7 +607,7 @@ require __DIR__ . '/../views/nav.php';
 </div>
 
 <div class="modal fade" id="timelineLegendModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable timeline-legend-dialog">
         <div class="modal-content">
             <div class="modal-header timeline-legend-modal__header">
                 <div>
@@ -641,8 +622,8 @@ require __DIR__ . '/../views/nav.php';
                         <div class="timeline-legend-item">
                             <span class="timeline-legend-chip timeline-legend-chip-estimated"></span>
                             <div class="timeline-legend-copy">
-                                <strong>Card claro</strong>
-                                <p>Auditorias estimadas ou trazidas para o grupo que pode chegar hoje.</p>
+                                <strong>Card branco</strong>
+                                <p>Auditorias com prazo estimado que pode chegar a qualquer momento.</p>
                             </div>
                         </div>
                         <div class="timeline-legend-item">
@@ -682,8 +663,8 @@ require __DIR__ . '/../views/nav.php';
                         <div class="timeline-legend-note">
                             <i class="bi bi-clipboard2-check"></i>
                             <div class="timeline-legend-copy">
-                            <strong>Definição da complexidade</strong>
-                            <p>A complexidade foi definida por critério subjetivo do gestor que cadastrou a auditoria.</p>
+                                <strong>Definição da complexidade</strong>
+                                <p>A complexidade foi definida por critério subjetivo do gestor que cadastrou a auditoria.</p>
                             </div>
                         </div>
                     </section>

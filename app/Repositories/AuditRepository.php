@@ -110,6 +110,40 @@ class AuditRepository
         'monitor_4_response',
     ];
 
+    public static function auditPhaseLabel(?string $phase): string
+    {
+        $token = self::phaseToken((string) $phase);
+
+        return match (true) {
+            $token === '' => 'Não informado',
+            str_contains($token, 'CONCLUID') => 'Concluídos',
+            str_contains($token, 'RELATORIOFINAL') || (str_contains($token, 'RELATORIO') && str_contains($token, 'FINAL')) => 'Relatório Final',
+            str_contains($token, 'DILIGENC') || str_contains($token, 'PRELIMINAR') => 'Diligência/Relatório Preliminar',
+            str_contains($token, 'INICIAR') => 'Monitoramento a Iniciar',
+            str_starts_with($token, '1') && str_contains($token, 'MONITORAMENTO') => '1º Monitoramento',
+            str_starts_with($token, '2') && str_contains($token, 'MONITORAMENTO') => '2º Monitoramento',
+            str_starts_with($token, '3') && str_contains($token, 'MONITORAMENTO') => '3º Monitoramento',
+            str_starts_with($token, '4') && str_contains($token, 'MONITORAMENTO') => '4º Monitoramento',
+            default => trim((string) $phase) !== '' ? trim((string) $phase) : 'Não informado',
+        };
+    }
+
+    public static function auditPhaseRank(string $phase): int
+    {
+        return match (self::auditPhaseLabel($phase)) {
+            'Diligência/Relatório Preliminar' => 10,
+            'Relatório Final' => 20,
+            'Monitoramento a Iniciar' => 30,
+            '1º Monitoramento' => 40,
+            '2º Monitoramento' => 50,
+            '3º Monitoramento' => 60,
+            '4º Monitoramento' => 70,
+            'Concluídos' => 80,
+            'Não informado' => 990,
+            default => 900,
+        };
+    }
+
     public function upsertAudit(array $payload, ?int $userId = null): int
     {
         $existing = $this->findByCode((string) $payload['audit_code']);
@@ -238,12 +272,13 @@ class AuditRepository
 
     public function dashboardMetrics(array $filters = []): array
     {
-        $diligenceReport = $this->countPhaseLike(['%DILIGENC%', '%RELATOR%'], $filters);
+        $diligenceReport = $this->countPhaseLike(['%DILIGENC%', '%PRELIMIN%'], $filters);
+        $finalReport = $this->countPhaseLike(['%RELAT%FINAL%'], $filters);
         $monitoringPending = $this->countPhaseLike(['%INICIAR%'], $filters);
-        $first = $this->countPhaseLike(['1%', 'PRIMEIRO%', '%1O%MONITORAMENTO%', '%1Âº%MONITORAMENTO%'], $filters);
-        $second = $this->countPhaseLike(['2%', 'SEGUNDO%', '%2O%MONITORAMENTO%', '%2Âº%MONITORAMENTO%'], $filters);
-        $third = $this->countPhaseLike(['3%', 'TERCEIRO%', '%3O%MONITORAMENTO%', '%3Âº%MONITORAMENTO%'], $filters);
-        $fourth = $this->countPhaseLike(['4%', 'QUARTO%', '%4O%MONITORAMENTO%', '%4Âº%MONITORAMENTO%'], $filters);
+        $first = $this->countPhaseLike(['%1%MONITORAMENTO%', 'PRIMEIRO%'], $filters);
+        $second = $this->countPhaseLike(['%2%MONITORAMENTO%', 'SEGUNDO%'], $filters);
+        $third = $this->countPhaseLike(['%3%MONITORAMENTO%', 'TERCEIRO%'], $filters);
+        $fourth = $this->countPhaseLike(['%4%MONITORAMENTO%', 'QUARTO%'], $filters);
 
         [$joins, $where, $params] = $this->buildAuditScope($filters);
         $sql = 'SELECT COUNT(DISTINCT a.id) FROM audits a' . $joins;
@@ -259,12 +294,13 @@ class AuditRepository
             'total' => $total,
             'rdc_total' => $this->countRdcItems($filters),
             'diligence_report' => $diligenceReport,
+            'final_report' => $finalReport,
             'monitoring_pending' => $monitoringPending,
             'first_monitoring' => $first,
             'second_monitoring' => $second,
             'third_monitoring' => $third,
             'fourth_monitoring' => $fourth,
-            'other_phases' => max(0, $total - ($diligenceReport + $monitoringPending + $first + $second + $third + $fourth)),
+            'other_phases' => max(0, $total - ($diligenceReport + $finalReport + $monitoringPending + $first + $second + $third + $fourth)),
         ];
     }
 
@@ -308,7 +344,10 @@ class AuditRepository
             $result[] = ['label' => $label, 'total' => $total];
         }
 
-        usort($result, static fn (array $a, array $b) => $b['total'] <=> $a['total'] ?: strcmp($a['label'], $b['label']));
+        usort($result, static function (array $a, array $b): int {
+            $rank = self::auditPhaseRank((string) $a['label']) <=> self::auditPhaseRank((string) $b['label']);
+            return $rank !== 0 ? $rank : strcmp((string) $a['label'], (string) $b['label']);
+        });
 
         return $result;
     }
@@ -451,7 +490,7 @@ class AuditRepository
                 'audit_nup' => $row['audit_nup'],
                 'requesting_body' => $row['requesting_body'],
                 'theme' => $row['theme'],
-                'audit_phase' => $row['audit_phase'],
+                'audit_phase' => self::auditPhaseLabel($row['audit_phase']),
                 'current_owner' => $row['current_owner'],
                 'complexity' => isset($row['complexity']) ? (int) $row['complexity'] : null,
                 'deadline_label' => $row['deadline_label'] ?: ($row['deadline_date'] ? \format_date($row['deadline_date']) : 'Sem prazo'),
@@ -485,7 +524,24 @@ class AuditRepository
             return [];
         }
 
-        return \db()->query("SELECT DISTINCT {$column} AS value FROM audits WHERE {$column} IS NOT NULL AND {$column} <> '' ORDER BY {$column} ASC")->fetchAll();
+        $rows = \db()->query("SELECT DISTINCT {$column} AS value FROM audits WHERE {$column} IS NOT NULL AND {$column} <> '' ORDER BY {$column} ASC")->fetchAll();
+        if ($column !== 'audit_phase') {
+            return $rows;
+        }
+
+        $labels = [];
+        foreach ($rows as $row) {
+            $label = self::auditPhaseLabel((string) $row['value']);
+            $labels[$label] = ['value' => $label, 'label' => $label];
+        }
+
+        $result = array_values($labels);
+        usort($result, static function (array $a, array $b): int {
+            $rank = self::auditPhaseRank((string) $a['label']) <=> self::auditPhaseRank((string) $b['label']);
+            return $rank !== 0 ? $rank : strcmp((string) $a['label'], (string) $b['label']);
+        });
+
+        return $result;
     }
 
     public function itemStatusOptions(): array
@@ -541,13 +597,9 @@ class AuditRepository
         if ($phases !== []) {
             $phaseClauses = [];
             foreach ($phases as $phase) {
-                if ($phase === 'Em diligência') {
-                    $phaseClauses[] = 'UPPER(a.audit_phase) LIKE ?';
-                    $params[] = '%DILIG%';
-                } else {
-                    $phaseClauses[] = 'a.audit_phase = ?';
-                    $params[] = $phase;
-                }
+                [$sql, $sqlParams] = $this->buildPhaseClause($phase);
+                $phaseClauses[] = $sql;
+                array_push($params, ...$sqlParams);
             }
             $where[] = '(' . implode(' OR ', $phaseClauses) . ')';
         }
@@ -646,13 +698,7 @@ class AuditRepository
 
     private function phaseBucket(string $phase): string
     {
-        $token = $this->normalizeToken($phase);
-
-        return match (true) {
-            $token === '' => 'Não informado',
-            str_contains($token, 'DILIGENC') => 'Em diligência',
-            default => $phase,
-        };
+        return self::auditPhaseLabel($phase);
     }
 
     private function normalizeToken(string $value): string
@@ -685,6 +731,31 @@ class AuditRepository
             'Não informada' => ['(ai.control_body_status IS NULL OR TRIM(ai.control_body_status) = "" OR UPPER(ai.control_body_status) IN ("NAO", "NÃO", "N/A", "NAO INFORMADA", "NÃO INFORMADA", "NAO APLICA", "NÃO APLICA"))', []],
             default => ['ai.control_body_status = ?', [$status]],
         };
+    }
+
+    private function buildPhaseClause(string $phase): array
+    {
+        return match (self::auditPhaseLabel($phase)) {
+            'Diligência/Relatório Preliminar' => ['(UPPER(a.audit_phase) LIKE ? OR UPPER(a.audit_phase) LIKE ?)', ['%DILIG%', '%PRELIMIN%']],
+            'Relatório Final' => ['UPPER(a.audit_phase) LIKE ?', ['%RELAT%FINAL%']],
+            'Monitoramento a Iniciar' => ['UPPER(a.audit_phase) LIKE ?', ['%INICIAR%']],
+            '1º Monitoramento' => ['UPPER(a.audit_phase) LIKE ?', ['%1%MONITORAMENTO%']],
+            '2º Monitoramento' => ['UPPER(a.audit_phase) LIKE ?', ['%2%MONITORAMENTO%']],
+            '3º Monitoramento' => ['UPPER(a.audit_phase) LIKE ?', ['%3%MONITORAMENTO%']],
+            '4º Monitoramento' => ['UPPER(a.audit_phase) LIKE ?', ['%4%MONITORAMENTO%']],
+            'Concluídos' => ['UPPER(a.audit_phase) LIKE ?', ['%CONCLU%']],
+            'Não informado' => ['(a.audit_phase IS NULL OR TRIM(a.audit_phase) = "")', []],
+            default => ['a.audit_phase = ?', [$phase]],
+        };
+    }
+
+    private static function phaseToken(string $value): string
+    {
+        $value = strtoupper(trim($value));
+        $normalized = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+        $value = $normalized !== false ? $normalized : $value;
+
+        return preg_replace('/[^A-Z0-9]+/', '', $value) ?? '';
     }
 
     private function resolvedAuditColumns(): array
