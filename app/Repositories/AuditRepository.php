@@ -768,7 +768,7 @@ class AuditRepository
         return preg_replace('/[^A-Z0-9]+/', '', $value) ?? '';
     }
 
-    private static function currentOwnerRank(string $owner): int
+    public static function currentOwnerRank(string $owner): int
     {
         return match (self::phaseToken($owner)) {
             'DGBA' => 10,

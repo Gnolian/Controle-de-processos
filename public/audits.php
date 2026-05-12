@@ -96,6 +96,12 @@ $sortFilterOptions = static function (string $name, array $options) use ($format
             return (int) $leftValue <=> (int) $rightValue;
         }
 
+        if ($name === 'current_owner') {
+            $leftRank = AuditRepository::currentOwnerRank($leftValue);
+            $rightRank = AuditRepository::currentOwnerRank($rightValue);
+            return $leftRank <=> $rightRank ?: strcasecmp($leftValue, $rightValue);
+        }
+
         if ($name === 'audit_phase') {
             $leftLabel = $formatPhaseLegend($leftValue);
             $rightLabel = $formatPhaseLegend($rightValue);
