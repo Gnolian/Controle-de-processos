@@ -45,6 +45,8 @@ database/
 public/
   assets/
   *.php
+apache/
+  controle-alias.conf
 views/
   *.php
 ```
@@ -59,6 +61,25 @@ views/
 6. Acesse `http://localhost:8080/controle-de-processos/public/`.
 
 > O `schema.sql` recria as tabelas. Se ja houver dados reais, faca backup antes de importar.
+
+## URL amigavel `/controle` no XAMPP
+
+Para acessar a aplicacao por `http://10.68.207.33/controle`, configure um alias no Apache apontando direto para a pasta `public`.
+
+1. Confirme que o projeto esta em `C:\xampp\htdocs\controle-de-processos`.
+2. Abra `C:\xampp\apache\conf\extra\httpd-xampp.conf`.
+3. Adicione esta linha no final do arquivo:
+
+```apache
+Include "C:/xampp/htdocs/controle-de-processos/apache/controle-alias.conf"
+```
+
+4. Reinicie o Apache pelo painel do XAMPP.
+5. Acesse `http://10.68.207.33/controle`.
+
+Se o projeto estiver em outra pasta, ajuste os caminhos dentro de `apache/controle-alias.conf`.
+
+A aplicacao detecta automaticamente o caminho publicado. Portanto, ao usar o alias `/controle`, os links internos passam a apontar para `/controle` sem precisar manter `/public` na URL.
 
 ## Atualizando uma instalacao antiga
 
@@ -105,7 +126,7 @@ O CSV bruto exportado da planilha nao deve mais ser usado na tela de importacao.
 
 1. Gere ou copie os arquivos tratados `auditorias_tratadas.csv` e `auditorias_itens_tratados.csv`.
 2. Abra `Usuarios` e habilite `audit_access` para quem vai usar o modulo.
-3. Acesse `http://localhost:8080/controle-de-processos/public/audit_import.php`.
+3. Acesse `http://10.68.207.33/controle/audit_import.php` ou `http://localhost:8080/controle-de-processos/public/audit_import.php`.
 4. Envie os dois arquivos tratados.
 5. Abra `Auditorias` para consultar os paineis, editar registros e usar a linha do tempo.
 

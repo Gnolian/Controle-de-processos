@@ -2,9 +2,21 @@
 
 declare(strict_types=1);
 
+$scriptName = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? '/controle/index.php'));
+$detectedBasePath = rtrim(str_replace('\\', '/', dirname($scriptName)), '/');
+
+if ($detectedBasePath === '/' || $detectedBasePath === '.') {
+    $detectedBasePath = '';
+}
+
+$configuredBasePath = getenv('APP_BASE_PATH');
+$basePath = is_string($configuredBasePath) && trim($configuredBasePath) !== ''
+    ? '/' . trim($configuredBasePath, '/')
+    : $detectedBasePath;
+
 return [
     'app_name' => 'Controle de Processos',
-    'base_path' => '/controle-de-processos/public',
+    'base_path' => $basePath,
     'database' => [
         'host' => '127.0.0.1',
         'port' => '3306',
