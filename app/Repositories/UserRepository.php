@@ -35,6 +35,27 @@ class UserRepository
         return $user ?: null;
     }
 
+    public function findById(int $id): ?array
+    {
+        $select = 'SELECT id, name, email, role, active, created_at';
+        if ($this->hasAuditAccessColumn()) {
+            $select .= ', audit_access';
+        } else {
+            $select .= ', 0 AS audit_access';
+        }
+        if ($this->hasAuditOnlyColumn()) {
+            $select .= ', audit_only';
+        } else {
+            $select .= ', 0 AS audit_only';
+        }
+
+        $stmt = \db()->prepare($select . ' FROM users WHERE id = ?');
+        $stmt->execute([$id]);
+        $user = $stmt->fetch();
+
+        return $user ?: null;
+    }
+
     public function all(): array
     {
         $select = 'SELECT id, name, email, role, active, created_at';
@@ -98,6 +119,29 @@ class UserRepository
     {
         $stmt = \db()->prepare('UPDATE users SET password_hash = ? WHERE id = ?');
         $stmt->execute([password_hash($password, PASSWORD_DEFAULT), $id]);
+    }
+
+    public function updateAccess(int $id, array $data): void
+    {
+        $fields = ['role = ?', 'active = ?'];
+        $params = [
+            (string) $data['role'],
+            !empty($data['active']) ? 1 : 0,
+        ];
+
+        if ($this->hasAuditAccessColumn()) {
+            $fields[] = 'audit_access = ?';
+            $params[] = !empty($data['audit_access']) ? 1 : 0;
+        }
+
+        if ($this->hasAuditOnlyColumn()) {
+            $fields[] = 'audit_only = ?';
+            $params[] = !empty($data['audit_only']) ? 1 : 0;
+        }
+
+        $params[] = $id;
+        $stmt = \db()->prepare('UPDATE users SET ' . implode(', ', $fields) . ' WHERE id = ?');
+        $stmt->execute($params);
     }
 
     private function hasAuditAccessColumn(): bool
