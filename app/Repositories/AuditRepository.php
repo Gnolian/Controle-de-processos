@@ -526,6 +526,16 @@ class AuditRepository
 
         $rows = \db()->query("SELECT DISTINCT {$column} AS value FROM audits WHERE {$column} IS NOT NULL AND {$column} <> '' ORDER BY {$column} ASC")->fetchAll();
         if ($column !== 'audit_phase') {
+            if ($column === 'current_owner') {
+                usort($rows, static function (array $a, array $b): int {
+                    $left = trim((string) ($a['value'] ?? ''));
+                    $right = trim((string) ($b['value'] ?? ''));
+                    $rank = self::currentOwnerRank($left) <=> self::currentOwnerRank($right);
+
+                    return $rank !== 0 ? $rank : strcasecmp($left, $right);
+                });
+            }
+
             return $rows;
         }
 
@@ -756,6 +766,16 @@ class AuditRepository
         $value = $normalized !== false ? $normalized : $value;
 
         return preg_replace('/[^A-Z0-9]+/', '', $value) ?? '';
+    }
+
+    private static function currentOwnerRank(string $owner): int
+    {
+        return match (self::phaseToken($owner)) {
+            'DGBA' => 10,
+            'ORGAODECONTROLE' => 20,
+            'NA', 'N/A' => 90,
+            default => 50,
+        };
     }
 
     private function resolvedAuditColumns(): array

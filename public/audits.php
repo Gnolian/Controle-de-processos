@@ -430,7 +430,7 @@ require __DIR__ . '/../views/nav.php';
                             ?>
                             <button
                                 type="button"
-                                class="timeline-chip <?= $entry['deadline_is_current'] ? 'timeline-chip-current' : '' ?> <?= !empty($entry['is_dgba']) ? 'timeline-chip-dgba' : '' ?>"
+                                class="timeline-chip <?= $entry['deadline_is_current'] ? 'timeline-chip-current' : '' ?> <?= !empty($entry['is_dgba']) ? 'timeline-chip-dgba' : 'timeline-chip-estimated' ?>"
                                 title="<?= e($entry['audit_code'] . ' • ' . $complexityLabel) ?>"
                                 data-timeline-entry='<?= e(json_encode($entry, JSON_UNESCAPED_UNICODE)) ?>'
                             >
@@ -622,7 +622,7 @@ require __DIR__ . '/../views/nav.php';
                         <div class="timeline-legend-item">
                             <span class="timeline-legend-chip timeline-legend-chip-estimated"></span>
                             <div class="timeline-legend-copy">
-                                <strong>Card branco</strong>
+                                <strong>Card laranja</strong>
                                 <p>Auditorias com prazo estimado que pode chegar a qualquer momento.</p>
                             </div>
                         </div>

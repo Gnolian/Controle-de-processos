@@ -624,8 +624,8 @@ a {
 }
 
 .timeline-legend-chip-estimated {
-    background: #ffffff;
-    border-color: rgba(180, 83, 9, 0.28);
+    background: #fff7ed;
+    border-color: rgba(217, 119, 6, 0.42);
 }
 
 .timeline-legend-chip-deadline {
@@ -1068,16 +1068,16 @@ a {
     gap: 3px;
     padding: 12px;
     text-align: left;
-    border: 1px solid rgba(37, 99, 235, 0.15);
+    border: 1px solid rgba(217, 119, 6, 0.38);
     border-radius: 12px;
-    background: #fff;
+    background: #fff7ed;
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .timeline-chip:hover {
     transform: translateY(-2px);
     box-shadow: 0 14px 24px rgba(16, 24, 40, 0.10);
-    border-color: rgba(37, 99, 235, 0.35);
+    border-color: rgba(217, 119, 6, 0.55);
 }
 
 .timeline-chip span {
@@ -1119,14 +1119,19 @@ a {
     background: #94a3b8;
 }
 
+.timeline-chip-estimated,
 .timeline-chip-current {
-    border-color: rgba(180, 83, 9, 0.35);
+    border-color: rgba(217, 119, 6, 0.42);
     background: #fff7ed;
 }
 
 .timeline-chip-dgba {
-    border-color: rgba(220, 38, 38, 0.35);
+    border-color: rgba(220, 38, 38, 0.42);
     background: #fef2f2;
+}
+
+.timeline-chip-dgba:hover {
+    border-color: rgba(220, 38, 38, 0.58);
 }
 
 #audit-results,
