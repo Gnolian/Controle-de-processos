@@ -1,177 +1,222 @@
 # Controle de Processos
 
-Aplicacao interna em PHP/MySQL para substituir o preenchimento manual de planilhas por uma interface profissional de cadastro, acompanhamento, auditoria, importacao CSV e dashboards.
+Sistema web desenvolvido em PHP para organizar, acompanhar e auditar processos internos que antes eram controlados principalmente por planilhas.
 
-## O que a aplicacao entrega
+Este repositorio foi preparado para portifolio. Ele mostra a estrutura, o codigo e a proposta da solucao, mas nao deve conter dados reais, planilhas internas, credenciais ou informacoes sensiveis.
 
-- Login por sessao com perfis `servidor`, `coordenador` e `admin`.
-- Dashboard pessoal do usuario logado.
-- Dashboard gerencial para processos.
-- Area restrita de auditorias CGU/TCU com:
-  - importacao de CSV tratado;
-  - cadastro manual de auditoria;
-  - edicao manual de auditoria;
-  - detalhe da auditoria com itens;
-  - paineis interativos;
-  - linha do tempo de prazos de 2026.
-- Lista de processos com busca global, filtros, paginacao e acoes rapidas.
-- Auditoria campo a campo nos processos.
+## Como surgiu a demanda
 
-## Telas
+A rotina de acompanhamento de processos dependia de planilhas e controles manuais. Isso tornava dificil saber rapidamente:
 
-- `login.php`: acesso ao sistema.
-- `dashboard.php`: painel pessoal.
-- `management.php`: painel gerencial de processos.
-- `processes.php`: lista e filtros de processos.
-- `process_form.php`: cadastro e edicao de processo.
-- `process_detail.php`: detalhes do processo.
-- `import.php`: importacao CSV da planilha de processos.
-- `audit.php`: trilha de auditoria dos processos.
-- `audits.php`: painel de auditorias.
-- `audit_form.php`: cadastro e edicao manual de auditoria.
-- `audit_detail.php`: identificacao completa e itens da auditoria.
-- `audit_import.php`: importacao da base tratada de auditorias.
-- `users.php`: administracao de usuarios.
+- quais processos estavam em andamento;
+- quem era o responsavel por cada resposta;
+- quais prazos estavam proximos;
+- quais etapas ja tinham sido concluidas;
+- quais alteracoes tinham sido feitas em cada registro;
+- como acompanhar auditorias e seus itens de forma centralizada.
 
-## Estrutura
+A proposta foi transformar esse fluxo em uma aplicacao web simples de acessar pela rede interna, com login, telas de consulta, dashboards e historico de alteracoes.
+
+## Como a solucao foi construida
+
+O projeto foi desenvolvido como uma aplicacao PHP tradicional, usando MySQL para armazenar as informacoes e Apache/XAMPP para execucao local ou em rede interna.
+
+Em vez de manter tudo em uma unica planilha, o sistema separa os dados em tabelas e telas:
+
+- cadastro e edicao de processos;
+- lista com busca, filtros e paginacao;
+- dashboard pessoal;
+- painel gerencial;
+- importacao de CSV;
+- controle de usuarios e permissoes;
+- trilha de auditoria das alteracoes;
+- modulo especifico para auditorias CGU/TCU.
+
+## Tecnologias utilizadas
+
+- **PHP**: linguagem principal do sistema. E responsavel pelas telas, regras de negocio, login, importacao e comunicacao com o banco.
+- **MySQL**: banco de dados relacional usado para guardar usuarios, processos, auditorias e historico de alteracoes.
+- **Apache**: servidor web usado para publicar a aplicacao.
+- **XAMPP**: pacote que facilita rodar Apache, PHP e MySQL no Windows durante desenvolvimento ou uso local.
+- **HTML, CSS e JavaScript**: tecnologias usadas para montar a interface visual, estilos, botoes, formularios e interacoes da pagina.
+- **Python**: usado apenas em scripts auxiliares para tratar bases CSV de auditoria antes da importacao.
+- **Git e GitHub**: controle de versao e publicacao do projeto para portifolio.
+
+## Principais funcionalidades
+
+- Login por sessao.
+- Perfis de acesso: `servidor`, `coordenador` e `admin`.
+- Dashboard do usuario logado.
+- Painel gerencial de processos.
+- Cadastro, edicao, exclusao e detalhamento de processos.
+- Busca global, filtros e paginacao.
+- Importacao de processos por CSV.
+- Exportacao de dados.
+- Registro de alteracoes campo a campo.
+- Administracao de usuarios.
+- Modulo de auditorias com:
+  - importacao de bases tratadas;
+  - cadastro manual;
+  - edicao;
+  - tela de detalhes;
+  - itens de auditoria;
+  - indicadores;
+  - linha do tempo de prazos.
+
+## Estrutura do projeto
 
 ```text
 app/
-  Repositories/
-  Services/
+  Repositories/       Acesso ao banco de dados
+  Services/           Regras de negocio
+  bootstrap.php       Inicializacao da aplicacao
+  config.php          Configuracao local do sistema
+
 database/
-  migrations/
-  schema.sql
+  migrations/         Alteracoes incrementais do banco
+  schema.sql          Estrutura inicial do banco
+
 public/
-  assets/
-  *.php
-apache/
-  controle-alias.conf
+  assets/             CSS e JavaScript
+  *.php               Telas acessadas pelo navegador
+
 views/
-  *.php
+  *.php               Partes reutilizaveis da interface
+
+apache/
+  controle-alias.conf Configuracao opcional de alias no Apache
+
+scripts/
+  *.py                Scripts auxiliares para tratamento de CSV
 ```
 
-## Instalacao no XAMPP
+## O que precisa para rodar
 
-1. Copie a pasta do projeto para `C:\xampp\htdocs\controle-de-processos`.
-2. Inicie `Apache` e `MySQL` no painel do XAMPP.
-3. Abra `http://localhost/phpmyadmin`.
-4. Importe `database/schema.sql`.
-5. Se necessario, ajuste banco, usuario e senha em `app/config.php`.
-6. Acesse `http://localhost:8080/controle-de-processos/public/`.
+Para executar em um computador Windows, o caminho mais simples e usar o XAMPP.
 
-> O `schema.sql` recria as tabelas. Se ja houver dados reais, faca backup antes de importar.
+Voce precisa instalar:
 
-## URL amigavel `/controle` no XAMPP
+- XAMPP com Apache, PHP e MySQL;
+- Git, caso queira clonar o repositorio;
+- um navegador, como Chrome, Edge ou Firefox;
+- Python, apenas se for usar os scripts de tratamento de CSV.
 
-Para acessar a aplicacao por `http://10.68.207.33/controle`, configure um alias no Apache apontando direto para a pasta `public`.
+## Como inicializar no XAMPP
 
-1. Confirme que o projeto esta em `C:\xampp\htdocs\controle-de-processos`.
-2. Abra `C:\xampp\apache\conf\extra\httpd-xampp.conf`.
-3. Adicione esta linha no final do arquivo:
+1. Copie ou clone o projeto para a pasta do XAMPP:
+
+```powershell
+C:\xampp\htdocs\controle-de-processos
+```
+
+2. Abra o painel do XAMPP.
+
+3. Inicie os servicos:
+
+- Apache;
+- MySQL.
+
+4. Abra o phpMyAdmin:
+
+```text
+http://localhost/phpmyadmin
+```
+
+5. Importe o arquivo:
+
+```text
+database/schema.sql
+```
+
+6. Confira os dados de conexao em:
+
+```text
+app/config.php
+```
+
+Por padrao, o projeto usa:
+
+```text
+host: 127.0.0.1
+banco: controle_processos
+usuario: root
+senha: vazia
+```
+
+7. Acesse no navegador:
+
+```text
+http://localhost/controle-de-processos/public/
+```
+
+Dependendo da configuracao do Apache, tambem pode ser usado:
+
+```text
+http://localhost:8080/controle-de-processos/public/
+```
+
+## Acesso inicial
+
+O banco de exemplo cria um usuario administrador inicial:
+
+```text
+Email: admin@local
+Senha: admin123
+```
+
+Depois do primeiro acesso, a recomendacao e trocar a senha imediatamente.
+
+## URL amigavel no Apache
+
+O projeto inclui uma configuracao opcional para acessar a aplicacao por uma URL mais curta, como:
+
+```text
+http://localhost/controle
+```
+
+Para isso, inclua no arquivo de configuracao do Apache/XAMPP:
 
 ```apache
 Include "C:/xampp/htdocs/controle-de-processos/apache/controle-alias.conf"
 ```
 
-4. Reinicie o Apache pelo painel do XAMPP.
-5. Acesse `http://10.68.207.33/controle`.
+Depois reinicie o Apache.
 
-Se o projeto estiver em outra pasta, ajuste os caminhos dentro de `apache/controle-alias.conf`.
+Se o projeto estiver em outro caminho, ajuste os caminhos dentro de `apache/controle-alias.conf`.
 
-A aplicacao detecta automaticamente o caminho publicado. Portanto, ao usar o alias `/controle`, os links internos passam a apontar para `/controle` sem precisar manter `/public` na URL.
+## Sobre importacao de dados
 
-## Atualizando uma instalacao antiga
+O sistema aceita importacao de CSV para alimentar processos e auditorias. Para uso publico no GitHub, esses arquivos nao devem ser enviados ao repositorio.
 
-Se voce ja tinha importado uma versao anterior do banco, nao reimporte o `schema.sql` se quiser preservar dados.
+Arquivos de planilhas, bases tratadas, exportacoes e bancos locais devem ficar apenas no computador ou servidor onde o sistema roda.
 
-Importe as migrations em ordem:
+## Cuidados antes de publicar no GitHub
 
-- `database/migrations/001_add_audit_tables.sql`
-- `database/migrations/002_add_deadline_type.sql`
-- `database/migrations/003_remove_legacy_integration_tables.sql`
-- `database/migrations/004_add_audits_module.sql`
-- `database/migrations/005_expand_audits_for_timeline.sql`
+Antes de tornar o repositorio publico, confira:
 
-As duas ultimas sao obrigatorias para o modulo de auditorias atual.
+- nao incluir arquivos `.env`;
+- nao incluir planilhas reais em `.csv`, `.xlsx` ou `.xls`;
+- nao incluir dumps de banco em `.sql`, `.dump`, `.bak` ou `.backup`;
+- nao incluir bancos locais em `.db`, `.sqlite` ou `.sqlite3`;
+- nao incluir logs com nomes, numeros de processo, CPF, e-mail ou outros dados pessoais;
+- revisar `app/config.php` e trocar qualquer senha real por valor de exemplo;
+- manter dados reais fora de `database/local_imports/`;
+- usar somente dados ficticios em prints, exemplos ou demonstracoes.
 
-## Acesso inicial
+## O que este projeto demonstra
 
-- Email: `admin@local`
-- Senha: `admin123`
+Este projeto demonstra a criacao de uma solucao interna completa a partir de uma necessidade administrativa real:
 
-No primeiro login, o sistema aceita a senha inicial legada e regrava o hash usando `password_hash`.
+- substituicao de planilhas por sistema web;
+- modelagem de banco relacional;
+- controle de acesso;
+- organizacao de telas por perfil;
+- importacao de dados;
+- acompanhamento de prazos;
+- historico de alteracoes;
+- evolucao incremental por migrations;
+- preocupacao com seguranca e publicacao responsavel.
 
-## Modulo de auditorias
+## Observacao
 
-- O acesso e permitido para `admin`, `coordenador` e usuarios com a chave `audit_access`.
-- A liberacao e feita na tela `Usuarios`.
-- A tela principal `audits.php` traz:
-  - cards de quantidade;
-  - graficos interativos;
-  - situacao de implementacao de itens;
-  - cards de ponto de controle;
-  - linha do tempo de 2026 baseada na coluna `deadline`.
-
-### Importacao tratada
-
-O importador usa diretamente os arquivos tratados:
-
-- `auditorias_tratadas.csv`
-- `auditorias_itens_tratados.csv`
-
-O CSV bruto exportado da planilha nao deve mais ser usado na tela de importacao.
-
-### Como carregar auditorias tratadas
-
-1. Gere ou copie os arquivos tratados `auditorias_tratadas.csv` e `auditorias_itens_tratados.csv`.
-2. Abra `Usuarios` e habilite `audit_access` para quem vai usar o modulo.
-3. Acesse `http://10.68.207.33/controle/audit_import.php` ou `http://localhost:8080/controle-de-processos/public/audit_import.php`.
-4. Envie os dois arquivos tratados.
-5. Abra `Auditorias` para consultar os paineis, editar registros e usar a linha do tempo.
-
-### Cadastro manual de auditoria
-
-1. Acesse `Auditorias`.
-2. Clique em `Nova auditoria`.
-3. Preencha identificacao, ponto de controle, etapa 2, monitoramentos e itens.
-4. Salve para abrir a tela de detalhe.
-
-### Campos novos do modulo
-
-O banco agora suporta, alem dos campos anteriores, os principais dados da planilha tratada:
-
-- `last_date_response`
-- `deadline_label`
-- `deadline_date`
-- `deadline_is_current`
-- `flag_estimated`
-- `last_response_sent_date_diligence`
-- `stage2_start_date`
-- `flag_stage2_diligence`
-- `stage2_date_last_response_diligence`
-- `stage2_preliminary_document`
-- `stage2_final_report`
-- `stage3_accord_report`
-- `stage3_accord_report_date`
-- `monitoring1_*`
-- `monitoring2_*`
-- `monitoring3_*`
-- `monitoring4_*`
-- `control_summary`
-- `status_geral` nos itens
-
-## Importacao CSV de processos
-
-- `Importar CSV`: importa a planilha exportada do SharePoint/Excel para alimentar o banco no servidor.
-- O numero do processo e usado como chave para atualizar registros existentes e inserir novos.
-- Processos sem prazo interno ou externo sao marcados como `Tempo Habil`.
-
-## Observacoes de seguranca
-
-- As rotas internas exigem login.
-- Telas gerenciais exigem perfil `coordenador` ou `admin`.
-- Senhas novas usam `password_hash`.
-- Acoes destrutivas pedem confirmacao visual.
-- Alteracoes dos processos ficam registradas em `audit_logs`.
-- Em ambiente real, proteja o Apache com HTTPS na rede interna.
+Este projeto foi adaptado para fins de portifolio. Qualquer dado institucional, pessoal ou operacional deve ser removido antes da publicacao publica.

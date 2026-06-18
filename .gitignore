@@ -3,3 +3,13 @@
 vendor/
 node_modules/
 database/local_imports/
+*.csv
+*.xlsx
+*.xls
+*.db
+*.sqlite
+*.sqlite3
+*.parquet
+*.bak
+*.backup
+*.dump
