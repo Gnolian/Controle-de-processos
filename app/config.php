@@ -17,6 +17,9 @@ $basePath = is_string($configuredBasePath) && trim($configuredBasePath) !== ''
 return [
     'app_name' => 'Controle de Processos',
     'base_path' => $basePath,
+    'security' => [
+        'default_user_password' => (string) (getenv('DEFAULT_USER_PASSWORD') ?: 'admin123'),
+    ],
     'database' => [
         'host' => '127.0.0.1',
         'port' => '3306',

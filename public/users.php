@@ -11,6 +11,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         verify_csrf();
         $action = (string) ($_POST['action'] ?? 'create');
+
+        if ($action === 'reset_password') {
+            if (($user['role'] ?? '') !== 'admin') {
+                throw new RuntimeException('Somente administradores podem redefinir senhas.');
+            }
+
+            $targetId = (int) ($_POST['user_id'] ?? 0);
+            $targetUser = $repo->findById($targetId);
+            if (!$targetUser) {
+                throw new RuntimeException('Usuário não encontrado.');
+            }
+
+            $defaultPassword = (string) config('security.default_user_password', 'admin123');
+            $repo->updatePassword($targetId, $defaultPassword);
+            flash('Senha de ' . $targetUser['name'] . ' redefinida para a senha padrão: ' . $defaultPassword . '.', 'success');
+            redirect('users.php');
+        }
+
         $role = (string) ($_POST['role'] ?? 'servidor');
         if (!in_array($role, config('dropdowns.roles'), true)) {
             throw new RuntimeException('Perfil inválido.');
@@ -183,9 +201,26 @@ require __DIR__ . '/../views/nav.php';
                         <td><?= $item['active'] ? '<span class="badge text-bg-success">Sim</span>' : '<span class="badge text-bg-secondary">Não</span>' ?></td>
                         <td><?= e($item['created_at']) ?></td>
                         <td class="text-end">
-                            <a class="btn btn-sm btn-outline-primary" href="<?= url('users.php?edit=' . (int) $item['id']) ?>">
-                                <i class="bi bi-pencil-square"></i> Editar
-                            </a>
+                            <div class="d-inline-flex gap-2">
+                                <a class="btn btn-sm btn-outline-primary" href="<?= url('users.php?edit=' . (int) $item['id']) ?>">
+                                    <i class="bi bi-pencil-square"></i> Editar
+                                </a>
+                                <?php if (($user['role'] ?? '') === 'admin'): ?>
+                                    <form method="post" class="d-inline">
+                                        <?= csrf_field() ?>
+                                        <input type="hidden" name="action" value="reset_password">
+                                        <input type="hidden" name="user_id" value="<?= (int) $item['id'] ?>">
+                                        <button
+                                            class="btn btn-sm btn-outline-warning"
+                                            type="submit"
+                                            data-confirm="Redefinir a senha de <?= e($item['name']) ?> para a senha padrão?"
+                                            title="Redefinir para a senha padrão"
+                                        >
+                                            <i class="bi bi-key"></i> Resetar senha
+                                        </button>
+                                    </form>
+                                <?php endif; ?>
+                            </div>
                         </td>
                     </tr>
                 <?php endforeach; ?>
