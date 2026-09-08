@@ -123,7 +123,7 @@ function require_role(array $roles): array
     $user = require_login();
     if (!in_array($user['role'], $roles, true)) {
         flash('Você não tem permissão para acessar esta tela.', 'danger');
-        redirect('dashboard.php');
+        redirect(can_access_audits($user) ? 'audits.php' : 'login.php');
     }
     if (is_audit_only($user)) {
         flash('Este usuário tem acesso apenas ao painel de auditorias.', 'warning');
@@ -137,8 +137,9 @@ function require_audit_access(): array
 {
     $user = require_login();
     if (!can_access_audits($user)) {
-        flash('Você não tem permissão para acessar a área de auditorias.', 'danger');
-        redirect('dashboard.php');
+        unset($_SESSION['user_id']);
+        flash('Seu usuário não possui acesso aos painéis da DGBA.', 'danger');
+        redirect('login.php');
     }
 
     return $user;
@@ -158,12 +159,8 @@ function require_audit_edit_access(): array
 function require_process_access(): array
 {
     $user = require_login();
-    if (!can_access_process_area($user)) {
-        flash('Este usuário tem acesso apenas ao painel de auditorias.', 'warning');
-        redirect('audits.php');
-    }
-
-    return $user;
+    flash('O módulo de processos foi desativado. Utilize o painel de auditorias.', 'info');
+    redirect(can_access_audits($user) ? 'audits.php' : 'login.php');
 }
 
 function flash(?string $message = null, string $type = 'success'): ?array

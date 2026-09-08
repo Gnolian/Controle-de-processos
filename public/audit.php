@@ -5,7 +5,7 @@ use App\Repositories\UserRepository;
 
 require __DIR__ . '/../app/bootstrap.php';
 
-$user = require_role(['admin', 'coordenador']);
+$user = require_process_access();
 $filters = [
     'process_id' => trim((string) ($_GET['process_id'] ?? '')),
     'user_id' => trim((string) ($_GET['user_id'] ?? '')),

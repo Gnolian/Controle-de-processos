@@ -5,7 +5,7 @@ use App\Services\DashboardService;
 require __DIR__ . '/../app/bootstrap.php';
 require __DIR__ . '/../views/components.php';
 
-$user = require_role(['admin', 'coordenador']);
+$user = require_process_access();
 $pageTitle = 'Dashboard gerencial';
 $activeNav = 'management';
 $metrics = (new DashboardService())->metrics($user);

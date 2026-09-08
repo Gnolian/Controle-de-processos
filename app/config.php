@@ -15,7 +15,7 @@ $basePath = is_string($configuredBasePath) && trim($configuredBasePath) !== ''
     : $detectedBasePath;
 
 return [
-    'app_name' => 'Controle de Processos',
+    'app_name' => 'Painéis DGBA',
     'base_path' => $basePath,
     'security' => [
         'default_user_password' => (string) (getenv('DEFAULT_USER_PASSWORD') ?: 'admin123'),

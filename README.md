@@ -1,19 +1,18 @@
-# Controle de Processos
+# Painéis DGBA
 
-Sistema web desenvolvido em PHP para organizar, acompanhar e auditar processos internos que antes eram controlados principalmente por planilhas.
+Sistema web desenvolvido em PHP para centralizar o acompanhamento das auditorias da DGBA que antes eram controladas principalmente por planilhas.
 
 Este repositorio foi preparado para portifolio. Ele mostra a estrutura, o codigo e a proposta da solucao, mas nao deve conter dados reais, planilhas internas, credenciais ou informacoes sensiveis.
 
 ## Como surgiu a demanda
 
-A rotina de acompanhamento de processos dependia de planilhas e controles manuais. Isso tornava dificil saber rapidamente:
+A rotina de acompanhamento de auditorias dependia de planilhas e controles manuais. Isso tornava dificil saber rapidamente:
 
-- quais processos estavam em andamento;
-- quem era o responsavel por cada resposta;
+- quais auditorias estavam em andamento;
+- qual era a fase e o responsavel atual;
 - quais prazos estavam proximos;
-- quais etapas ja tinham sido concluidas;
-- quais alteracoes tinham sido feitas em cada registro;
-- como acompanhar auditorias e seus itens de forma centralizada.
+- quais recomendacoes, determinacoes e ciencias estavam sendo acompanhadas;
+- como consultar os pontos de controle de forma centralizada.
 
 A proposta foi transformar esse fluxo em uma aplicacao web simples de acessar pela rede interna, com login, telas de consulta, dashboards e historico de alteracoes.
 
@@ -21,21 +20,20 @@ A proposta foi transformar esse fluxo em uma aplicacao web simples de acessar pe
 
 O projeto foi desenvolvido como uma aplicacao PHP tradicional, usando MySQL para armazenar as informacoes e Apache/XAMPP para execucao local ou em rede interna.
 
-Em vez de manter tudo em uma unica planilha, o sistema separa os dados em tabelas e telas:
+Em vez de manter tudo em uma unica planilha, o sistema organiza os dados em tabelas e telas:
 
-- cadastro e edicao de processos;
-- lista com busca, filtros e paginacao;
-- dashboard pessoal;
-- painel gerencial;
-- importacao de CSV;
+- painel gerencial de auditorias;
+- cadastro e edicao de auditorias;
+- busca e filtros interativos;
+- importacao de bases tratadas;
+- acompanhamento de prazos em linha do tempo;
 - controle de usuarios e permissoes;
-- trilha de auditoria das alteracoes;
-- modulo especifico para auditorias CGU/TCU.
+- acompanhamento de recomendacoes, determinacoes e ciencias.
 
 ## Tecnologias utilizadas
 
 - **PHP**: linguagem principal do sistema. E responsavel pelas telas, regras de negocio, login, importacao e comunicacao com o banco.
-- **MySQL**: banco de dados relacional usado para guardar usuarios, processos, auditorias e historico de alteracoes.
+- **MySQL**: banco de dados relacional usado para guardar usuarios, auditorias e seus itens.
 - **Apache**: servidor web usado para publicar a aplicacao.
 - **XAMPP**: pacote que facilita rodar Apache, PHP e MySQL no Windows durante desenvolvimento ou uso local.
 - **HTML, CSS e JavaScript**: tecnologias usadas para montar a interface visual, estilos, botoes, formularios e interacoes da pagina.
@@ -46,15 +44,8 @@ Em vez de manter tudo em uma unica planilha, o sistema separa os dados em tabela
 
 - Login por sessao.
 - Perfis de acesso: `servidor`, `coordenador` e `admin`.
-- Dashboard do usuario logado.
-- Painel gerencial de processos.
-- Cadastro, edicao, exclusao e detalhamento de processos.
-- Busca global, filtros e paginacao.
-- Importacao de processos por CSV.
-- Exportacao de dados.
-- Registro de alteracoes campo a campo.
 - Administracao de usuarios.
-- Modulo de auditorias com:
+- Painel de auditorias com:
   - importacao de bases tratadas;
   - cadastro manual;
   - edicao;
@@ -186,7 +177,7 @@ Se o projeto estiver em outro caminho, ajuste os caminhos dentro de `apache/cont
 
 ## Sobre importacao de dados
 
-O sistema aceita importacao de CSV para alimentar processos e auditorias. Para uso publico no GitHub, esses arquivos nao devem ser enviados ao repositorio.
+O sistema aceita importacao de CSV para alimentar auditorias e seus itens. Para uso publico no GitHub, esses arquivos nao devem ser enviados ao repositorio.
 
 Arquivos de planilhas, bases tratadas, exportacoes e bancos locais devem ficar apenas no computador ou servidor onde o sistema roda.
 
@@ -205,7 +196,7 @@ Antes de tornar o repositorio publico, confira:
 
 ## O que este projeto demonstra
 
-Este projeto demonstra a criacao de uma solucao interna completa a partir de uma necessidade administrativa real:
+Este projeto demonstra a criacao de uma solucao interna a partir de uma necessidade administrativa real:
 
 - substituicao de planilhas por sistema web;
 - modelagem de banco relacional;
@@ -213,9 +204,12 @@ Este projeto demonstra a criacao de uma solucao interna completa a partir de uma
 - organizacao de telas por perfil;
 - importacao de dados;
 - acompanhamento de prazos;
-- historico de alteracoes;
 - evolucao incremental por migrations;
 - preocupacao com seguranca e publicacao responsavel.
+
+## Modulo legado de processos
+
+As telas de painel pessoal e controle de processos foram desativadas. As tabelas e os registros existentes permanecem preservados no banco de dados; nenhuma informacao foi excluida durante essa mudanca.
 
 ## Observacao
 

@@ -4,21 +4,31 @@ use App\Services\AuthService;
 
 require __DIR__ . '/../app/bootstrap.php';
 
-if (current_user()) {
-    $user = current_user();
-    redirect(can_access_process_area($user) ? 'dashboard.php' : 'audits.php');
-}
-
 $error = null;
+$loggedUser = current_user();
+if ($loggedUser) {
+    if (can_access_audits($loggedUser)) {
+        redirect('audits.php');
+    }
+
+    unset($_SESSION['user_id']);
+    $error = 'Seu usuário não possui acesso aos painéis da DGBA.';
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         verify_csrf();
         if ((new AuthService())->attempt(trim((string) ($_POST['email'] ?? '')), (string) ($_POST['password'] ?? ''))) {
             $user = current_user();
-            redirect($user && can_access_process_area($user) ? 'dashboard.php' : 'audits.php');
+            if ($user && can_access_audits($user)) {
+                redirect('audits.php');
+            }
+
+            unset($_SESSION['user_id']);
+            $error = 'Seu usuário não possui acesso aos painéis da DGBA.';
+        } else {
+            $error = 'Email ou senha inválidos.';
         }
-        $error = 'Email ou senha invalidos.';
     } catch (Throwable $exception) {
         $error = $exception->getMessage();
     }
@@ -32,8 +42,8 @@ require __DIR__ . '/../views/header.php';
 <main class="login-shell">
     <section class="login-hero">
         <span class="login-icon"><i class="bi bi-shield-lock"></i></span>
-        <h1>Controle de Processos</h1>
-        <p>Uma interface interna para preencher, acompanhar, auditar e sincronizar processos com a planilha gerencial.</p>
+        <h1>Painéis DGBA</h1>
+        <p>Ambiente interno para acompanhamento e gestão das auditorias da DGBA.</p>
     </section>
 
     <section class="login-card">

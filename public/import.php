@@ -4,7 +4,7 @@ use App\Services\CsvImportService;
 
 require __DIR__ . '/../app/bootstrap.php';
 
-$user = require_role(['admin', 'coordenador']);
+$user = require_process_access();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
