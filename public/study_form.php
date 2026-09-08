@@ -1,6 +1,7 @@
 <?php
 
 use App\Repositories\StudyRepository;
+use App\Services\StudyPdfService;
 
 require __DIR__ . '/../app/bootstrap.php';
 
@@ -17,15 +18,30 @@ if ($id && !$study) {
 $values = array_merge(array_fill_keys(StudyRepository::IMPORT_COLUMNS, ''), $study ?: []);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $pdfService = new StudyPdfService();
+    $newPdf = null;
     try {
         verify_csrf();
-        $savedId = $repository->save($_POST, $id, (int) $user['id']);
+        $newPdf = $pdfService->store($_FILES['study_pdf'] ?? []);
+        $removePdf = $id !== null && !empty($_POST['remove_pdf']);
+        $pdfUpdate = $newPdf;
+        if ($newPdf === null && $removePdf) {
+            $pdfUpdate = ['file' => null, 'name' => null, 'size' => null];
+        }
+
+        $savedId = $repository->save($_POST, $id, (int) $user['id'], $pdfUpdate);
+        if (($newPdf !== null || $removePdf) && !empty($study['pdf_file'])) {
+            $pdfService->delete((string) $study['pdf_file']);
+        }
         flash($id ? 'Estudo atualizado com sucesso.' : 'Estudo adicionado com sucesso.');
         redirect('studies.php?' . http_build_query([
             'q' => trim((string) ($_POST['title'] ?? '')),
             'highlight' => $savedId,
         ]) . '#study-' . $savedId);
     } catch (Throwable $exception) {
+        if ($newPdf !== null) {
+            $pdfService->delete((string) $newPdf['file']);
+        }
         flash($exception->getMessage(), 'danger');
         $values = array_merge($values, $_POST);
     }
@@ -82,7 +98,7 @@ require __DIR__ . '/../views/nav.php';
         <a class="btn btn-outline-secondary" href="<?= url('studies.php') ?>"><i class="bi bi-arrow-left"></i> Voltar</a>
     </section>
 
-    <form method="post" class="app-card form-card study-form-card">
+    <form method="post" enctype="multipart/form-data" class="app-card form-card study-form-card">
         <?= csrf_field() ?>
 
         <div class="form-section">
@@ -100,6 +116,25 @@ require __DIR__ . '/../views/nav.php';
                         <input class="form-control" id="access_link" name="access_link" inputmode="url" value="<?= e((string) $values['access_link']) ?>" placeholder="https://exemplo.gov.br/estudo">
                     </div>
                     <small class="text-muted">Confira o endereço completo. Se o protocolo não for informado, o sistema adicionará https://.</small>
+                </div>
+                <div class="col-12">
+                    <label class="form-label" for="study_pdf">PDF do estudo</label>
+                    <input class="form-control" id="study_pdf" name="study_pdf" type="file" accept="application/pdf,.pdf">
+                    <small class="text-muted">Opcional. Envie um PDF de até 30 MB para permitir a abertura direta pelo sistema.</small>
+                    <?php if (!empty($study['pdf_file'])): ?>
+                        <div class="study-current-pdf mt-2">
+                            <span><i class="bi bi-file-earmark-pdf"></i> <?= e((string) ($study['pdf_original_name'] ?: 'PDF do estudo')) ?></span>
+                            <div>
+                                <a class="btn btn-sm btn-outline-primary" href="<?= url('study_pdf.php?id=' . (int) $study['id']) ?>" target="_blank" rel="noopener">
+                                    Abrir PDF atual
+                                </a>
+                                <label class="form-check form-check-inline mb-0 ms-2">
+                                    <input class="form-check-input" type="checkbox" name="remove_pdf" value="1">
+                                    <span class="form-check-label">Remover PDF</span>
+                                </label>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                 </div>
                 <?php $renderInput('author', 'Autor ou instituição autora', $values); ?>
                 <?php $renderInput('publication_source', 'Meio de publicação', $values); ?>

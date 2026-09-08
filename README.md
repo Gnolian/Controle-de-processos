@@ -188,10 +188,13 @@ O sistema aceita importacao de CSV para alimentar auditorias e seus itens. Para 
 
 O Banco de estudos aceita cadastro e edicao manual, alem da importacao direta da planilha XLSX da matriz de evidencias ou de uma versao CSV com os mesmos cabecalhos. Qualquer usuario com acesso ao Banco de estudos pode adicionar, editar e importar registros. Estudos existentes sao atualizados pela identificacao do link ou pela combinacao de titulo, autor e ano.
 
+No cadastro manual, o estudo pode ter um link externo, um PDF de ate 30 MB ou ambos. Os PDFs ficam em `storage/studies`, fora da pasta publica, e sao abertos por uma rota autenticada. Essa pasta nao deve ser versionada no Git e precisa ter permissao de escrita para o Apache no servidor.
+
 Em instalacoes antigas, a tabela tambem pode ser criada manualmente com:
 
 ```text
 database/migrations/008_add_studies_module.sql
+database/migrations/009_add_study_pdf.sql
 ```
 
 A propria pagina cria a tabela automaticamente quando o usuario do banco possui permissao para isso.

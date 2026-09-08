@@ -39,6 +39,7 @@ class StudyRepository
     public function __construct()
     {
         $this->ensureTable();
+        $this->ensurePdfColumns();
     }
 
     public function countAll(): int
@@ -133,7 +134,7 @@ class StudyRepository
         $statement->execute($values);
     }
 
-    public function save(array $data, ?int $id, int $userId): int
+    public function save(array $data, ?int $id, int $userId, ?array $pdf = null): int
     {
         $clean = [];
         foreach (self::IMPORT_COLUMNS as $column) {
@@ -172,6 +173,12 @@ class StudyRepository
                 self::IMPORT_COLUMNS
             );
             $values = array_map(static fn (string $column): mixed => $clean[$column], self::IMPORT_COLUMNS);
+            if ($pdf !== null) {
+                array_push($assignments, 'pdf_file = ?', 'pdf_original_name = ?', 'pdf_size = ?');
+                $values[] = $pdf['file'] ?? null;
+                $values[] = $pdf['name'] ?? null;
+                $values[] = $pdf['size'] ?? null;
+            }
             $values[] = $searchText;
             $values[] = $userId;
             $values[] = $id;
@@ -185,11 +192,21 @@ class StudyRepository
             return $id;
         }
 
-        $columns = array_merge(['source_key'], self::IMPORT_COLUMNS, ['search_text', 'imported_by']);
+        $columns = array_merge(
+            ['source_key'],
+            self::IMPORT_COLUMNS,
+            ['search_text', 'imported_by', 'pdf_file', 'pdf_original_name', 'pdf_size']
+        );
         $values = array_merge(
             [hash('sha256', 'manual|' . bin2hex(random_bytes(24)))],
             array_map(static fn (string $column): mixed => $clean[$column], self::IMPORT_COLUMNS),
-            [$searchText, $userId]
+            [
+                $searchText,
+                $userId,
+                $pdf['file'] ?? null,
+                $pdf['name'] ?? null,
+                $pdf['size'] ?? null,
+            ]
         );
         $statement = \db()->prepare(
             'INSERT INTO studies (' . implode(', ', $columns) . ') VALUES ('
@@ -257,6 +274,9 @@ CREATE TABLE IF NOT EXISTS studies (
     keyword_5 VARCHAR(255) NULL,
     summary LONGTEXT NULL,
     access_link TEXT NULL,
+    pdf_file VARCHAR(255) NULL,
+    pdf_original_name VARCHAR(255) NULL,
+    pdf_size INT UNSIGNED NULL,
     search_text LONGTEXT NOT NULL,
     imported_by INT UNSIGNED NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -267,5 +287,27 @@ CREATE TABLE IF NOT EXISTS studies (
     CONSTRAINT fk_studies_user FOREIGN KEY (imported_by) REFERENCES users(id) ON DELETE SET NULL
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
 SQL);
+    }
+
+    private function ensurePdfColumns(): void
+    {
+        static $checked = false;
+        if ($checked) {
+            return;
+        }
+
+        $columns = [
+            'pdf_file' => 'VARCHAR(255) NULL AFTER access_link',
+            'pdf_original_name' => 'VARCHAR(255) NULL AFTER pdf_file',
+            'pdf_size' => 'INT UNSIGNED NULL AFTER pdf_original_name',
+        ];
+
+        foreach ($columns as $column => $definition) {
+            if (!\column_exists('studies', $column)) {
+                \db()->exec('ALTER TABLE studies ADD COLUMN ' . $column . ' ' . $definition);
+            }
+        }
+
+        $checked = true;
     }
 }

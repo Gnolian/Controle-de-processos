@@ -127,6 +127,7 @@ require __DIR__ . '/../views/nav.php';
                         $study['collection_technique_3'],
                     ]));
                     $link = $safeLink($study['access_link']);
+                    $hasPdf = !empty($study['pdf_file']);
                     ?>
                     <article id="study-<?= (int) $study['id'] ?>" class="study-result-card <?= $highlightId === (int) $study['id'] ? 'study-result-card--highlight' : '' ?>">
                         <div class="study-result-main">
@@ -160,11 +161,16 @@ require __DIR__ . '/../views/nav.php';
                             </div>
 
                             <div class="study-result-actions">
-                                <?php if ($link): ?>
-                                    <a class="btn btn-primary study-access-link" href="<?= e($link) ?>" target="_blank" rel="noopener noreferrer">
-                                        <i class="bi bi-box-arrow-up-right"></i> Abrir estudo
+                                <?php if ($hasPdf): ?>
+                                    <a class="btn btn-primary study-access-link" href="<?= url('study_pdf.php?id=' . (int) $study['id']) ?>" target="_blank" rel="noopener">
+                                        <i class="bi bi-file-earmark-pdf"></i> Abrir PDF
                                     </a>
-                                <?php else: ?>
+                                <?php endif; ?>
+                                <?php if ($link): ?>
+                                    <a class="btn <?= $hasPdf ? 'btn-outline-primary' : 'btn-primary' ?> study-access-link" href="<?= e($link) ?>" target="_blank" rel="noopener noreferrer">
+                                        <i class="bi bi-box-arrow-up-right"></i> Abrir link
+                                    </a>
+                                <?php elseif (!$hasPdf): ?>
                                     <span class="study-link-warning"><i class="bi bi-exclamation-circle"></i> Link não informado ou inválido</span>
                                 <?php endif; ?>
                                 <a class="btn btn-outline-primary" href="<?= url('study_form.php?id=' . (int) $study['id']) ?>">

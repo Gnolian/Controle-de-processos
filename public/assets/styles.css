@@ -1483,6 +1483,33 @@ a {
     max-width: 1120px;
 }
 
+.study-current-pdf {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    color: #334155;
+    background: #f8fafc;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+}
+
+.study-current-pdf > span {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    gap: 8px;
+    overflow-wrap: anywhere;
+    font-weight: 700;
+}
+
+.study-current-pdf > span i {
+    flex: 0 0 auto;
+    color: #dc2626;
+    font-size: 20px;
+}
+
 @media (max-width: 1060px) {
     .app-body {
         grid-template-columns: 1fr;
@@ -1589,6 +1616,11 @@ a {
 
     .study-link-warning {
         max-width: none;
+    }
+
+    .study-current-pdf {
+        align-items: flex-start;
+        flex-direction: column;
     }
 
     .study-results-head {

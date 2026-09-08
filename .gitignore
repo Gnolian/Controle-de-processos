@@ -13,3 +13,4 @@ database/local_imports/
 *.bak
 *.backup
 *.dump
+/storage/studies/
