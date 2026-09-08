@@ -113,6 +113,20 @@ function can_access_audits(array $user): bool
     return can_manage($user) || !empty($user['audit_access']) || is_audit_only($user);
 }
 
+function can_access_studies(array $user): bool
+{
+    return !is_audit_only($user);
+}
+
+function user_home_path(array $user): string
+{
+    if (can_access_audits($user)) {
+        return 'audits.php';
+    }
+
+    return can_access_studies($user) ? 'studies.php' : 'login.php';
+}
+
 function can_edit_audits(array $user): bool
 {
     return can_access_audits($user) && !is_audit_only($user);
@@ -123,7 +137,7 @@ function require_role(array $roles): array
     $user = require_login();
     if (!in_array($user['role'], $roles, true)) {
         flash('Você não tem permissão para acessar esta tela.', 'danger');
-        redirect(can_access_audits($user) ? 'audits.php' : 'login.php');
+        redirect(user_home_path($user));
     }
     if (is_audit_only($user)) {
         flash('Este usuário tem acesso apenas ao painel de auditorias.', 'warning');
@@ -137,9 +151,8 @@ function require_audit_access(): array
 {
     $user = require_login();
     if (!can_access_audits($user)) {
-        unset($_SESSION['user_id']);
-        flash('Seu usuário não possui acesso aos painéis da DGBA.', 'danger');
-        redirect('login.php');
+        flash('Seu usuário não possui acesso ao painel de auditorias.', 'danger');
+        redirect(can_access_studies($user) ? 'studies.php' : 'login.php');
     }
 
     return $user;
@@ -159,8 +172,19 @@ function require_audit_edit_access(): array
 function require_process_access(): array
 {
     $user = require_login();
-    flash('O módulo de processos foi desativado. Utilize o painel de auditorias.', 'info');
-    redirect(can_access_audits($user) ? 'audits.php' : 'login.php');
+    flash('O módulo de processos foi desativado. Utilize os painéis disponíveis.', 'info');
+    redirect(user_home_path($user));
+}
+
+function require_study_access(): array
+{
+    $user = require_login();
+    if (!can_access_studies($user)) {
+        flash('Este usuário possui acesso somente ao painel de auditorias.', 'warning');
+        redirect('audits.php');
+    }
+
+    return $user;
 }
 
 function flash(?string $message = null, string $type = 'success'): ?array

@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS audit_logs;
 DROP TABLE IF EXISTS audit_items;
 DROP TABLE IF EXISTS audits;
 DROP TABLE IF EXISTS processes;
+DROP TABLE IF EXISTS studies;
 DROP TABLE IF EXISTS users;
 SET FOREIGN_KEY_CHECKS = 1;
 
@@ -19,6 +20,47 @@ CREATE TABLE users (
     audit_access TINYINT(1) NOT NULL DEFAULT 0,
     audit_only TINYINT(1) NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE studies (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    source_key CHAR(64) NOT NULL UNIQUE,
+    source_row INT UNSIGNED NULL,
+    knowledge_area VARCHAR(180) NULL,
+    collection_technique_1 VARCHAR(255) NULL,
+    collection_technique_2 VARCHAR(255) NULL,
+    collection_technique_3 VARCHAR(255) NULL,
+    methodology TEXT NULL,
+    study_type VARCHAR(255) NULL,
+    country VARCHAR(120) NULL,
+    region VARCHAR(160) NULL,
+    state VARCHAR(160) NULL,
+    city VARCHAR(160) NULL,
+    publication_type VARCHAR(160) NULL,
+    publication_year SMALLINT UNSIGNED NULL,
+    author TEXT NULL,
+    title TEXT NOT NULL,
+    publication_source TEXT NULL,
+    evidence_1 LONGTEXT NULL,
+    evidence_2 LONGTEXT NULL,
+    evidence_3 LONGTEXT NULL,
+    evidence_4 LONGTEXT NULL,
+    evidence_5 LONGTEXT NULL,
+    keyword_1 VARCHAR(255) NULL,
+    keyword_2 VARCHAR(255) NULL,
+    keyword_3 VARCHAR(255) NULL,
+    keyword_4 VARCHAR(255) NULL,
+    keyword_5 VARCHAR(255) NULL,
+    summary LONGTEXT NULL,
+    access_link TEXT NULL,
+    search_text LONGTEXT NOT NULL,
+    imported_by INT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_studies_year (publication_year),
+    INDEX idx_studies_area (knowledge_area),
+    INDEX idx_studies_type (publication_type),
+    CONSTRAINT fk_studies_user FOREIGN KEY (imported_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE TABLE processes (

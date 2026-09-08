@@ -7,12 +7,7 @@ require __DIR__ . '/../app/bootstrap.php';
 $error = null;
 $loggedUser = current_user();
 if ($loggedUser) {
-    if (can_access_audits($loggedUser)) {
-        redirect('audits.php');
-    }
-
-    unset($_SESSION['user_id']);
-    $error = 'Seu usuário não possui acesso aos painéis da DGBA.';
+    redirect(user_home_path($loggedUser));
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -20,12 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         verify_csrf();
         if ((new AuthService())->attempt(trim((string) ($_POST['email'] ?? '')), (string) ($_POST['password'] ?? ''))) {
             $user = current_user();
-            if ($user && can_access_audits($user)) {
-                redirect('audits.php');
-            }
-
-            unset($_SESSION['user_id']);
-            $error = 'Seu usuário não possui acesso aos painéis da DGBA.';
+            redirect($user ? user_home_path($user) : 'login.php');
         } else {
             $error = 'Email ou senha inválidos.';
         }

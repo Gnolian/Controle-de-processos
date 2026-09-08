@@ -1,6 +1,6 @@
 <?php $navUser = current_user(); ?>
 <aside class="app-sidebar">
-    <a class="sidebar-brand" href="<?= url('audits.php') ?>">
+    <a class="sidebar-brand" href="<?= url($navUser ? user_home_path($navUser) : 'login.php') ?>">
         <span class="brand-mark"><i class="bi bi-grid-1x2"></i></span>
         <span>Painéis<br><strong>DGBA</strong></span>
     </a>
@@ -8,6 +8,9 @@
     <nav class="sidebar-nav">
         <?php if ($navUser && can_access_audits($navUser)): ?>
             <a class="<?= ($activeNav ?? '') === 'audits' ? 'active' : '' ?>" href="<?= url('audits.php') ?>"><i class="bi bi-shield-check"></i> Auditorias</a>
+        <?php endif; ?>
+        <?php if ($navUser && can_access_studies($navUser)): ?>
+            <a class="<?= ($activeNav ?? '') === 'studies' ? 'active' : '' ?>" href="<?= url('studies.php') ?>"><i class="bi bi-journal-richtext"></i> Banco de estudos</a>
         <?php endif; ?>
         <?php if ($navUser && can_manage($navUser)): ?>
             <a class="<?= ($activeNav ?? '') === 'users' ? 'active' : '' ?>" href="<?= url('users.php') ?>"><i class="bi bi-people"></i> Usuários</a>

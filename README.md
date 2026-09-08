@@ -29,6 +29,7 @@ Em vez de manter tudo em uma unica planilha, o sistema organiza os dados em tabe
 - acompanhamento de prazos em linha do tempo;
 - controle de usuarios e permissoes;
 - acompanhamento de recomendacoes, determinacoes e ciencias.
+- banco de estudos com pesquisa em titulos, autores, temas, palavras-chave, resumos e evidencias.
 
 ## Tecnologias utilizadas
 
@@ -53,6 +54,12 @@ Em vez de manter tudo em uma unica planilha, o sistema organiza os dados em tabe
   - itens de auditoria;
   - indicadores;
   - linha do tempo de prazos.
+- Banco de estudos com:
+  - pesquisa textual em todos os campos da matriz de evidencias;
+  - exibicao de autores, ano, tipo, local, resumo e palavras-chave;
+  - consulta das evidencias registradas;
+  - abertura do link original da publicacao;
+  - importacao de arquivos XLSX ou CSV por administradores e coordenadores.
 
 ## Estrutura do projeto
 
@@ -178,6 +185,16 @@ Se o projeto estiver em outro caminho, ajuste os caminhos dentro de `apache/cont
 ## Sobre importacao de dados
 
 O sistema aceita importacao de CSV para alimentar auditorias e seus itens. Para uso publico no GitHub, esses arquivos nao devem ser enviados ao repositorio.
+
+O Banco de estudos aceita diretamente a planilha XLSX da matriz de evidencias ou uma versao CSV com os mesmos cabecalhos. Na tela `Banco de estudos`, administradores e coordenadores podem usar `Importar planilha`. Registros existentes sao atualizados pela identificacao do link ou pela combinacao de titulo, autor e ano.
+
+Em instalacoes antigas, a tabela tambem pode ser criada manualmente com:
+
+```text
+database/migrations/008_add_studies_module.sql
+```
+
+A propria pagina cria a tabela automaticamente quando o usuario do banco possui permissao para isso.
 
 Arquivos de planilhas, bases tratadas, exportacoes e bancos locais devem ficar apenas no computador ou servidor onde o sistema roda.
 
