@@ -46,6 +46,15 @@ class StudyRepository
         return (int) \db()->query('SELECT COUNT(*) FROM studies')->fetchColumn();
     }
 
+    public function find(int $id): ?array
+    {
+        $statement = \db()->prepare('SELECT * FROM studies WHERE id = ?');
+        $statement->execute([$id]);
+        $study = $statement->fetch();
+
+        return $study ?: null;
+    }
+
     public function search(string $query, int $page = 1, int $perPage = 12): array
     {
         $query = trim($query);
@@ -122,6 +131,96 @@ class StudyRepository
             . 'ON DUPLICATE KEY UPDATE ' . implode(', ', $updates)
         );
         $statement->execute($values);
+    }
+
+    public function save(array $data, ?int $id, int $userId): int
+    {
+        $clean = [];
+        foreach (self::IMPORT_COLUMNS as $column) {
+            $clean[$column] = trim(str_replace("\0", '', (string) ($data[$column] ?? '')));
+        }
+
+        if ($clean['title'] === '') {
+            throw new \RuntimeException('Informe o título do estudo.');
+        }
+
+        $year = $clean['publication_year'];
+        if ($year !== '') {
+            $validatedYear = filter_var($year, FILTER_VALIDATE_INT);
+            if ($validatedYear === false || $validatedYear < 1800 || $validatedYear > 2200) {
+                throw new \RuntimeException('Informe um ano de publicação válido.');
+            }
+            $clean['publication_year'] = (string) $validatedYear;
+        } else {
+            $clean['publication_year'] = null;
+        }
+
+        $clean['access_link'] = $this->normalizeAccessLink($clean['access_link']);
+        $searchParts = array_filter(
+            array_map(static fn (mixed $value): string => trim((string) $value), $clean),
+            static fn (string $value): bool => $value !== ''
+        );
+        $searchText = preg_replace('/\s+/u', ' ', implode(' ', $searchParts)) ?: '';
+
+        if ($id !== null) {
+            if ($this->find($id) === null) {
+                throw new \RuntimeException('Estudo não encontrado.');
+            }
+
+            $assignments = array_map(
+                static fn (string $column): string => $column . ' = ?',
+                self::IMPORT_COLUMNS
+            );
+            $values = array_map(static fn (string $column): mixed => $clean[$column], self::IMPORT_COLUMNS);
+            $values[] = $searchText;
+            $values[] = $userId;
+            $values[] = $id;
+
+            $statement = \db()->prepare(
+                'UPDATE studies SET ' . implode(', ', $assignments)
+                . ', search_text = ?, imported_by = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+            );
+            $statement->execute($values);
+
+            return $id;
+        }
+
+        $columns = array_merge(['source_key'], self::IMPORT_COLUMNS, ['search_text', 'imported_by']);
+        $values = array_merge(
+            [hash('sha256', 'manual|' . bin2hex(random_bytes(24)))],
+            array_map(static fn (string $column): mixed => $clean[$column], self::IMPORT_COLUMNS),
+            [$searchText, $userId]
+        );
+        $statement = \db()->prepare(
+            'INSERT INTO studies (' . implode(', ', $columns) . ') VALUES ('
+            . implode(', ', array_fill(0, count($columns), '?')) . ')'
+        );
+        $statement->execute($values);
+
+        return (int) \db()->lastInsertId();
+    }
+
+    private function normalizeAccessLink(string $link): ?string
+    {
+        $link = trim($link);
+        if ($link === '') {
+            return null;
+        }
+
+        if (!preg_match('#^https?://#i', $link)) {
+            $link = 'https://' . ltrim($link, '/');
+        }
+
+        if (filter_var($link, FILTER_VALIDATE_URL) === false) {
+            throw new \RuntimeException('Informe um link válido, como https://exemplo.gov.br/estudo.');
+        }
+
+        $scheme = strtolower((string) parse_url($link, PHP_URL_SCHEME));
+        if (!in_array($scheme, ['http', 'https'], true)) {
+            throw new \RuntimeException('O link do estudo deve começar com http:// ou https://.');
+        }
+
+        return $link;
     }
 
     private function ensureTable(): void

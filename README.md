@@ -186,7 +186,7 @@ Se o projeto estiver em outro caminho, ajuste os caminhos dentro de `apache/cont
 
 O sistema aceita importacao de CSV para alimentar auditorias e seus itens. Para uso publico no GitHub, esses arquivos nao devem ser enviados ao repositorio.
 
-O Banco de estudos aceita diretamente a planilha XLSX da matriz de evidencias ou uma versao CSV com os mesmos cabecalhos. Na tela `Banco de estudos`, administradores e coordenadores podem usar `Importar planilha`. Registros existentes sao atualizados pela identificacao do link ou pela combinacao de titulo, autor e ano.
+O Banco de estudos aceita cadastro e edicao manual, alem da importacao direta da planilha XLSX da matriz de evidencias ou de uma versao CSV com os mesmos cabecalhos. Qualquer usuario com acesso ao Banco de estudos pode adicionar, editar e importar registros. Estudos existentes sao atualizados pela identificacao do link ou pela combinacao de titulo, autor e ano.
 
 Em instalacoes antigas, a tabela tambem pode ser criada manualmente com:
 

@@ -7,13 +7,20 @@ require __DIR__ . '/../app/bootstrap.php';
 $user = require_study_access();
 $query = trim((string) ($_GET['q'] ?? ''));
 $page = max(1, (int) ($_GET['page'] ?? 1));
+$highlightId = max(0, (int) ($_GET['highlight'] ?? 0));
 $repository = new StudyRepository();
 $result = $repository->search($query, $page, 12);
 $collectionTotal = $repository->countAll();
 
 $safeLink = static function (?string $link): ?string {
     $link = trim((string) $link);
-    if ($link === '' || filter_var($link, FILTER_VALIDATE_URL) === false) {
+    if ($link === '') {
+        return null;
+    }
+    if (!preg_match('#^https?://#i', $link)) {
+        $link = 'https://' . ltrim($link, '/');
+    }
+    if (filter_var($link, FILTER_VALIDATE_URL) === false) {
         return null;
     }
     $scheme = strtolower((string) parse_url($link, PHP_URL_SCHEME));
@@ -40,11 +47,14 @@ require __DIR__ . '/../views/nav.php';
             <h1>Banco de estudos</h1>
             <p class="text-muted mb-0">Consulte publicações, evidências e referências reunidas pela DGBA.</p>
         </div>
-        <?php if (can_manage($user)): ?>
+        <div class="studies-title-actions">
+            <a class="btn btn-primary" href="<?= url('study_form.php') ?>">
+                <i class="bi bi-plus-lg"></i> Adicionar estudo
+            </a>
             <a class="btn btn-outline-primary" href="<?= url('study_import.php') ?>">
                 <i class="bi bi-cloud-upload"></i> Importar planilha
             </a>
-        <?php endif; ?>
+        </div>
     </section>
 
     <section class="app-card study-search-panel">
@@ -118,7 +128,7 @@ require __DIR__ . '/../views/nav.php';
                     ]));
                     $link = $safeLink($study['access_link']);
                     ?>
-                    <article class="study-result-card">
+                    <article id="study-<?= (int) $study['id'] ?>" class="study-result-card <?= $highlightId === (int) $study['id'] ? 'study-result-card--highlight' : '' ?>">
                         <div class="study-result-main">
                             <div class="study-result-copy">
                                 <div class="study-result-badges">
@@ -149,11 +159,18 @@ require __DIR__ . '/../views/nav.php';
                                 <?php endif; ?>
                             </div>
 
-                            <?php if ($link): ?>
-                                <a class="btn btn-primary study-access-link" href="<?= e($link) ?>" target="_blank" rel="noopener noreferrer">
-                                    <i class="bi bi-box-arrow-up-right"></i> Abrir estudo
+                            <div class="study-result-actions">
+                                <?php if ($link): ?>
+                                    <a class="btn btn-primary study-access-link" href="<?= e($link) ?>" target="_blank" rel="noopener noreferrer">
+                                        <i class="bi bi-box-arrow-up-right"></i> Abrir estudo
+                                    </a>
+                                <?php else: ?>
+                                    <span class="study-link-warning"><i class="bi bi-exclamation-circle"></i> Link não informado ou inválido</span>
+                                <?php endif; ?>
+                                <a class="btn btn-outline-primary" href="<?= url('study_form.php?id=' . (int) $study['id']) ?>">
+                                    <i class="bi bi-pencil-square"></i> Editar
                                 </a>
-                            <?php endif; ?>
+                            </div>
                         </div>
 
                         <?php if ($study['summary'] || $evidences): ?>
