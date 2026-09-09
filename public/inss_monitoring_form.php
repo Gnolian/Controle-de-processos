@@ -136,7 +136,7 @@ require __DIR__ . '/../views/nav.php';
         <div class="form-section inss-tracking-form-section">
             <h2>Acompanhamento da resposta</h2>
             <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
-                <?php $renderSelect('deadline_status', 'Situação do prazo', ['No prazo', 'Atenção', 'Prazo vencido', 'Respondido'], $values); ?>
+                <?php $renderSelect('deadline_status', 'Situação do prazo', ['Sem prazo', 'No prazo', 'Atenção', 'Prazo vencido', 'Respondido'], $values); ?>
                 <?php $renderSelect('status', 'Status', ['Aguardando resposta', 'Resposta recebida', 'Em análise', 'Em cobrança', 'Concluído'], $values); ?>
                 <?php $renderSelect('priority', 'Prioridade', ['Alta', 'Média', 'Baixa'], $values); ?>
                 <?php $renderInput('inss_response_date', 'Data da resposta INSS', $values, 'date'); ?>

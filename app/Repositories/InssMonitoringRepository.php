@@ -253,6 +253,23 @@ class InssMonitoringRepository
         $identity = mb_strtolower(trim((string) ($data['sei_process'] ?? '')), 'UTF-8') . '|'
             . mb_strtolower(trim((string) ($data['sent_office_number'] ?? '')), 'UTF-8');
         $sourceKey = hash('sha256', $identity);
+        $existingId = $this->findImportedId($sourceKey, $data);
+
+        if ($existingId !== null) {
+            $assignments = array_map(
+                static fn (string $column): string => $column . ' = COALESCE(?, ' . $column . ')',
+                $columns
+            );
+            $values = array_map(static fn (string $column): mixed => $data[$column] ?? null, $columns);
+            array_push($values, $sourceRow, $userId, $existingId);
+            \db()->prepare(
+                'UPDATE inss_monitoring SET ' . implode(', ', $assignments)
+                . ', source_row = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+            )->execute($values);
+
+            return;
+        }
+
         $insertColumns = array_merge(['source_key', 'source_row'], $columns, ['created_by', 'updated_by']);
         $values = [$sourceKey, $sourceRow];
         foreach ($columns as $column) {
@@ -277,6 +294,28 @@ class InssMonitoringRepository
             . 'ON DUPLICATE KEY UPDATE ' . implode(', ', $updates)
         );
         $statement->execute($values);
+    }
+
+    private function findImportedId(string $sourceKey, array $data): ?int
+    {
+        $statement = \db()->prepare('SELECT id FROM inss_monitoring WHERE source_key = ? LIMIT 1');
+        $statement->execute([$sourceKey]);
+        $id = $statement->fetchColumn();
+        if ($id !== false) {
+            return (int) $id;
+        }
+
+        $externalId = $data['external_id'] ?? null;
+        if ($externalId !== null) {
+            $statement = \db()->prepare('SELECT id FROM inss_monitoring WHERE external_id = ? ORDER BY id LIMIT 1');
+            $statement->execute([$externalId]);
+            $id = $statement->fetchColumn();
+            if ($id !== false) {
+                return (int) $id;
+            }
+        }
+
+        return null;
     }
 
     private function whereSql(array $filters): array

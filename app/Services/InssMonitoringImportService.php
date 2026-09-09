@@ -20,14 +20,26 @@ class InssMonitoringImportService
         'n_do_oficio_enviado' => 'sent_office_number',
         'no_do_oficio_enviado' => 'sent_office_number',
         'numero_do_oficio_enviado' => 'sent_office_number',
+        'n_oficio_enviado' => 'sent_office_number',
+        'no_oficio_enviado' => 'sent_office_number',
+        'numero_do_oficio' => 'sent_office_number',
         'sei_do_oficio_enviado' => 'sent_office_sei',
+        'sei_oficio_enviado' => 'sent_office_sei',
+        'sei_do_oficio' => 'sent_office_sei',
         'data_do_oficio' => 'office_date',
+        'data_oficio' => 'office_date',
         'data_de_envio_ao_inss' => 'sent_to_inss_date',
         'unidade_destinataria_inss' => 'inss_recipient_unit',
+        'unidade_destinataria_do_inss' => 'inss_recipient_unit',
+        'unidade_destinataria' => 'inss_recipient_unit',
         'assunto' => 'subject',
         'tipo_de_demanda' => 'demand_type',
         'origem_da_demanda' => 'demand_origin',
         'beneficiario_interessado' => 'beneficiary',
+        'beneficiarios_interessados' => 'beneficiary',
+        'beneficiario' => 'beneficiary',
+        'beneficiarios' => 'beneficiary',
+        'interessado' => 'beneficiary',
         'cpf' => 'cpf',
         'nb' => 'benefit_number',
         'situacao_do_prazo' => 'deadline_status',
@@ -44,6 +56,8 @@ class InssMonitoringImportService
         'responsavel_pelo_acompanhamento' => 'owner',
         'prioridade' => 'priority',
         'observacao' => 'notes',
+        'observacoes' => 'notes',
+        'observacoes_complementares' => 'notes',
         'link_sei' => 'sei_link',
     ];
 
@@ -297,6 +311,14 @@ class InssMonitoringImportService
     private function normalizeHeader(string $header): string
     {
         $header = trim(mb_strtolower($header, 'UTF-8'));
+        $header = strtr($header, [
+            'á' => 'a', 'à' => 'a', 'â' => 'a', 'ã' => 'a', 'ä' => 'a',
+            'é' => 'e', 'è' => 'e', 'ê' => 'e', 'ë' => 'e',
+            'í' => 'i', 'ì' => 'i', 'î' => 'i', 'ï' => 'i',
+            'ó' => 'o', 'ò' => 'o', 'ô' => 'o', 'õ' => 'o', 'ö' => 'o',
+            'ú' => 'u', 'ù' => 'u', 'û' => 'u', 'ü' => 'u',
+            'ç' => 'c', 'ñ' => 'n', 'º' => 'o', 'ª' => 'a',
+        ]);
         $ascii = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $header);
 
         return trim((string) preg_replace('/[^a-z0-9]+/', '_', strtolower($ascii !== false ? $ascii : $header)), '_');
@@ -322,7 +344,7 @@ class InssMonitoringImportService
         if (is_numeric($value)) {
             return (new \DateTimeImmutable('1899-12-30'))->modify('+' . (int) floor((float) $value) . ' days')->format('Y-m-d');
         }
-        foreach (['!Y-m-d', '!d/m/Y', '!d-m-Y'] as $format) {
+        foreach (['!Y-m-d', '!d/m/Y', '!d-m-Y', '!d/m/Y H:i:s', '!Y-m-d H:i:s'] as $format) {
             $date = \DateTimeImmutable::createFromFormat($format, $value);
             if ($date !== false) {
                 return $date->format('Y-m-d');

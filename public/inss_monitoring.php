@@ -19,7 +19,7 @@ $deadlineChart = $repository->groupCounts('deadline_status', $filters);
 $statusChart = $repository->groupCounts('status', $filters);
 
 $fixedOptions = [
-    'deadline_status' => ['No prazo', 'Atenção', 'Prazo vencido', 'Respondido'],
+    'deadline_status' => ['Sem prazo', 'No prazo', 'Atenção', 'Prazo vencido', 'Respondido'],
     'status' => ['Aguardando resposta', 'Resposta recebida', 'Em análise', 'Em cobrança', 'Concluído'],
     'conclusive_response' => ['A avaliar', 'Sim', 'Parcialmente', 'Não'],
     'needs_follow_up' => ['A avaliar', 'Sim', 'Não'],
