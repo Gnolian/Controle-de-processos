@@ -113,23 +113,23 @@ class InssMonitoringRepository
         [$whereSql, $params] = $this->whereSql($filters);
         $statement = \db()->prepare("SELECT
             COUNT(*) AS total,
-            SUM(m.inss_response_date IS NULL AND UPPER(COALESCE(m.status, '')) NOT LIKE '%CONCLU%') AS awaiting_response,
-            SUM(m.inss_response_date IS NOT NULL OR NULLIF(m.response_office_number, '') IS NOT NULL OR NULLIF(m.response_sei, '') IS NOT NULL) AS with_response,
-            SUM(UPPER(COALESCE(m.deadline_status, '')) LIKE '%VENC%' OR UPPER(COALESCE(m.deadline_status, '')) LIKE '%ATRAS%') AS overdue,
-            SUM(UPPER(COALESCE(m.needs_follow_up, '')) LIKE 'SIM%' OR UPPER(COALESCE(m.status, '')) LIKE '%COBRAN%') AS needs_follow_up,
-            SUM(UPPER(COALESCE(m.priority, '')) LIKE 'ALTA%') AS high_priority
+            SUM(CASE WHEN m.inss_response_date IS NULL AND UPPER(COALESCE(m.status, '')) NOT LIKE '%CONCLU%' THEN 1 ELSE 0 END) AS awaiting_response,
+            SUM(CASE WHEN m.inss_response_date IS NOT NULL OR NULLIF(m.response_office_number, '') IS NOT NULL OR NULLIF(m.response_sei, '') IS NOT NULL THEN 1 ELSE 0 END) AS with_response,
+            SUM(CASE WHEN UPPER(COALESCE(m.deadline_status, '')) LIKE '%VENC%' OR UPPER(COALESCE(m.deadline_status, '')) LIKE '%ATRAS%' THEN 1 ELSE 0 END) AS overdue,
+            SUM(CASE WHEN UPPER(COALESCE(m.needs_follow_up, '')) LIKE 'SIM%' OR UPPER(COALESCE(m.status, '')) LIKE '%COBRAN%' THEN 1 ELSE 0 END) AS needs_follow_up,
+            SUM(CASE WHEN UPPER(COALESCE(m.priority, '')) LIKE 'ALTA%' THEN 1 ELSE 0 END) AS priority_high_total
             FROM inss_monitoring m" . $whereSql);
         $statement->execute($params);
         $row = $statement->fetch() ?: [];
 
-        return array_map('intval', array_merge([
-            'total' => 0,
-            'awaiting_response' => 0,
-            'with_response' => 0,
-            'overdue' => 0,
-            'needs_follow_up' => 0,
-            'high_priority' => 0,
-        ], $row));
+        return [
+            'total' => (int) ($row['total'] ?? 0),
+            'awaiting_response' => (int) ($row['awaiting_response'] ?? 0),
+            'with_response' => (int) ($row['with_response'] ?? 0),
+            'overdue' => (int) ($row['overdue'] ?? 0),
+            'needs_follow_up' => (int) ($row['needs_follow_up'] ?? 0),
+            'high_priority' => (int) ($row['priority_high_total'] ?? 0),
+        ];
     }
 
     public function groupCounts(string $field, array $filters, int $limit = 8): array
