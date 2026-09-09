@@ -118,6 +118,11 @@ function can_access_studies(array $user): bool
     return !is_audit_only($user);
 }
 
+function can_access_inss_monitoring(array $user): bool
+{
+    return !is_audit_only($user);
+}
+
 function user_home_path(array $user): string
 {
     if (can_access_audits($user)) {
@@ -180,6 +185,17 @@ function require_study_access(): array
 {
     $user = require_login();
     if (!can_access_studies($user)) {
+        flash('Este usuário possui acesso somente ao painel de auditorias.', 'warning');
+        redirect('audits.php');
+    }
+
+    return $user;
+}
+
+function require_inss_monitoring_access(): array
+{
+    $user = require_login();
+    if (!can_access_inss_monitoring($user)) {
         flash('Este usuário possui acesso somente ao painel de auditorias.', 'warning');
         redirect('audits.php');
     }

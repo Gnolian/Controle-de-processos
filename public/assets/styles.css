@@ -1510,6 +1510,299 @@ a {
     font-size: 20px;
 }
 
+.inss-monitoring-page {
+    width: min(1480px, calc(100% - 42px));
+}
+
+.inss-hero-panel {
+    border-top: 3px solid #0f766e;
+}
+
+.inss-filter-card {
+    display: grid;
+    gap: 16px;
+}
+
+.inss-filters-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.inss-filters-grid--primary {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.inss-filter-search {
+    grid-column: span 2;
+}
+
+.inss-filter-field {
+    min-width: 0;
+}
+
+.inss-filter-field .form-label {
+    min-height: 38px;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.inss-more-filters {
+    padding-top: 4px;
+    border-top: 1px solid var(--line);
+}
+
+.inss-more-filters summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    color: #475569;
+    cursor: pointer;
+    font-weight: 700;
+    list-style: none;
+}
+
+.inss-more-filters summary::-webkit-details-marker {
+    display: none;
+}
+
+.inss-filter-actions {
+    padding-top: 2px;
+}
+
+.inss-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 12px;
+    margin: 18px 0 24px;
+}
+
+.inss-metric {
+    position: relative;
+    overflow: hidden;
+    min-height: 118px;
+    padding: 16px;
+    background: linear-gradient(145deg, rgba(15, 118, 110, 0.13), #fff 68%);
+    border: 1px solid rgba(15, 118, 110, 0.22);
+    border-radius: 10px;
+    box-shadow: 0 12px 28px rgba(16, 24, 40, 0.06);
+}
+
+.inss-metric span {
+    display: block;
+    max-width: calc(100% - 24px);
+    color: #526074;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.inss-metric strong {
+    display: block;
+    margin-top: 18px;
+    color: #111827;
+    font-size: 38px;
+    font-weight: 750;
+    line-height: 1;
+}
+
+.inss-metric > i {
+    position: absolute;
+    right: 12px;
+    bottom: 11px;
+    color: rgba(15, 118, 110, 0.28);
+    font-size: 25px;
+}
+
+.inss-metric--info {
+    background: linear-gradient(145deg, rgba(37, 99, 235, 0.13), #fff 68%);
+    border-color: rgba(37, 99, 235, 0.22);
+}
+
+.inss-metric--info > i {
+    color: rgba(37, 99, 235, 0.28);
+}
+
+.inss-metric--danger {
+    background: linear-gradient(145deg, rgba(190, 18, 60, 0.13), #fff 68%);
+    border-color: rgba(190, 18, 60, 0.22);
+}
+
+.inss-metric--danger > i,
+.inss-metric--priority > i {
+    color: rgba(190, 18, 60, 0.30);
+}
+
+.inss-metric--warning,
+.inss-metric--priority {
+    background: linear-gradient(145deg, rgba(217, 119, 6, 0.14), #fff 68%);
+    border-color: rgba(217, 119, 6, 0.24);
+}
+
+.inss-metric--warning > i {
+    color: rgba(180, 83, 9, 0.30);
+}
+
+.inss-chart-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.inss-chart-grid .chart-card {
+    min-width: 0;
+}
+
+.inss-chart-grid .chart-canvas {
+    height: 220px !important;
+}
+
+.inss-results-panel {
+    overflow: hidden;
+}
+
+.inss-results-head {
+    align-items: flex-end;
+}
+
+.inss-results-head h2 {
+    margin: 0;
+    font-size: 22px;
+}
+
+.inss-monitoring-table {
+    min-width: 1420px;
+}
+
+.inss-monitoring-table td {
+    vertical-align: top;
+}
+
+.inss-monitoring-table td > strong,
+.inss-monitoring-table td > span:not(.inss-status-badge):not(.inss-priority) {
+    display: block;
+}
+
+.inss-demand-cell {
+    width: 280px;
+    max-width: 280px;
+}
+
+.inss-demand-cell > strong,
+.inss-demand-cell > small {
+    overflow-wrap: anywhere;
+}
+
+.inss-status-badge,
+.inss-priority {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 8px;
+    color: #475569;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.inss-status-badge--danger,
+.inss-priority--danger {
+    color: #9f1239;
+    background: #fff1f2;
+    border-color: #fecdd3;
+}
+
+.inss-status-badge--warning,
+.inss-priority--warning {
+    color: #92400e;
+    background: #fffbeb;
+    border-color: #fde68a;
+}
+
+.inss-status-badge--success,
+.inss-priority--success {
+    color: #166534;
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+}
+
+.inss-status-badge--info {
+    color: #1d4ed8;
+    background: #eff6ff;
+    border-color: #bfdbfe;
+}
+
+.inss-priority {
+    margin-top: 8px;
+}
+
+.inss-row-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 7px;
+    white-space: nowrap;
+}
+
+.inss-row-details {
+    margin-top: 8px;
+}
+
+.inss-row-details summary {
+    color: #0f766e;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.inss-row-details dl {
+    display: grid;
+    gap: 8px;
+    margin: 10px 0 0;
+    padding: 10px;
+    background: #f8fafc;
+    border-radius: 6px;
+}
+
+.inss-row-details dl > div {
+    display: grid;
+    gap: 2px;
+}
+
+.inss-row-details dt {
+    color: #64748b;
+    font-size: 11px;
+    text-transform: uppercase;
+}
+
+.inss-row-details dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-size: 13px;
+}
+
+.inss-row-highlight {
+    background: #ecfdf5;
+    box-shadow: inset 4px 0 #0f766e;
+}
+
+.inss-form-card {
+    max-width: 1180px;
+}
+
+.inss-tracking-form-section {
+    padding: 20px;
+    background: rgba(15, 118, 110, 0.055);
+    border: 1px solid rgba(15, 118, 110, 0.14);
+    border-radius: 10px;
+}
+
 @media (max-width: 1060px) {
     .app-body {
         grid-template-columns: 1fr;
@@ -1544,6 +1837,15 @@ a {
 
     .study-result-main {
         gap: 18px;
+    }
+
+    .inss-filters-grid--primary,
+    .inss-metrics-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .inss-filters-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
 
@@ -1634,6 +1936,29 @@ a {
         gap: 2px;
     }
 
+    .inss-monitoring-page {
+        width: min(100% - 24px, 1480px);
+    }
+
+    .inss-filters-grid--primary,
+    .inss-filters-grid,
+    .inss-metrics-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .inss-filter-search {
+        grid-column: 1 / -1;
+    }
+
+    .inss-chart-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .inss-results-head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
     .detail-grid {
         grid-template-columns: 1fr;
     }
@@ -1655,6 +1980,24 @@ a {
     .audit-cards-grid,
     .rdc-cards-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .inss-filters-grid--primary,
+    .inss-filters-grid,
+    .inss-metrics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .inss-filter-field .form-label {
+        min-height: 0;
+    }
+
+    .inss-filter-actions {
+        flex-direction: column-reverse;
+    }
+
+    .inss-filter-actions .btn {
+        width: 100%;
     }
 }
 

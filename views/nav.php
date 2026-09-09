@@ -9,6 +9,9 @@
         <?php if ($navUser && can_access_audits($navUser)): ?>
             <a class="<?= ($activeNav ?? '') === 'audits' ? 'active' : '' ?>" href="<?= url('audits.php') ?>"><i class="bi bi-shield-check"></i> Auditorias</a>
         <?php endif; ?>
+        <?php if ($navUser && can_access_inss_monitoring($navUser)): ?>
+            <a class="<?= ($activeNav ?? '') === 'inss' ? 'active' : '' ?>" href="<?= url('inss_monitoring.php') ?>"><i class="bi bi-envelope-check"></i> Monitoramento INSS</a>
+        <?php endif; ?>
         <?php if ($navUser && can_access_studies($navUser)): ?>
             <a class="<?= ($activeNav ?? '') === 'studies' ? 'active' : '' ?>" href="<?= url('studies.php') ?>"><i class="bi bi-journal-richtext"></i> Banco de estudos</a>
         <?php endif; ?>
@@ -27,6 +30,9 @@
         <div class="topbar-actions">
             <?php if (($activeNav ?? '') === 'audits' && $navUser && can_edit_audits($navUser)): ?>
                 <a class="btn btn-primary btn-sm" href="<?= url('audit_form.php') ?>"><i class="bi bi-plus-lg"></i> Nova auditoria</a>
+            <?php endif; ?>
+            <?php if (($activeNav ?? '') === 'inss' && $navUser && can_access_inss_monitoring($navUser)): ?>
+                <a class="btn btn-primary btn-sm" href="<?= url('inss_monitoring_form.php') ?>"><i class="bi bi-plus-lg"></i> Nova demanda</a>
             <?php endif; ?>
             <div class="user-chip">
                 <span><?= e($navUser['name'] ?? '') ?></span>

@@ -1,6 +1,6 @@
 # Painéis DGBA
 
-Sistema web desenvolvido em PHP para centralizar o acompanhamento das auditorias da DGBA que antes eram controladas principalmente por planilhas.
+Sistema web desenvolvido em PHP para centralizar painéis e controles internos da DGBA que antes eram mantidos principalmente em planilhas.
 
 Este repositorio foi preparado para portifolio. Ele mostra a estrutura, o codigo e a proposta da solucao, mas nao deve conter dados reais, planilhas internas, credenciais ou informacoes sensiveis.
 
@@ -30,6 +30,7 @@ Em vez de manter tudo em uma unica planilha, o sistema organiza os dados em tabe
 - controle de usuarios e permissoes;
 - acompanhamento de recomendacoes, determinacoes e ciencias.
 - banco de estudos com pesquisa em titulos, autores, temas, palavras-chave, resumos e evidencias.
+- monitoramento das respostas do INSS aos oficios enviados pela DGBA.
 
 ## Tecnologias utilizadas
 
@@ -59,7 +60,14 @@ Em vez de manter tudo em uma unica planilha, o sistema organiza os dados em tabe
   - exibicao de autores, ano, tipo, local, resumo e palavras-chave;
   - consulta das evidencias registradas;
   - abertura do link original da publicacao;
-  - importacao de arquivos XLSX ou CSV por administradores e coordenadores.
+  - importacao de arquivos XLSX ou CSV pelos usuarios com acesso ao modulo;
+  - anexacao e abertura protegida de PDFs.
+- Monitoramento INSS com:
+  - dashboard de respostas, prazos, cobrancas e prioridades;
+  - filtros suspensos para os campos de acompanhamento;
+  - cadastro e edicao das demandas;
+  - calculo automatico dos dias decorridos;
+  - importacao da planilha XLSX ou CSV sem apagar atualizacoes ja realizadas na aplicacao.
 
 ## Estrutura do projeto
 
@@ -186,6 +194,8 @@ Se o projeto estiver em outro caminho, ajuste os caminhos dentro de `apache/cont
 
 O sistema aceita importacao de CSV para alimentar auditorias e seus itens. Para uso publico no GitHub, esses arquivos nao devem ser enviados ao repositorio.
 
+O Monitoramento INSS aceita a planilha `Base para monitoramento respostas ao INSS` em XLSX ou CSV. Os registros sao identificados pelo processo SEI e pelo oficio enviado. Campos vazios de uma nova importacao nao apagam informacoes de acompanhamento preenchidas anteriormente no sistema.
+
 O Banco de estudos aceita cadastro e edicao manual, alem da importacao direta da planilha XLSX da matriz de evidencias ou de uma versao CSV com os mesmos cabecalhos. Qualquer usuario com acesso ao Banco de estudos pode adicionar, editar e importar registros. Estudos existentes sao atualizados pela identificacao do link ou pela combinacao de titulo, autor e ano.
 
 No cadastro manual, o estudo pode ter um link externo, um PDF de ate 30 MB ou ambos. Os PDFs ficam em `storage/studies`, fora da pasta publica, e sao abertos por uma rota autenticada. Essa pasta nao deve ser versionada no Git e precisa ter permissao de escrita para o Apache no servidor.
@@ -195,6 +205,7 @@ Em instalacoes antigas, a tabela tambem pode ser criada manualmente com:
 ```text
 database/migrations/008_add_studies_module.sql
 database/migrations/009_add_study_pdf.sql
+database/migrations/010_add_inss_monitoring.sql
 ```
 
 A propria pagina cria a tabela automaticamente quando o usuario do banco possui permissao para isso.
