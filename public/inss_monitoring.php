@@ -204,7 +204,7 @@ require __DIR__ . '/../views/nav.php';
                                 <td>
                                     <div class="d-flex align-items-start justify-content-between gap-2">
                                         <strong><?= e((string) $item['sei_process']) ?></strong>
-                                        <a class="btn btn-sm btn-outline-primary" href="<?= url('inss_monitoring_form.php?id=' . (int) $item['id']) ?>" title="Editar este registro" aria-label="Editar este registro"><i class="bi bi-pencil-square"></i></a>
+                                        <?php if ($seiLink): ?><a class="btn btn-sm btn-outline-secondary" href="<?= e($seiLink) ?>" target="_blank" rel="noopener noreferrer" title="Abrir processo no SEI" aria-label="Abrir processo no SEI"><i class="bi bi-box-arrow-up-right"></i></a><?php endif; ?>
                                     </div>
                                     <small>Ofício <?= e((string) ($item['sent_office_number'] ?: '-')) ?></small>
                                     <?php if ($item['sent_office_sei']): ?><small>SEI <?= e((string) $item['sent_office_sei']) ?></small><?php endif; ?>
@@ -244,7 +244,6 @@ require __DIR__ . '/../views/nav.php';
                                 </td>
                                 <td class="text-end">
                                     <div class="inss-row-actions">
-                                        <?php if ($seiLink): ?><a class="btn btn-sm btn-outline-secondary" href="<?= e($seiLink) ?>" target="_blank" rel="noopener noreferrer" title="Abrir processo no SEI"><i class="bi bi-box-arrow-up-right"></i></a><?php endif; ?>
                                         <a class="btn btn-sm btn-outline-primary" href="<?= url('inss_monitoring_form.php?id=' . (int) $item['id']) ?>"><i class="bi bi-pencil-square"></i> Editar</a>
                                     </div>
                                 </td>
