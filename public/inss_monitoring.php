@@ -202,7 +202,10 @@ require __DIR__ . '/../views/nav.php';
                             <?php $seiLink = $safeLink($item['sei_link']); ?>
                             <tr id="monitoring-<?= (int) $item['id'] ?>" class="<?= $highlightId === (int) $item['id'] ? 'inss-row-highlight' : '' ?>">
                                 <td>
-                                    <strong><?= e((string) $item['sei_process']) ?></strong>
+                                    <div class="d-flex align-items-start justify-content-between gap-2">
+                                        <strong><?= e((string) $item['sei_process']) ?></strong>
+                                        <a class="btn btn-sm btn-outline-primary" href="<?= url('inss_monitoring_form.php?id=' . (int) $item['id']) ?>" title="Editar este registro" aria-label="Editar este registro"><i class="bi bi-pencil-square"></i></a>
+                                    </div>
                                     <small>Ofício <?= e((string) ($item['sent_office_number'] ?: '-')) ?></small>
                                     <?php if ($item['sent_office_sei']): ?><small>SEI <?= e((string) $item['sent_office_sei']) ?></small><?php endif; ?>
                                 </td>

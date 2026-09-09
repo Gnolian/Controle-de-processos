@@ -6,7 +6,10 @@ require __DIR__ . '/../app/bootstrap.php';
 
 $user = require_inss_monitoring_access();
 $repository = new InssMonitoringRepository();
-$id = isset($_GET['id']) ? (int) $_GET['id'] : null;
+$requestId = $_SERVER['REQUEST_METHOD'] === 'POST'
+    ? ($_POST['record_id'] ?? null)
+    : ($_GET['id'] ?? null);
+$id = filter_var($requestId, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) ?: null;
 $record = $id ? $repository->find($id) : null;
 
 if ($id && !$record) {
@@ -86,8 +89,11 @@ require __DIR__ . '/../views/nav.php';
         <a class="btn btn-outline-secondary" href="<?= url('inss_monitoring.php') ?>"><i class="bi bi-arrow-left"></i> Voltar</a>
     </section>
 
-    <form method="post" class="app-card form-card inss-form-card">
+    <form method="post" action="<?= url('inss_monitoring_form.php' . ($id ? '?id=' . $id : '')) ?>" class="app-card form-card inss-form-card">
         <?= csrf_field() ?>
+        <?php if ($id): ?>
+            <input type="hidden" name="record_id" value="<?= (int) $id ?>">
+        <?php endif; ?>
 
         <div class="form-section">
             <h2>Ofício enviado</h2>
@@ -152,7 +158,7 @@ require __DIR__ . '/../views/nav.php';
 
         <div class="form-actions sticky-actions">
             <a class="btn btn-outline-secondary" href="<?= url('inss_monitoring.php') ?>">Cancelar</a>
-            <button class="btn btn-primary" type="submit"><i class="bi bi-save"></i> Salvar monitoramento</button>
+            <button class="btn btn-primary" type="submit"><i class="bi bi-save"></i> <?= $id ? 'Atualizar registro' : 'Salvar monitoramento' ?></button>
         </div>
     </form>
 </main>
